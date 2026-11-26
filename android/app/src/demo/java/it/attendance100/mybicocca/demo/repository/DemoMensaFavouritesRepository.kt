@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,6 +34,7 @@ class DemoMensaFavouritesRepository @Inject constructor() : MensaFavouritesRepos
 
     override suspend fun setNotify(notify: Boolean) = settings.update { it.copy(notify = notify) }
     override suspend fun setLookaheadDays(days: Int) = settings.update { it.copy(lookaheadDays = days) }
+    override suspend fun setNotifyTime(time: LocalTime) = settings.update { it.copy(notifyAt = time) }
     override suspend fun announcedKeys(): Set<String> = announced
     override suspend fun setAnnouncedKeys(keys: Set<String>) {
         announced = keys

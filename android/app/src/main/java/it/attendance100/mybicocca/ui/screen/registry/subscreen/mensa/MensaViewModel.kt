@@ -43,11 +43,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaNewAccount
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.LocalTime
 import javax.inject.Inject
 import it.attendance100.mybicocca.domain.model.mensa.MensaFavourite
 import it.attendance100.mybicocca.domain.model.mensa.MensaFavouriteSettings
@@ -90,13 +95,22 @@ class MensaViewModel @Inject constructor(
     fun setFavouriteNotify(notify: Boolean) {
         viewModelScope.launch {
             favouritesRepository.setNotify(notify)
-            favouritesScheduler.apply(notify)
+            favouritesScheduler.apply(notify, favouritesRepository.observeSettings().first().notifyAt)
             if (notify) favouritesScheduler.checkNow()
         }
     }
 
     fun setFavouriteLookahead(days: Int) {
         viewModelScope.launch { favouritesRepository.setLookaheadDays(days) }
+    }
+
+    /** The daily check moves to [time] straight away. */
+    fun setFavouriteNotifyTime(time: LocalTime) {
+        viewModelScope.launch {
+            favouritesRepository.setNotifyTime(time)
+            val settings = favouritesRepository.observeSettings().first()
+            if (settings.notify) favouritesScheduler.apply(true, time)
+        }
     }
 
     private val _backStack = MutableStateFlow<List<MensaSubPage>>(listOf(MensaSubPage.Home))
@@ -221,10 +235,19 @@ class MensaViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.Eagerly, MensaOrderAvailability.Checking)
     }
 
+    /** Today's date, moving on at midnight while the hub is on screen. */
+    val today: StateFlow<LocalDate> = flow {
+        while (true) {
+            val now = LocalDateTime.now(AppClock.clock)
+            emit(now.toLocalDate())
+            delay(Duration.between(now, now.toLocalDate().plusDays(1).atStartOfDay()).toMillis() + 1_000)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LocalDate.now(AppClock.clock))
+
     /** Today's primo and secondo from the menu loaded on start, for the tray on the hub. */
-    val hubTray: StateFlow<MensaHubTray> = combine(_currentSchedule, _selectedMealTypeId) { schedule, mealId ->
-        hubTrayOf(schedule.valueOrNull()?.get(LocalDate.now(AppClock.clock)), mealId)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, MensaHubTray())
+    val hubTray: StateFlow<MensaHubTray> = combine(_currentSchedule, _selectedMealTypeId, today) { schedule, mealId, day ->
+        hubTrayOf(schedule.valueOrNull()?.get(day), mealId)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MensaHubTray())
 
     /** Whether the tray has slid out of the menu card since the sheet opened; it slides once per opening. */
     var hubTrayIntroPlayed: Boolean = false
@@ -279,8 +302,12 @@ class MensaViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { fetchMenus() }
-        // Keeps the daily check planned for anyone who turned it on, after a reinstall or a cleared job.
-        viewModelScope.launch { if (favouritesRepository.observeSettings().first().notify) favouritesScheduler.apply(true) }
+        // Plans the daily check again at the chosen time for anyone who turned it on: after a reinstall,
+        // a cleared job, or a slot left over from an older build.
+        viewModelScope.launch {
+            val settings = favouritesRepository.observeSettings().first()
+            if (settings.notify) favouritesScheduler.apply(true, settings.notifyAt)
+        }
         viewModelScope.launch {
             if (repository.isLoggedIn()) {
                 runCatching { repository.refreshAccountInfo() }
@@ -1027,6 +1054,10 @@ class MensaViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { repository.cancelTakeawayReservation(reservation.id) }.fold(
                 onSuccess = {
+                    // The booking is gone, so its page closes: one step back, to the hub or the list of orders.
+                    _backStack.update { stack ->
+                        if (stack.lastOrNull() == MensaSubPage.ReservationDetail(reservation.id)) stack.dropLast(1) else stack
+                    }
                     runCatching { fetchReservationsInternal() }
                     _events.send(MensaEvent.OrderCancelled)
                 },

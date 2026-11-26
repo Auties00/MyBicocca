@@ -62,13 +62,13 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaLoopingArt
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaDishDrawable
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaAnimatedArt
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenMatch
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaArt
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
@@ -366,7 +366,7 @@ internal fun MensaPlateWithBadge(
             art = art,
             size = size,
             modifier = Modifier.mensaPlateElement(dish.id, sharedElement),
-            drawable = MensaDishDrawings.of(dish.id) ?: art.drawable,
+            drawable = mensaDishDrawable(dish.id, art.drawable),
         )
         if (portionLabel != null) {
             Surface(

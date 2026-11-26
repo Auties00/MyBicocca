@@ -2286,7 +2286,9 @@
     <string name="mensa_favourite_remove">Togli dai preferiti</string>
     <string name="mensa_favourite_add">Aggiungi ai preferiti</string>
     <string name="mensa_favourites_notify_title">Avvisami quando ci sono</string>
-    <string name="mensa_favourites_notify_body">Ogni mattina controlliamo i menù di mense e bar e ti avvisiamo se c\'è uno dei tuoi preferiti.</string>
+    <string name="mensa_favourites_notify_body">Ogni giorno, all\'ora che scegli, controlliamo i menù di mense e bar e ti avvisiamo se c\'è uno dei tuoi preferiti.</string>
+    <string name="mensa_favourites_notify_time">Avvisami alle</string>
+    <string name="mensa_favourites_notify_time_title">Orario della notifica</string>
     <string name="mensa_favourites_lookahead">Quali giorni</string>
     <string name="mensa_favourites_lookahead_today">Oggi</string>
     <string name="mensa_favourites_lookahead_tomorrow">2 giorni</string>
@@ -2294,9 +2296,8 @@
     <string name="mensa_hub_menu_title">Menù e ordini</string>
     <string name="mensa_hub_menu_body">Scegli dove mangi, guarda il menù e ordina il Take-Away</string>
     <string name="mensa_hub_menu_browse">Sfoglia i menù</string>
-    <string name="mensa_hub_wallet_title">Borsellino e pagamenti</string>
-    <string name="mensa_hub_wallet_body">Ricarica e paga nell\'app Fresh &amp; Natural</string>
-    <string name="mensa_hub_wallet_body_balance">Saldo %1$.2f € · ricarica nell\'app Fresh &amp; Natural</string>
+    <string name="mensa_hub_catalog_title">Tutti i piatti e i prezzi</string>
+    <string name="mensa_hub_catalog_body">Ogni piatto dei menù, con il suo prezzo e le combinazioni dei pasti</string>
     <string name="mensa_hub_personalize_title">Personalizza</string>
     <string name="mensa_hub_personalize_body">Segnala i piatti con i tuoi allergeni</string>
     <plurals name="mensa_hub_favourites">
@@ -2310,7 +2311,6 @@
     <string name="mensa_menu_title">Menù</string>
     <string name="mensa_menu_subtitle">Piatti del giorno</string>
     <string name="mensa_course_all">Tutti</string>
-    <string name="mensa_catalog_action">Tutti i piatti e le combinazioni</string>
     <string name="mensa_allergen_match_contains">Contiene i tuoi allergeni</string>
     <string name="mensa_allergen_match_trace">Possibili tracce</string>
     <string name="mensa_catalog_title">Tutti i piatti</string>

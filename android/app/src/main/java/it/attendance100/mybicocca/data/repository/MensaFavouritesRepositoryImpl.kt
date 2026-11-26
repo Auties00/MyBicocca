@@ -13,6 +13,7 @@ import it.attendance100.mybicocca.domain.repository.MensaFavouritesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,6 +34,7 @@ class MensaFavouritesRepositoryImpl @Inject constructor(
         MensaFavouriteSettings(
             notify = prefs[NOTIFY_KEY] ?: false,
             lookaheadDays = prefs[LOOKAHEAD_KEY] ?: 0,
+            notifyAt = prefs[NOTIFY_MINUTE_KEY]?.let { LocalTime.ofSecondOfDay(it * 60L) } ?: MensaFavouriteSettings.DEFAULT_NOTIFY_TIME,
         )
     }
 
@@ -49,6 +51,10 @@ class MensaFavouritesRepositoryImpl @Inject constructor(
 
     override suspend fun setLookaheadDays(days: Int) {
         dataStore.edit { it[LOOKAHEAD_KEY] = days.coerceIn(0, MensaFavouriteMatcher.MAX_LOOKAHEAD_DAYS) }
+    }
+
+    override suspend fun setNotifyTime(time: LocalTime) {
+        dataStore.edit { it[NOTIFY_MINUTE_KEY] = time.hour * 60 + time.minute }
     }
 
     override suspend fun announcedKeys(): Set<String> = dataStore.data.first()[ANNOUNCED_KEY].orEmpty()
@@ -68,6 +74,7 @@ class MensaFavouritesRepositoryImpl @Inject constructor(
         val FAVOURITES_KEY = stringSetPreferencesKey("mensa_favourite_dishes")
         val NOTIFY_KEY = booleanPreferencesKey("mensa_favourites_notify")
         val LOOKAHEAD_KEY = intPreferencesKey("mensa_favourites_lookahead_days")
+        val NOTIFY_MINUTE_KEY = intPreferencesKey("mensa_favourites_notify_minute")
         val ANNOUNCED_KEY = stringSetPreferencesKey("mensa_favourites_announced")
     }
 }

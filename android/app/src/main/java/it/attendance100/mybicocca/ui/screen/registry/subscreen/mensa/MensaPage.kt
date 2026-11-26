@@ -5,7 +5,6 @@ import it.attendance100.mybicocca.domain.model.mensa.availabilityAt
 import it.attendance100.mybicocca.domain.model.mensa.MensaDishAvailability
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -123,6 +122,7 @@ fun MensaPage(
     val session by viewModel.session.collectAsStateWithLifecycle()
     val menus by viewModel.menus.collectAsStateWithLifecycle()
     val hubTray by viewModel.hubTray.collectAsStateWithLifecycle()
+    val today by viewModel.today.collectAsStateWithLifecycle()
     val menusStatus by viewModel.menusStatus.collectAsStateWithLifecycle()
     val selectedPlace by viewModel.selectedPlace.collectAsStateWithLifecycle()
     val orderAvailability by viewModel.orderAvailability.collectAsStateWithLifecycle()
@@ -376,12 +376,6 @@ fun MensaPage(
                                         contentDescription = stringResource(R.string.mensa_change_selection_action),
                                     )
                                 }
-                                IconButton(onClick = { haptic.tap(); viewModel.openFoodCatalog() }, modifier = Modifier.testTag(MensaTestTags.CATALOG_BUTTON)) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Outlined.List,
-                                        contentDescription = stringResource(R.string.mensa_catalog_action),
-                                    )
-                                }
                             }
                         }
                     }
@@ -430,8 +424,9 @@ fun MensaPage(
                     onOpenBooking = viewModel::openReservationDetail,
                     onOpenOrders = viewModel::openReservations,
                     onOpenAllergens = viewModel::openAllergens,
-                    onOpenWallet = { context.openFreshAndNatural() },
+                    onOpenCatalog = viewModel::openFoodCatalog,
                     tray = hubTray,
+                    today = today,
                     playTrayIntro = !viewModel.hubTrayIntroPlayed,
                     onTrayIntroPlayed = viewModel::markHubTrayIntroPlayed,
                 )
@@ -550,6 +545,7 @@ fun MensaPage(
                             onBrowseDishes = viewModel::openFoodCatalog,
                             onNotifyChange = viewModel::setFavouriteNotify,
                             onLookaheadChange = viewModel::setFavouriteLookahead,
+                            onNotifyTimeChange = viewModel::setFavouriteNotifyTime,
                         )
                     },
                     allergens = {

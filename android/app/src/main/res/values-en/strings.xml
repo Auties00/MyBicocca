@@ -2281,7 +2281,9 @@
     <string name="mensa_favourite_remove">Remove from favourites</string>
     <string name="mensa_favourite_add">Add to favourites</string>
     <string name="mensa_favourites_notify_title">Tell me when they are on</string>
-    <string name="mensa_favourites_notify_body">Every morning we check the canteen and bar menus and let you know if one of your favourites is on.</string>
+    <string name="mensa_favourites_notify_body">Every day, at the time you choose, we check the canteen and bar menus and let you know if one of your favourites is on.</string>
+    <string name="mensa_favourites_notify_time">Notify me at</string>
+    <string name="mensa_favourites_notify_time_title">Notification time</string>
     <string name="mensa_favourites_lookahead">Which days</string>
     <string name="mensa_favourites_lookahead_today">Today</string>
     <string name="mensa_favourites_lookahead_tomorrow">2 days</string>
@@ -2289,9 +2291,8 @@
     <string name="mensa_hub_menu_title">Menu and orders</string>
     <string name="mensa_hub_menu_body">Pick where you eat, see the menu and order take-away</string>
     <string name="mensa_hub_menu_browse">Browse menus</string>
-    <string name="mensa_hub_wallet_title">Wallet and payments</string>
-    <string name="mensa_hub_wallet_body">Top up and pay in the Fresh &amp; Natural app</string>
-    <string name="mensa_hub_wallet_body_balance">Balance €%1$.2f · top up in the Fresh &amp; Natural app</string>
+    <string name="mensa_hub_catalog_title">All dishes and prices</string>
+    <string name="mensa_hub_catalog_body">Every dish on the menus, with its price and the meal combinations</string>
     <string name="mensa_hub_personalize_title">Personalize</string>
     <string name="mensa_hub_personalize_body">Flag dishes with your allergens</string>
     <plurals name="mensa_hub_favourites">
@@ -2305,7 +2306,6 @@
     <string name="mensa_menu_title">Menu</string>
     <string name="mensa_menu_subtitle">Dishes of the day</string>
     <string name="mensa_course_all">All</string>
-    <string name="mensa_catalog_action">All dishes and meal combinations</string>
     <string name="mensa_allergen_match_contains">Contains your allergens</string>
     <string name="mensa_allergen_match_trace">May contain traces</string>
     <string name="mensa_catalog_title">All dishes</string>

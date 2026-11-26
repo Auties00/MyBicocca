@@ -21,10 +21,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.automirrored.outlined.Login
-import androidx.compose.material.icons.automirrored.outlined.OpenInNew
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -69,9 +68,10 @@ internal fun MensaHubPage(
     onOpenBooking: (MensaReservation) -> Unit,
     onOpenOrders: () -> Unit,
     onOpenAllergens: () -> Unit,
-    onOpenWallet: () -> Unit,
+    onOpenCatalog: () -> Unit,
     modifier: Modifier = Modifier,
     tray: MensaHubTray = MensaHubTray(),
+    today: LocalDate = LocalDate.now(AppClock.clock),
     playTrayIntro: Boolean = false,
     onTrayIntroPlayed: () -> Unit = {},
 ) {
@@ -94,7 +94,7 @@ internal fun MensaHubPage(
                     onClick = onOpenMenu,
                     modifier = Modifier.weight(1f),
                 ) { MensaPlateTrio(middleSize = 72.dp, modifier = Modifier.align(Alignment.TopEnd).offset(x = (-4).dp, y = 16.dp)) }
-                BookingBox(booking = booking, onClick = { onOpenBooking(booking) }, modifier = Modifier.weight(1f))
+                BookingBox(booking = booking, today = today, onClick = { onOpenBooking(booking) }, modifier = Modifier.weight(1f))
             }
         } else {
             MensaMenuTrayCard(
@@ -114,14 +114,12 @@ internal fun MensaHubPage(
         }
 
         HubRow(
-            tag = "mensa_hub_wallet",
-            icon = Icons.Outlined.AccountBalanceWallet,
-            title = stringResource(R.string.mensa_hub_wallet_title),
-            body = session?.walletBalance
-                ?.let { stringResource(R.string.mensa_hub_wallet_body_balance, it) }
-                ?: stringResource(R.string.mensa_hub_wallet_body),
-            trailing = Icons.AutoMirrored.Outlined.OpenInNew,
-            onClick = onOpenWallet,
+            tag = MensaTestTags.HUB_CATALOG,
+            icon = Icons.AutoMirrored.Outlined.List,
+            title = stringResource(R.string.mensa_hub_catalog_title),
+            body = stringResource(R.string.mensa_hub_catalog_body),
+            trailing = Icons.Outlined.ChevronRight,
+            onClick = onOpenCatalog,
         )
 
         HubRow(
@@ -203,9 +201,8 @@ private fun HubBox(
 
 /** The next booking to pick up, as big as the menu card: when, which meal, where, and its code. */
 @Composable
-private fun BookingBox(booking: MensaReservation, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun BookingBox(booking: MensaReservation, today: LocalDate, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val locale = currentLocale()
-    val today = remember { LocalDate.now(AppClock.clock) }
     val day = when (booking.date) {
         today -> stringResource(R.string.mensa_today)
         today.plusDays(1) -> stringResource(R.string.mensa_tomorrow)
@@ -348,7 +345,7 @@ private fun HubSignedInPreview(@PreviewParameter(MensaPreviewThemeProvider::clas
             onOpenBooking = {},
             onOpenOrders = {},
             onOpenAllergens = {},
-            onOpenWallet = {},
+            onOpenCatalog = {},
         )
     }
 }
@@ -366,7 +363,7 @@ private fun HubSignedOutPreview(@PreviewParameter(MensaPreviewThemeProvider::cla
             onOpenBooking = {},
             onOpenOrders = {},
             onOpenAllergens = {},
-            onOpenWallet = {},
+            onOpenCatalog = {},
         )
     }
 }

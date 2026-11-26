@@ -573,7 +573,7 @@ class MensaViewModelTest {
         advanceUntilIdle()
 
         coVerify { favouritesRepository.setNotify(true) }
-        io.mockk.verify { favouritesScheduler.apply(true) }
+        io.mockk.verify { favouritesScheduler.apply(true, any()) }
         io.mockk.verify { favouritesScheduler.checkNow() }
     }
 

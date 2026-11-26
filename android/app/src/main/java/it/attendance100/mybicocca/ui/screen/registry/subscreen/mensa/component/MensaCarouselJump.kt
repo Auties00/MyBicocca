@@ -8,7 +8,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import kotlin.math.abs
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
 
 /**
  * Jumps across the dish carousel without flashing the dishes in between, and without swapping the
@@ -25,26 +29,40 @@ internal class MensaCarouselJumper {
 
     private var jump by mutableStateOf<Jump?>(null)
 
+    /** The jump sliding now, so a newer one can stop it first. */
+    private var running: Job? = null
+
     /** The index of the dish shown on [page]: the page's own, unless a jump is borrowing it. */
     fun dishIndex(page: Int): Int = jump?.let { dishIndexDuring(it, page) } ?: page
 
     /** Slides to dish [target], through at most one other dish. */
     suspend fun jumpTo(pagerState: PagerState, target: Int, animationSpec: AnimationSpec<Float>) {
-        val from = pagerState.currentPage
-        if (abs(target - from) <= 2) {
-            pagerState.animateScrollToPage(target, animationSpec = animationSpec)
-            return
-        }
-        val next = Jump(from, target)
-        jump = next
+        // A jump still sliding lands on the dish it shows first, so this one starts from a real page.
+        running?.cancelAndJoin()
+        val self = currentCoroutineContext()[Job]
+        running = self
         try {
-            pagerState.animateScrollToPage(from + 2 * next.step, animationSpec = animationSpec)
+            withFrameNanos { }
+            val from = pagerState.currentPage
+            if (abs(target - from) <= 2) {
+                pagerState.animateScrollToPage(target, animationSpec = animationSpec)
+                return
+            }
+            val next = Jump(from, target)
+            jump = next
+            try {
+                pagerState.animateScrollToPage(from + 2 * next.step, animationSpec = animationSpec)
+            } finally {
+                // Also when a swipe or a newer jump cuts this one short: stay on the dish it reached.
+                if (jump === next) {
+                    val landedOn = dishIndexDuring(next, pagerState.currentPage)
+                    val fraction = pagerState.currentPageOffsetFraction
+                    jump = null
+                    pagerState.requestScrollToPage(landedOn, fraction)
+                }
+            }
         } finally {
-            // Also when a swipe cuts the jump short: wherever it stopped, stay on that dish.
-            val landedOn = dishIndexDuring(next, pagerState.currentPage)
-            val fraction = pagerState.currentPageOffsetFraction
-            jump = null
-            pagerState.requestScrollToPage(landedOn, fraction)
+            if (running === self) running = null
         }
     }
 

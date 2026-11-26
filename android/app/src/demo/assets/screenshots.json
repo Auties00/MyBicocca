@@ -39,7 +39,7 @@
     { "name": "Screenshot_MensaSetup", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_hub_menu_title", "text:Mensa U12", "text:Menù Bicocca"] },
     { "name": "Screenshot_MensaMenu", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_hub_menu_title", "text:Mensa U12", "text:Menù Bicocca", "mensa_setup_confirm"] },
     { "name": "Screenshot_MensaDish", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_hub_menu_title", "text:Mensa U12", "text:Menù Bicocca", "mensa_setup_confirm", "text:Pasta al pomodoro"] },
-    { "name": "Screenshot_MensaCatalog", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_hub_menu_title", "text:Mensa U12", "text:Menù Bicocca", "mensa_setup_confirm", "mensa_catalog_action"] },
+    { "name": "Screenshot_MensaCatalog", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_hub_catalog_title"] },
     { "name": "Screenshot_MensaFavourites", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_hub_personalize_title"] },
     { "name": "Screenshot_MensaAllergens", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_hub_personalize_title", "mensa_allergens_title"] },
     { "name": "Screenshot_MensaAccount", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_account_title"] },

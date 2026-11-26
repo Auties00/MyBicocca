@@ -30,7 +30,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
 import it.attendance100.mybicocca.ui.component.modal.SheetMotion
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaDishDrawable
 import kotlin.math.abs
 
 /** The bag drawing's width over its height. */
@@ -92,7 +92,7 @@ internal fun MensaBookingBagHero(reservationId: Int, dishes: List<MensaDish>, mo
             MensaPlate(
                 art = art,
                 size = HeroPlateSize,
-                drawable = MensaDishDrawings.of(dish.id) ?: art.drawable,
+                drawable = mensaDishDrawable(dish.id, art.drawable),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .risingOutOfBag(rise, index, shown.size),

@@ -45,7 +45,7 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaCartPricing
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaCartEntry
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaDishDrawable
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import androidx.compose.material.icons.outlined.Delete
 
@@ -125,7 +125,7 @@ internal fun MensaOrderSummaryPage(
                             MensaPlate(
                                 art = MensaDishArtwork.forDish(entry.dish),
                                 size = 52.dp,
-                                drawable = MensaDishDrawings.of(entry.dish.id) ?: MensaDishArtwork.forDish(entry.dish).drawable,
+                                drawable = mensaDishDrawable(entry.dish.id, MensaDishArtwork.forDish(entry.dish).drawable),
                             )
                             Text(
                                 text = entry.dish.name.toDishDisplayName(),

@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.domain.repository
 
+import java.time.LocalTime
+
 import it.attendance100.mybicocca.domain.model.mensa.MensaFavourite
 import it.attendance100.mybicocca.domain.model.mensa.MensaFavouriteSettings
 import kotlinx.coroutines.flow.Flow
@@ -11,6 +13,7 @@ interface MensaFavouritesRepository {
     suspend fun setFavourite(favourite: MensaFavourite, isFavourite: Boolean)
     suspend fun setNotify(notify: Boolean)
     suspend fun setLookaheadDays(days: Int)
+    suspend fun setNotifyTime(time: LocalTime)
 
     /** Hits already announced, as [it.attendance100.mybicocca.domain.model.mensa.MensaFavouriteHit.key]s. */
     suspend fun announcedKeys(): Set<String>

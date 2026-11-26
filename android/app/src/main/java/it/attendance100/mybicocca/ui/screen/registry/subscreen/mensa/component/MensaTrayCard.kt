@@ -39,7 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -70,10 +70,10 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaDish
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaHubTray
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaAnimatedArt
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaDishDrawable
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaArt
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaLoopingArt
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -106,7 +106,7 @@ private val TrayWell = Color(0xFF7A3634)
 private val TrayEdge = Color(0xFFB8634F)
 private val TrayBevel = Color(0xFF8E4640)
 
-private val TrayPlate = 76.dp
+private val TrayPlate = 94.dp
 
 /**
  * The menu card on the hub without a booking: a tilted canteen tray, with today's primo and
@@ -230,8 +230,7 @@ internal fun MensaMenuTrayCard(
  * Clips to the card's right and bottom edges, with its rounded bottom-right corner; what is drawn
  * above the card or before it stays visible.
  */
-private fun Modifier.clipToCardEnd(): Modifier = drawWithContent {
-    val corner = CornerRadius(CardCorner.toPx())
+private fun Modifier.clipToCardEnd(): Modifier = drawWithCache {
     val bounds = Path().apply {
         addRoundRect(
             RoundRect(
@@ -239,11 +238,11 @@ private fun Modifier.clipToCardEnd(): Modifier = drawWithContent {
                 top = -size.height,
                 right = size.width,
                 bottom = size.height,
-                bottomRightCornerRadius = corner,
+                bottomRightCornerRadius = CornerRadius(CardCorner.toPx()),
             ),
         )
     }
-    clipPath(bounds) { this@drawWithContent.drawContent() }
+    onDrawWithContent { clipPath(bounds) { this@onDrawWithContent.drawContent() } }
 }
 
 /** The tray and what is on it, its left end showing a handle; the rest runs past the card. */
@@ -264,11 +263,12 @@ private fun MensaTray(tray: MensaHubTray, modifier: Modifier = Modifier) {
         )
         TrayPlate(
             drawable = tray.primo.trayDrawable(MensaArt.PASTA_TOMATO),
-            modifier = Modifier.offset(x = body + 52.dp, y = 70.dp),
+            modifier = Modifier.offset(x = body + 53.dp, y = 61.dp),
         )
         TrayPlate(
             drawable = tray.secondo.trayDrawable(MensaArt.MEAT),
-            modifier = Modifier.offset(x = body + 122.dp, y = 42.dp),
+            // Cut by the card's edge on purpose: the tray goes on, with more on it.
+            modifier = Modifier.offset(x = body + 141.dp, y = 36.dp),
         )
         MensaLoopingArt(
             drawable = R.drawable.mensa_art_drink_cola,
@@ -295,7 +295,7 @@ private fun TrayPlate(@DrawableRes drawable: Int, modifier: Modifier = Modifier)
 
 @DrawableRes
 private fun MensaDish?.trayDrawable(standIn: MensaArt): Int =
-    this?.let { MensaDishDrawings.of(it.id) ?: MensaDishArtwork.forDish(it).drawable } ?: standIn.drawable
+    this?.let { mensaDishDrawable(it.id, MensaDishArtwork.forDish(it).drawable) } ?: standIn.drawable
 
 /** A canteen tray seen from above: a raised rim around a sunken well, a long handle on the left end. */
 private fun DrawScope.drawTray() {

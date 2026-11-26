@@ -118,18 +118,22 @@ internal object MensaFavouriteNotifications {
 class MensaFavouritesScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    fun apply(enabled: Boolean) {
+    /**
+     * Plans the daily check for [at], or cancels it. It is planned anew each time (the app's start,
+     * a new time), so the check stays on the chosen time: a periodic job otherwise keeps the slot
+     * it was first given and drifts from there.
+     */
+    fun apply(enabled: Boolean, at: LocalTime) {
         val work = WorkManager.getInstance(context)
         if (!enabled) {
             work.cancelUniqueWork(WORK_NAME)
             return
         }
         val request = PeriodicWorkRequestBuilder<MensaFavouritesWorker>(1, TimeUnit.DAYS)
-            .setInitialDelay(untilNextCheck().toMinutes(), TimeUnit.MINUTES)
+            .setInitialDelay(untilNext(at).toMinutes(), TimeUnit.MINUTES)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
-        // KEEP: turning it on again does not move a check that is already planned.
-        work.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+        work.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, request)
     }
 
     /** Runs the check now, for when the user has just turned it on or changed the favourites. */
@@ -141,17 +145,14 @@ class MensaFavouritesScheduler @Inject constructor(
         )
     }
 
-    private fun untilNextCheck(): Duration {
+    private fun untilNext(at: LocalTime): Duration {
         val now = LocalDateTime.now(AppClock.clock)
-        val todayAt = now.toLocalDate().atTime(CHECK_TIME)
+        val todayAt = now.toLocalDate().atTime(at)
         val next = if (now.isBefore(todayAt)) todayAt else todayAt.plusDays(1)
         return Duration.between(now, next)
     }
 
     private companion object {
         const val WORK_NAME = "MensaFavouritesWorker"
-
-        /** Late enough for the day's menu to be published, early enough to plan lunch. */
-        val CHECK_TIME: LocalTime = LocalTime.of(9, 30)
     }
 }

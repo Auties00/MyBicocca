@@ -145,7 +145,9 @@ class MensaSignUpViewModel @Inject constructor(
             )
             when (result) {
                 is MensaSignUpResult.NeedsCode -> _state.update {
-                    it.copy(step = MensaSignUpStep.CODE, codeEmail = result.email, code = "", codeError = null)
+                    // The page names the address the code went to; should it ever leave it out, it is the one typed.
+                    val sentTo = result.email.ifBlank { current.email.trim() }
+                    it.copy(step = MensaSignUpStep.CODE, codeEmail = sentTo, code = "", codeError = null)
                 }
                 is MensaSignUpResult.Refused -> {
                     // A captcha is good for one try: a refused form needs a new one.
@@ -173,8 +175,11 @@ class MensaSignUpViewModel @Inject constructor(
         }
     }
 
-    /** Back from the code step to the form, e.g. to fix a mistyped address. */
-    fun editForm() = _state.update { it.copy(step = MensaSignUpStep.FORM, code = "", codeError = null) }
+    /** Back from the code step to the form, e.g. to fix a mistyped address. The captcha was spent, so a new one loads. */
+    fun editForm() {
+        _state.update { it.copy(step = MensaSignUpStep.FORM, code = "", codeError = null, captcha = "") }
+        refreshCaptcha()
+    }
 
     private suspend fun loadCaptcha() {
         _state.update { it.copy(captchaLoading = true) }

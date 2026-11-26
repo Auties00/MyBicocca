@@ -35,6 +35,23 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import java.time.format.FormatStyle
+import java.time.format.DateTimeFormatter
+import java.time.LocalTime
+import it.attendance100.mybicocca.core.os.currentLocale
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
+import android.text.format.DateFormat
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,7 +74,7 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaFavouriteSettings
 import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaDishDrawable
 import kotlinx.coroutines.launch
 
 /** The two pages of the Personalize sheet, in pager order. */
@@ -122,7 +139,7 @@ internal fun MensaPersonalizePage(
 private val LookaheadChoices = listOf(0, 1, 4)
 
 /**
- * The dishes the user likes, and whether to be told each morning when one is on a menu. Dishes
+ * The dishes the user likes, and whether (and at what time of day) to be told when one is on a menu. Dishes
  * are added from a dish's page with its heart, or from all dishes.
  */
 @Composable
@@ -134,10 +151,13 @@ internal fun MensaFavouritesPage(
     onNotifyChange: (Boolean) -> Unit,
     onLookaheadChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onNotifyTimeChange: (LocalTime) -> Unit = {},
 ) {
     val scheme = MaterialTheme.colorScheme
     val haptic = rememberHapticManager()
     val context = LocalContext.current
+    val locale = currentLocale()
+    var pickingTime by rememberSaveable { mutableStateOf(false) }
     // Turning the reminder on asks for the notification permission first, where the system wants one.
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) onNotifyChange(true)
@@ -181,7 +201,7 @@ internal fun MensaFavouritesPage(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         val art = MensaDishArtwork.forName(favourite.name) ?: MensaDishArtwork.forCourse(null)
-                        MensaPlate(art = art, size = 48.dp, drawable = MensaDishDrawings.of(favourite.dishId) ?: art.drawable)
+                        MensaPlate(art = art, size = 48.dp, drawable = mensaDishDrawable(favourite.dishId, art.drawable))
                         Text(
                             text = favourite.name.toDishDisplayName(),
                             style = MaterialTheme.typography.titleSmall,
@@ -234,6 +254,30 @@ internal fun MensaFavouritesPage(
                 }
                 AnimatedVisibility(visible = settings.notify) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { haptic.tap(); pickingTime = true }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Icon(Icons.Outlined.Schedule, contentDescription = null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                            Text(
+                                text = stringResource(R.string.mensa_favourites_notify_time),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = scheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                text = settings.notifyAt.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = scheme.primary,
+                                modifier = Modifier.testTag(MensaTestTags.FAVOURITES_NOTIFY_TIME),
+                            )
+                        }
                         Text(
                             text = stringResource(R.string.mensa_favourites_lookahead),
                             style = MaterialTheme.typography.labelLarge,
@@ -259,6 +303,40 @@ internal fun MensaFavouritesPage(
             }
         }
     }
+
+    if (pickingTime) {
+        NotifyTimeDialog(
+            initial = settings.notifyAt,
+            onDismiss = { pickingTime = false },
+            onConfirm = { time ->
+                pickingTime = false
+                onNotifyTimeChange(time)
+            },
+        )
+    }
+}
+
+/** Picks the time of the daily notification, in the phone's 12 or 24 hour clock. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NotifyTimeDialog(initial: LocalTime, onDismiss: () -> Unit, onConfirm: (LocalTime) -> Unit) {
+    val context = LocalContext.current
+    val state = rememberTimePickerState(
+        initialHour = initial.hour,
+        initialMinute = initial.minute,
+        is24Hour = DateFormat.is24HourFormat(context),
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.mensa_favourites_notify_time_title)) },
+        text = { TimePicker(state = state) },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(LocalTime.of(state.hour, state.minute)) }) { Text(stringResource(android.R.string.ok)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
+    )
 }
 
 @Preview(name = "Favourites", widthDp = MENSA_PREVIEW_WIDTH, heightDp = 640)

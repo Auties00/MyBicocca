@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.domain.model.mensa
 
 import java.text.Normalizer
 import java.time.LocalDate
+import java.time.LocalTime
 
 /** A dish the user wants to hear about. The name is kept to show it while no menu lists it. */
 data class MensaFavourite(val dishId: Int, val name: String)
@@ -13,7 +14,14 @@ data class MensaFavourite(val dishId: Int, val name: String)
 data class MensaFavouriteSettings(
     val notify: Boolean = false,
     val lookaheadDays: Int = 0,
-)
+    /** When the daily check runs and its notification arrives. */
+    val notifyAt: LocalTime = DEFAULT_NOTIFY_TIME,
+) {
+    companion object {
+        /** Just before lunch, when the day's menus are out. */
+        val DEFAULT_NOTIFY_TIME: LocalTime = LocalTime.of(11, 0)
+    }
+}
 
 /** A favourite found on a menu: which day, which menu and meal, and the dish as listed there. */
 data class MensaFavouriteHit(
