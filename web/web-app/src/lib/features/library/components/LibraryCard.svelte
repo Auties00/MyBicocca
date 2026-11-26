@@ -69,6 +69,12 @@
 </Card>
 
 <style>
+	/* The card's body wrapper passes its shape down, for the photo to round its top corners with. */
+	:global(.card > .body:has(> .photo)) {
+		border-radius: inherit;
+		corner-shape: inherit;
+	}
+
 	.photo {
 		position: relative;
 		aspect-ratio: 2 / 1;
@@ -76,6 +82,7 @@
 		border-radius: inherit;
 		border-end-start-radius: 0;
 		border-end-end-radius: 0;
+		corner-shape: inherit;
 		background: var(--surface-sunken);
 	}
 
