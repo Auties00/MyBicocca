@@ -3,13 +3,25 @@ name: Codegen
 on:
   push:
     branches: [main]
+    paths:
+      - 'common/**'
+      - 'android/data-api/**'
+      - 'ios/DataApi/**'
+      - 'web/web-app/data-api/**'
+      - 'web/web-app/package.json'
+      - 'web/web-app/package-lock.json'
+      - 'web/web-app/tsconfig.base.json'
+      - '.github/workflows/codegen.yml'
   pull_request:
     branches: [main]
     paths:
       - 'common/**'
       - 'android/data-api/**'
       - 'ios/DataApi/**'
-      - 'web/**'
+      - 'web/web-app/data-api/**'
+      - 'web/web-app/package.json'
+      - 'web/web-app/package-lock.json'
+      - 'web/web-app/tsconfig.base.json'
       - '.github/workflows/codegen.yml'
   workflow_dispatch:
 
@@ -17,12 +29,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: codegen-${{ github.ref }}
+  group: codegen-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   generator:
-    name: Generator and generated code
+    name: Generator
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -47,24 +59,36 @@ jobs:
         working-directory: common/codegen
         run: ../../android/gradlew build --stacktrace
 
-      - name: Check that the generated code is up to date
+      - name: Check that all generated SDKs are up to date
         working-directory: common/codegen
         run: ../../android/gradlew :cli:run --args="--check" --stacktrace
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+  kotlin:
+    name: Android (Kotlin)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # The SDK, and its live tests, which need vitest's and Node's types.
-      - name: Type-check the web SDK and its live tests
-        working-directory: web/web-app
-        run: |
-          npm ci
-          npm run typecheck
+      - name: Set up the Gradle daemon JDK (JetBrains 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: jetbrains
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build and test the Kotlin SDK (live suites excluded)
+        working-directory: android
+        run: ./gradlew -p data-api test --stacktrace
 
   swift:
-    name: Swift SDKs
+    name: iOS / iPadOS (Swift)
     runs-on: macos-15
     timeout-minutes: 30
     steps:
@@ -72,6 +96,30 @@ jobs:
         uses: actions/checkout@v4
 
       # Also builds the generated live tests, which skip without LIVE_TESTS=1.
-      - name: Build and test
+      - name: Build and test the Swift SDK
         working-directory: ios/DataApi
         run: swift test
+
+  typescript:
+    name: Web (TypeScript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/web-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web/web-app
+        run: npm ci
+
+      # The generated SDK and its live tests, which need Vitest's and Node's types.
+      - name: Type-check the TypeScript SDK and its live tests
+        working-directory: web/web-app
+        run: npx tsc -p data-api && npx tsc -p data-api/test
