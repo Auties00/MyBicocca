@@ -10,6 +10,7 @@ import it.unimib.indoornav.lab.inventory.BeaconFilter
 import androidx.compose.runtime.saveable.rememberSaveable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import it.unimib.indoornav.lab.inventory.InventoryCatalogCsv
 import it.unimib.indoornav.lab.inventory.LayoutCsvImporter
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -114,9 +115,14 @@ fun InventoryScreen(
             val message = withContext(Dispatchers.IO) {
                 runCatching {
                     val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }.orEmpty()
-                    val entries = LayoutCsvImporter.parse(text, config.building, System.currentTimeMillis())
-                    val added = inventoryRepository.importNew(entries)
-                    "Imported $added beacons" + if (added < entries.size) " (${entries.size - added} already saved)" else ""
+                    if (InventoryCatalogCsv.isCatalog(text)) {
+                        val (replaced, added) = inventoryRepository.restore(InventoryCatalogCsv.parse(text))
+                        "Restored ${replaced + added} beacons ($replaced replaced, $added added)"
+                    } else {
+                        val entries = LayoutCsvImporter.parse(text, config.building, System.currentTimeMillis())
+                        val added = inventoryRepository.importNew(entries)
+                        "Imported $added beacons" + if (added < entries.size) " (${entries.size - added} already saved)" else ""
+                    }
                 }.getOrElse { "Could not read the layout: ${it.message}" }
             }
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()

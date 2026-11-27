@@ -65,12 +65,9 @@ class BeaconInventoryRepository(context: Context) {
                     updatedAtMs = now,
                 )
             }
-            val filtered = current.filterNot { candidate ->
-                candidate.id == merged.id ||
-                    (merged.canonicalKey.isNotBlank() && candidate.canonicalKey == merged.canonicalKey) ||
-                    (merged.macAddress.isNotBlank() && candidate.macAddress.equals(merged.macAddress, ignoreCase = true))
-            }
-            filtered + merged
+            // Only the entry being saved is replaced: dropping every entry that shares its ID or MAC once
+            // wiped eight beacons after two of them briefly broadcast the same UID.
+            current.filterNot { it.id == merged.id } + merged
         }
         _entries.value = updatedList
         persistAsync(updatedList)
@@ -89,6 +86,33 @@ class BeaconInventoryRepository(context: Context) {
             persistAsync(updatedList)
         }
         return added
+    }
+
+    /**
+     * Puts back entries from an inventory export: each replaces the saved entry with the same id or ID,
+     * the rest are added, and saved entries not in the file are kept. Returns (replaced, added).
+     */
+    fun restore(imported: List<SavedBeaconEntry>): Pair<Int, Int> {
+        var replaced = 0
+        val updatedList = synchronized(lock) {
+            val result = _entries.value.toMutableList()
+            val importedIds = imported.map { it.id }.toSet()
+            for (entry in imported) {
+                val i = result.indexOfFirst { it.id == entry.id }
+                    .takeIf { it >= 0 }
+                    ?: result.indexOfFirst { it.id !in importedIds && it.canonicalKey == entry.canonicalKey }
+                if (i >= 0) {
+                    result[i] = entry
+                    replaced++
+                } else {
+                    result += entry
+                }
+            }
+            result.toList()
+        }
+        _entries.value = updatedList
+        persistAsync(updatedList)
+        return replaced to imported.size - replaced
     }
 
     fun updatePosition(id: String, x: Double?, y: Double?) = modify(id) { it.copy(x = x, y = y) }
@@ -119,11 +143,19 @@ class BeaconInventoryRepository(context: Context) {
             val current = _entries.value
             if (current.isEmpty()) return
             current.map { saved ->
-                val live = liveGrouped.firstOrNull { BeaconGrouping.matchesSavedEntry(saved, it) }
+                // A live beacon whose ID another entry owns is that beacon, even if it shares this entry's
+                // MAC or a linked ID (e.g. a UID pasted onto the wrong beacon): don't fold it in here.
+                val ownedElsewhere = current.filter { it.id != saved.id }
+                    .flatMap { it.linkedKeys + it.canonicalKey }
+                    .filter { it.isNotBlank() }
+                    .toSet()
+                val live = liveGrouped.firstOrNull {
+                    BeaconGrouping.matchesSavedEntry(saved, it) && it.identityKey !in ownedElsewhere
+                }
                 if (live == null) {
                     saved
                 } else {
-                    val nextLinked = (saved.linkedKeys + live.canonicalKeys)
+                    val nextLinked = (saved.linkedKeys + live.canonicalKeys.filter { it !in ownedElsewhere })
                         .filter { it.isNotBlank() }
                         .distinct()
                     val nextFrames = saved.seenFrameTypes + live.frameTypes
