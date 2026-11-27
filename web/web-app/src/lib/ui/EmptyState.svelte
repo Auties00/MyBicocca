@@ -107,7 +107,7 @@
 
 	.title {
 		max-inline-size: 28ch;
-		font: italic 400 1.375rem / 1.25 var(--font-display);
+		font: 400 1.375rem / 1.25 var(--font-display);
 		letter-spacing: -0.01em;
 		text-wrap: balance;
 	}

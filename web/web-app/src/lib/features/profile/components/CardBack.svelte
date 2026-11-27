@@ -8,7 +8,7 @@
 		signature: string;
 		email: string;
 		photo: string | null;
-		/** Set once the back may be seen: only then the script face and the photo load. */
+		/** Set once the back may be seen: only then the signature and photo are rendered. */
 		revealed: boolean;
 	}
 
@@ -48,7 +48,7 @@
 		<div class="box">
 			<span class="rule"></span><span class="rule"></span><span class="rule"></span>
 			{#if revealed}
-				<p class="script" {@attach fitText(signature, 15 / 38)}>{signature}</p>
+				<p class="holder-name" {@attach fitText(signature, 12 / 22)}>{signature}</p>
 			{/if}
 		</div>
 	</div>
@@ -64,14 +64,6 @@
 </div>
 
 <style>
-	@font-face {
-		font-family: 'Mrs Saint Delafield';
-		font-style: normal;
-		font-weight: 400;
-		font-display: swap;
-		src: url('../assets/mrs-saint-delafield.woff2') format('woff2');
-	}
-
 	.texture {
 		position: absolute;
 		inset: 0;
@@ -135,7 +127,7 @@
 		background: rgb(184 184 184 / 0.75);
 	}
 
-	.script {
+	.holder-name {
 		position: absolute;
 		inset: 0;
 		display: flex;
@@ -143,9 +135,7 @@
 		overflow: hidden;
 		padding: calc(1.75 * var(--u)) calc(10 * var(--u)) 0;
 		color: #000;
-		font:
-			400 calc(38 * var(--u) * var(--fit, 1)) / 1 'Mrs Saint Delafield',
-			cursive;
+		font: 500 calc(22 * var(--u) * var(--fit, 1)) / 1.2 var(--font-ui);
 		white-space: nowrap;
 	}
 

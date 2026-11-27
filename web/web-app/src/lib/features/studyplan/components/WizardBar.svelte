@@ -99,16 +99,22 @@
 
 <style>
 	.bar {
+		--bar-pad: 10px;
 		position: sticky;
 		inset-block-end: calc(var(--shell-inset-bottom) + var(--sp-4));
 		z-index: var(--z-sticky);
 		display: grid;
 		gap: 6px;
-		padding: 10px;
+		padding: var(--bar-pad);
 		border-radius: var(--r-xl);
 		background: var(--surface-raised);
 		box-shadow: var(--elev-3), var(--inner-light);
 		container-type: inline-size;
+	}
+
+	/* The buttons' corners follow the bar's, an even gap all round. */
+	.bar :global(.btn) {
+		border-radius: calc(var(--r-xl) - var(--bar-pad));
 	}
 
 	.spacer {
@@ -125,7 +131,7 @@
 			position: fixed;
 			inset-inline: calc(var(--gutter) - 6px);
 			inset-block-end: calc(var(--shell-inset-bottom) + 10px);
-			padding: 6px;
+			--bar-pad: 6px;
 			background: var(--veil-raised);
 			-webkit-backdrop-filter: var(--veil-filter);
 			backdrop-filter: var(--veil-filter);

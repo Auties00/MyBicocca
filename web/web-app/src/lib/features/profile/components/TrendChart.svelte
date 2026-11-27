@@ -1,6 +1,6 @@
 <script lang="ts" module>
-	/* The line draws itself in once per session, as count-ups do. */
-	const session = { drawn: false };
+	/* Fade the series in once per session. */
+	const session = { shown: false };
 </script>
 
 <script lang="ts">
@@ -33,8 +33,8 @@
 	];
 
 	const id = $props.id();
-	const draw = !session.drawn;
-	session.drawn = true;
+	const entering = !session.shown;
+	session.shown = true;
 
 	let root = $state<HTMLElement>();
 	let width = $state(0);
@@ -229,7 +229,7 @@
 								y2={yOf(average)}
 							/>
 						{/if}
-						<g class={['series', { draw }]}>
+						<g class={['series', { 'view-enter': entering }]}>
 							<path class="area" d={area} fill="url(#{id}-fill)" />
 							<path class="line" d={line} />
 							{#each series as at, index (at.row.id)}
@@ -325,7 +325,7 @@
 		place-items: center;
 		padding: var(--sp-4);
 		color: var(--text-muted);
-		font: italic 400 1.0625rem / 1.4 var(--font-display);
+		font: 400 1.0625rem / 1.4 var(--font-display);
 		text-align: center;
 		text-wrap: balance;
 	}
@@ -417,20 +417,6 @@
 		fill: var(--surface);
 	}
 
-	.draw {
-		animation: draw 900ms var(--ease-out-expo) both;
-	}
-
-	@keyframes draw {
-		from {
-			clip-path: inset(-8px 100% -8px 0);
-		}
-
-		to {
-			clip-path: inset(-8px -8px -8px 0);
-		}
-	}
-
 	.tip {
 		position: absolute;
 		inset-block-start: 0;
@@ -483,11 +469,5 @@
 	.swatch {
 		inline-size: 16px;
 		border-block-start: 1.5px dashed var(--text-subtle);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.draw {
-			animation: none;
-		}
 	}
 </style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { afterNavigate, onNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import IconArrowLeft from '~icons/ph/arrow-left';
 	import IconMagnifyingGlass from '~icons/ph/magnifying-glass';
@@ -6,10 +7,16 @@
 	import Avatar from '#lib/ui/Avatar.svelte';
 	import IconButton from '#lib/ui/IconButton.svelte';
 	import type { PageChrome } from '#lib/ui/pageChrome.svelte.ts';
+	import type { Href } from '#lib/ui/types.ts';
+	import {
+		allDestinations,
+		primaryDestinations,
+		type DestinationId
+	} from '#lib/ui/destinations.ts';
 	import Wordmark from '#lib/ui/Wordmark.svelte';
 	import type { AccountModel } from './account.ts';
 	import AccountMenu from './AccountMenu.svelte';
-	import { shellHref } from './nav.ts';
+	import { activeDestination, shellHref } from './nav.ts';
 	import { shell } from './shell.svelte.ts';
 
 	interface Props {
@@ -17,41 +24,98 @@
 		/** Phones: the bar is always there, with brand, search and account. */
 		compact: boolean;
 		account: AccountModel;
+		destinationHref: (id: DestinationId) => string;
 	}
 
-	let { chrome, compact, account }: Props = $props();
+	let { chrome, compact, account, destinationHref }: Props = $props();
 
 	const me = $derived(account.accounts.find((a) => a.id === account.activeId));
+	const accountHrefs: readonly string[] = [shellHref('profile'), shellHref('settings')];
+	const path = $derived(page.url.pathname.replace(/\/$/, ''));
 	/* Profile and Settings open from the account menu: on phones its avatar says you are there. */
 	const accountPage = $derived(
-		[shellHref('profile'), shellHref('settings')].some(
-			(href) => page.url.pathname === href || page.url.pathname.startsWith(`${href}/`)
-		)
+		accountHrefs.some((href) => path === href || path.startsWith(`${href}/`))
 	);
-	/* From 600 px up the bar only appears once the page title has scrolled under it. */
-	const shown = $derived(compact || chrome.collapsed);
+	/* A destination's own page is already named by the navigation: its title never takes the bar. */
+	const destinationPage = $derived(allDestinations.some((d) => path === shellHref(d.path)));
+	/*
+	 * On phones Profile and Settings open from the account menu, over the tab they were opened
+	 * from: they are nested pages, named in the bar, and Back returns to that tab.
+	 */
+	let openedFrom = $state<DestinationId>('calendar');
+
+	/*
+	 * The bar's fades follow scrolling within a page. Across a navigation it simply takes the new
+	 * page's state, until that page has painted, rather than fading out what the old one showed.
+	 */
+	let switching = $state(false);
+	onNavigate(() => {
+		switching = true;
+	});
+	afterNavigate(({ from }) => {
+		const tab = from?.url && activeDestination(from.url.pathname);
+		if (tab && primaryDestinations.some((d) => d.id === tab)) openedFrom = tab;
+		requestAnimationFrame(() => requestAnimationFrame(() => (switching = false)));
+	});
+	const accountRoot = $derived(compact && accountHrefs.includes(path));
+	/*
+	 * Between a navigation and the new page's header reporting, the state still describes the page
+	 * left behind: it is dropped rather than shown for a frame or two under the new URL.
+	 */
+	const current = $derived(
+		chrome.header.path === page.url.pathname ? chrome.header : { collapsed: false }
+	);
+	const header = $derived(
+		accountRoot
+			? {
+					...current,
+					back: { href: destinationHref(openedFrom) as Href, label: m.ui_back() }
+				}
+			: destinationPage
+				? { ...current, title: undefined }
+				: current
+	);
+	/* From 600 px up the bar only appears once a subpage's title has scrolled under it. */
+	const shown = $derived(compact || (header.collapsed && !destinationPage));
+	/* On phones the wordmark gives way to the title; with no title it stays. */
+	const brandAway = $derived(header.collapsed && !!header.title);
 </script>
 
-<header class={['topbar', { compact, collapsed: chrome.collapsed, shown }]} inert={!shown}>
+<header
+	class={[
+		'topbar',
+		{
+			compact,
+			collapsed: header.collapsed && shown,
+			shown,
+			'brand-away': brandAway,
+			switching
+		}
+	]}
+	inert={!shown}
+>
 	<!-- Back, the wordmark and the title share one cell, so Back arriving with the page moves nothing. -->
-	<div class={['lead', { back: chrome.back }]}>
-		{#if chrome.back}
-			<!-- Snapshot: a header swap can clear chrome.back while this button tears down. -->
-			{@const back = chrome.back}
-			<IconButton icon={IconArrowLeft} label={back.label} href={back.href} />
+	<div class={['lead', { back: header.back }]}>
+		{#if header.back}
+			{@const back = header.back}
+			<div class="back-control">
+				<IconButton icon={IconArrowLeft} label={back.label} href={back.href} />
+			</div>
 		{/if}
-		{#if compact && !chrome.back}
+		{#if compact && !header.back}
 			<a
-				class="brand"
+				class={['brand', { restoring: chrome.restoringScroll }]}
 				href={shellHref('calendar')}
 				aria-label="MyBicocca"
-				aria-hidden={chrome.collapsed}
+				inert={brandAway || chrome.restoringScroll}
 			>
 				<Wordmark />
 			</a>
 		{/if}
-		{#if chrome.title}
-			<span class="title" aria-hidden={!chrome.collapsed}>{chrome.title}</span>
+		{#if header.title}
+			{#key header.title}
+				<span class="title" aria-hidden={!header.collapsed}>{header.title}</span>
+			{/key}
 		{/if}
 	</div>
 	{#if compact}
@@ -62,7 +126,7 @@
 				onclick={() => (shell.paletteOpen = true)}
 			/>
 			{#if me}
-				<AccountMenu model={account}>
+				<AccountMenu model={account} destinations>
 					{#snippet trigger(props)}
 						<button
 							type="button"
@@ -112,7 +176,16 @@
 		pointer-events: auto;
 	}
 
-	.collapsed::after {
+	/* On phones the bar is always there, so a page that asks for it is solid whatever the scroll. */
+	:global(.shell:has([data-solid-topbar])) .collapsed,
+	:global(.shell:has([data-solid-topbar])) .compact {
+		background: var(--bg);
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+	}
+
+	/* On phones the bar is always there and reads as one surface with the page: no divider. */
+	.collapsed:not(.compact)::after {
 		opacity: 1;
 	}
 
@@ -128,12 +201,16 @@
 
 	.lead {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		align-items: center;
 		justify-items: start;
 		min-inline-size: 0;
 		min-block-size: var(--control-h);
 		opacity: 0;
-		transition: opacity var(--dur-base) var(--ease-out);
+		transform: translateY(4px);
+		transition:
+			opacity var(--dur-fast) var(--ease-out),
+			transform var(--dur-base) var(--ease-out);
 	}
 
 	.lead > :global(*) {
@@ -146,6 +223,11 @@
 
 	.shown .lead {
 		opacity: 1;
+		transform: none;
+	}
+
+	.back-control {
+		display: grid;
 	}
 
 	.brand {
@@ -160,10 +242,15 @@
 			transform var(--dur-base) var(--ease-out);
 	}
 
-	.collapsed .brand {
+	.brand-away .brand {
 		opacity: 0;
 		transform: translateY(-6px) scale(0.96);
 		pointer-events: none;
+	}
+
+	.brand.restoring {
+		visibility: hidden;
+		transition: none;
 	}
 
 	/* Arriving from the sign-in pages, their wordmark flies into this one (authTransitions.ts). */
@@ -174,6 +261,7 @@
 	}
 
 	.title {
+		justify-self: stretch;
 		overflow: hidden;
 		padding-inline: 4px;
 		font: var(--type-title-s);
@@ -190,7 +278,36 @@
 	.collapsed .title {
 		opacity: 1;
 		transform: none;
-		transition-delay: 40ms;
+	}
+
+	/* On wide screens the bar enters together; on phones only its leading controls change. */
+	.topbar:not(.compact) .title {
+		opacity: 1;
+		transform: none;
+	}
+
+	.switching,
+	.switching::after,
+	.switching .lead,
+	.switching .brand,
+	.switching .title {
+		transition: none;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.topbar,
+		.topbar::after,
+		.lead,
+		.brand,
+		.title {
+			transition: none;
+		}
+
+		.lead,
+		.brand-away .brand,
+		.title {
+			transform: none;
+		}
 	}
 
 	.trail {

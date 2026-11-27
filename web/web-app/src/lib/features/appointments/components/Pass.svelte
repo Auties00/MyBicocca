@@ -274,7 +274,6 @@
 		padding-block: 6px 0;
 		color: var(--text-muted);
 		font: var(--type-title-s);
-		font-style: italic;
 	}
 
 	.sub {

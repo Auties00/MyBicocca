@@ -2,7 +2,6 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
-	import { badgeInput, useAlerts } from '../alerts.svelte.ts';
 	import type { DeadlinesQuery } from '../deadlines.svelte.ts';
 	import { serviceGroups } from '../hub.ts';
 	import DeadlinesCard from './DeadlinesCard.svelte';
@@ -13,18 +12,15 @@
 	}
 
 	let { deadlines }: Props = $props();
-
-	const alerts = useAlerts();
-	const badges = $derived(badgeInput(deadlines, alerts));
 </script>
 
 <Page width="dashboard">
-	<PageHeader title={m.shell_services()} />
+	<PageHeader title={m.shell_services()} subtitle={m.services_subtitle()} />
 	<div class="hub">
 		<DeadlinesCard {deadlines} />
 		<div class="groups">
 			{#each serviceGroups as group (group)}
-				<ServiceGroupList {group} {badges} />
+				<ServiceGroupList {group} />
 			{/each}
 		</div>
 	</div>
@@ -34,7 +30,6 @@
 	.hub {
 		display: grid;
 		gap: var(--sp-5);
-		margin-block-start: calc(-1 * var(--sp-2));
 	}
 
 	.groups {

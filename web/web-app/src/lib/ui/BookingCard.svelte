@@ -151,6 +151,6 @@
 	}
 
 	.pending {
-		font-style: italic;
+		font-weight: 600;
 	}
 </style>

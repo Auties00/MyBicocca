@@ -77,23 +77,8 @@
 	"course_content_failed": "Impossibile caricare i contenuti del corso",
 	"course_content_empty_title": "Ancora nessun contenuto.",
 	"course_content_empty_body": "I materiali del corso appariranno qui appena il docente li pubblica.",
-	"course_sections_count": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} sezione",
-				"countPlural=other": "{count} sezioni"
-			}
-		}
-	],
-	"course_progress_label": "Attività completate",
-	"course_progress_value": "{done} di {total}",
-	"course_expand_all": "Espandi tutto",
-	"course_collapse_all": "Comprimi tutto",
 	"course_index_title": "Sezioni",
 	"course_index_label": "Indice delle sezioni",
-	"course_section_done": "{done}/{total} fatte",
 	"course_section_empty": "Nessuna risorsa in questa sezione.",
 	"course_no_resources": "Nessuna risorsa",
 	"course_count_video": [

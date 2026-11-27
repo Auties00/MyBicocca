@@ -102,6 +102,7 @@
 	{#snippet head()}
 		<LevelHeader
 			title={room?.name ?? code}
+			subtitle={`${building.address}, ${building.city}`}
 			back={{ href: buildingHref(building.code, view.filter), label: title }}
 		>
 			{#snippet actions()}

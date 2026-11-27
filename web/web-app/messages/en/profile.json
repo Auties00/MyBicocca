@@ -1,6 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"profile_title": "Profile",
+	"profile_subtitle_bachelor": "Bachelor’s degree in {programme}",
+	"profile_subtitle_master": "Master’s degree in {programme}",
 	"profile_refresh_error": "Couldn’t update your transcript.",
 	"profile_load_error": "Couldn’t load your transcript",
 	"profile_stats_error": "Your averages and totals couldn’t be loaded.",
@@ -97,6 +99,7 @@
 	],
 	"profile_course_no_appelli": "No exam calls available",
 	"profile_course_simulate": "Simulate your average with this exam",
+	"profile_course_simulate_short": "Simulate average",
 	"profile_course_load_failed": "Couldn’t load the attempts.",
 	"profile_course_not_found_title": "Course not found.",
 	"profile_course_not_found_body": "This course isn’t in the transcript of your active career.",

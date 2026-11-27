@@ -146,7 +146,6 @@
 	.status {
 		color: var(--text-muted);
 		font: var(--type-meta);
-		font-style: italic;
 	}
 
 	.status.soon {

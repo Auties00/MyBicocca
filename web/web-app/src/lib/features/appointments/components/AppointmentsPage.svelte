@@ -11,6 +11,8 @@
 	import Button from '#lib/ui/Button.svelte';
 	import EmptyState from '#lib/ui/EmptyState.svelte';
 	import { LoadingGate } from '#lib/ui/loadingGate.svelte.ts';
+	import Fab from '#lib/ui/Fab.svelte';
+	import { expanded } from '#lib/ui/media.ts';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
 	import SectionHeader from '#lib/ui/SectionHeader.svelte';
@@ -73,11 +75,13 @@
 		back={{ href: shellHref('services'), label: m.shell_services() }}
 		loading={!loaded && { eyebrow: false }}
 	>
-		<!-- Always there, as on Android: the header keeps its height whatever the list turns out to be. -->
+		<!-- From 1024 px up; below, booking is the floating button. -->
 		{#snippet actions()}
-			<Button variant="solid" icon={IconCalendarPlus} href={directoryHref()}>
-				{m.appointments_book_action()}
-			</Button>
+			{#if expanded.current}
+				<Button variant="solid" icon={IconCalendarPlus} href={directoryHref()}>
+					{m.appointments_book_action()}
+				</Button>
+			{/if}
 		{/snippet}
 	</PageHeader>
 
@@ -130,6 +134,7 @@
 
 		<SectionsCard headingId="{ids}-directory" />
 	</div>
+	<Fab icon={IconCalendarPlus} label={m.appointments_book_action()} href={directoryHref()} />
 </Page>
 
 <AddBookingDialog bind:open={adding} />

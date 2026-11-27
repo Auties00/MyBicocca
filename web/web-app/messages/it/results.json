@@ -98,7 +98,7 @@
 	"results_accepted_body": "Il voto verrà registrato nel tuo libretto.",
 	"results_rejected_title": "Esito rifiutato",
 	"results_rejected_body": "Per superare l’esame iscriviti a un nuovo appello.",
-	"results_go_transcript": "Vai al libretto",
+	"results_open_study_plan": "Vedi nel piano di studi",
 	"results_book_call": "Prenota un appello",
 	"results_refused": "Esse3 non ha accettato la richiesta: {reason}",
 	"results_unconfirmed_title": "Esse3 non ha confermato la risposta",

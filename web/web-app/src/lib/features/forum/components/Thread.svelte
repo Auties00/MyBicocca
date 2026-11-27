@@ -33,6 +33,7 @@
 	import ThreadHeader from './ThreadHeader.svelte';
 	import ThreadSkeleton from './ThreadSkeleton.svelte';
 	import { reducedMotion } from '#lib/ui/media.ts';
+	import PullToRefresh from '#lib/ui/PullToRefresh.svelte';
 
 	interface Props {
 		discussionId: number;
@@ -407,83 +408,85 @@
 	{/if}
 {/snippet}
 
-{#if !wide}{@render header()}{/if}
+<PullToRefresh onrefresh={posts.refresh} refreshing={posts.refreshing}>
+	{#if !wide}{@render header()}{/if}
 
-<div class={['thread', { stacked: !wide }]} data-discussion={discussionId}>
-	{#if wide}{@render header()}{/if}
+	<div class={['thread', { stacked: !wide }]} data-discussion={discussionId}>
+		{#if wide}{@render header()}{/if}
 
-	{#if starError || followError}
-		<Banner
-			tone="danger"
-			role="alert"
-			title={m.forum_action_failed()}
-			message={errorMessage((starError ?? followError) as DataError)}
-			ondismiss={() => {
-				starError = undefined;
-				followError = undefined;
-			}}
-		/>
-	{/if}
-
-	{#if posts.error && posts.data && !gone}
-		<ErrorState
-			variant="stale"
-			message={errorMessage(posts.error)}
-			{updatedAt}
-			onretry={retry}
-			{retrying}
-		/>
-	{/if}
-
-	{#if gone}
-		<EmptyState
-			size="page"
-			icon={IconChatsDuotone}
-			title={m.forum_thread_gone_title()}
-			body={m.forum_thread_gone_body()}
-		>
-			{#snippet action()}
-				<Button href={forumHref}>{m.forum_back_to_list()}</Button>
-			{/snippet}
-		</EmptyState>
-	{:else if posts.status === 'error' && posts.error && posts.data === undefined}
-		<ErrorState
-			title={m.forum_thread_failed()}
-			message={errorMessage(posts.error)}
-			onretry={posts.refresh}
-			retrying={posts.refreshing}
-		/>
-	{:else if posts.data === undefined}
-		<ThreadSkeleton />
-	{:else}
-		<div class="posts">
-			{#each roots as root (root.post.id)}
-				{@render post(root, 0, undefined)}
-			{/each}
-		</div>
-
-		{#if opening && replyTarget?.id === opening.id}
-			<Composer
-				mode={{ kind: 'reply', parent: opening }}
-				onsubmitted={submitted}
-				oncancel={closeComposer}
+		{#if starError || followError}
+			<Banner
+				tone="danger"
+				role="alert"
+				title={m.forum_action_failed()}
+				message={errorMessage((starError ?? followError) as DataError)}
+				ondismiss={() => {
+					starError = undefined;
+					followError = undefined;
+				}}
 			/>
-		{:else if canReply && opening}
-			<button
-				type="button"
-				class="reply-box"
-				onclick={() => opening && openComposer('reply', opening)}
-			>
-				{#if session.current}
-					<AuthorAvatar name={session.current.account.displayName} size={32} />
-				{/if}
-				<span>{m.forum_reply_prompt()}</span>
-			</button>
-		{:else if locked}
-			<p class="closed"><IconLock aria-hidden="true" />{m.forum_locked_notice()}</p>
 		{/if}
-	{/if}
-</div>
+
+		{#if posts.error && posts.data && !gone}
+			<ErrorState
+				variant="stale"
+				message={errorMessage(posts.error)}
+				{updatedAt}
+				onretry={retry}
+				{retrying}
+			/>
+		{/if}
+
+		{#if gone}
+			<EmptyState
+				size="page"
+				icon={IconChatsDuotone}
+				title={m.forum_thread_gone_title()}
+				body={m.forum_thread_gone_body()}
+			>
+				{#snippet action()}
+					<Button href={forumHref}>{m.forum_back_to_list()}</Button>
+				{/snippet}
+			</EmptyState>
+		{:else if posts.status === 'error' && posts.error && posts.data === undefined}
+			<ErrorState
+				title={m.forum_thread_failed()}
+				message={errorMessage(posts.error)}
+				onretry={posts.refresh}
+				retrying={posts.refreshing}
+			/>
+		{:else if posts.data === undefined}
+			<ThreadSkeleton />
+		{:else}
+			<div class="posts">
+				{#each roots as root (root.post.id)}
+					{@render post(root, 0, undefined)}
+				{/each}
+			</div>
+
+			{#if opening && replyTarget?.id === opening.id}
+				<Composer
+					mode={{ kind: 'reply', parent: opening }}
+					onsubmitted={submitted}
+					oncancel={closeComposer}
+				/>
+			{:else if canReply && opening}
+				<button
+					type="button"
+					class="reply-box"
+					onclick={() => opening && openComposer('reply', opening)}
+				>
+					{#if session.current}
+						<AuthorAvatar name={session.current.account.displayName} size={32} />
+					{/if}
+					<span>{m.forum_reply_prompt()}</span>
+				</button>
+			{:else if locked}
+				<p class="closed"><IconLock aria-hidden="true" />{m.forum_locked_notice()}</p>
+			{/if}
+		{/if}
+	</div>
+</PullToRefresh>
 
 <ConfirmDialog
 	bind:open={confirmDelete}
@@ -508,7 +511,7 @@
 	}
 
 	.stacked {
-		margin-block-start: var(--sp-5);
+		margin-block-start: var(--page-gap);
 	}
 
 	.posts {

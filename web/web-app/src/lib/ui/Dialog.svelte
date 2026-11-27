@@ -112,8 +112,8 @@
 		transition:
 			opacity 120ms var(--ease-out),
 			transform 120ms var(--ease-out),
-			overlay 120ms allow-discrete,
-			display 120ms allow-discrete;
+			overlay var(--dur-base) allow-discrete,
+			display var(--dur-base) allow-discrete;
 	}
 
 	.dialog[open] {

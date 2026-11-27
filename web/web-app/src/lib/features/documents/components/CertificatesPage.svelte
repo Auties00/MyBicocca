@@ -99,7 +99,6 @@
 		align-items: flex-start;
 		gap: var(--sp-2);
 		max-inline-size: var(--w-reading);
-		margin-block-start: calc(var(--page-gap) * -0.5);
 		color: var(--text-muted);
 		font: var(--type-meta);
 		letter-spacing: var(--track-meta);

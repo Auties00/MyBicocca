@@ -103,6 +103,15 @@
 		scrollbar-gutter: auto;
 	}
 
+	/* Adjacent sticky surfaces overlap slightly so fractional scroll offsets leave no seam. */
+	[data-sticky-join] {
+		box-shadow: 0 -2px var(--sticky-join-bg, var(--bg));
+	}
+
+	[data-sticky-join='below'] {
+		box-shadow: 0 2px var(--sticky-join-bg, var(--bg));
+	}
+
 	/*
 	 * Paper takes dark ink whatever the theme (important: the theme's own scheme is set unlayered in
 	 * app.html). The shell's bars hide themselves.
@@ -204,55 +213,45 @@
 		overflow: hidden;
 	}
 
-	/* Page transitions. Only the content pane is snapshotted: chrome stays still. */
+	@media (prefers-reduced-motion: no-preference) {
+		.view-enter {
+			animation: view-enter var(--view-enter-duration) var(--ease-out);
+		}
+	}
+
+	@keyframes view-enter {
+		from {
+			opacity: var(--view-enter-opacity);
+		}
+	}
+
 	::view-transition-old(root),
 	::view-transition-new(root) {
 		animation: none;
 	}
 
-	::view-transition-group(page) {
-		animation-duration: var(--dur-slow);
-		animation-timing-function: var(--ease-out);
+	/* Keep the floating tabs above the moving page, including while their indicator moves. */
+	::view-transition-group(shell-tabbar) {
+		z-index: 1;
+		animation: none;
 	}
 
-	::view-transition-old(page) {
-		animation: vt-fade-out 120ms var(--ease-in) both;
+	::view-transition-old(shell-tabbar),
+	::view-transition-new(shell-tabbar) {
+		animation: none;
 	}
 
-	::view-transition-new(page) {
-		animation: vt-fade-in var(--dur-base) var(--ease-out) 60ms both;
+	::view-transition-old(shell-tabbar) {
+		opacity: 0;
 	}
 
-	@media (prefers-reduced-motion: no-preference) {
-		:active-view-transition-type(forward)::view-transition-old(page) {
-			animation:
-				vt-fade-out 120ms var(--ease-in) both,
-				vt-slide-out-start var(--dur-slow) var(--ease-out) both;
-		}
+	::view-transition-old(shell-tabbar):only-child {
+		opacity: 1;
+		animation: vt-fade-out var(--dur-fast) var(--ease-in) both;
+	}
 
-		:active-view-transition-type(forward)::view-transition-new(page) {
-			animation:
-				vt-fade-in var(--dur-base) var(--ease-out) 60ms both,
-				vt-slide-in-end var(--dur-slow) var(--spring-standard) both;
-		}
-
-		:active-view-transition-type(back)::view-transition-old(page) {
-			animation:
-				vt-fade-out 120ms var(--ease-in) both,
-				vt-slide-out-end var(--dur-slow) var(--ease-out) both;
-		}
-
-		:active-view-transition-type(back)::view-transition-new(page) {
-			animation:
-				vt-fade-in var(--dur-base) var(--ease-out) 60ms both,
-				vt-slide-in-start var(--dur-slow) var(--spring-standard) both;
-		}
-
-		:active-view-transition-type(swap)::view-transition-new(page) {
-			animation:
-				vt-fade-in var(--dur-base) var(--ease-out) 60ms both,
-				vt-rise var(--dur-slow) var(--spring-standard) both;
-		}
+	::view-transition-new(shell-tabbar):only-child {
+		animation: vt-fade-in var(--dur-fast) var(--ease-out) both;
 	}
 
 	/* Theme change: the new theme grows as a circle from the control that changed it. */
@@ -278,36 +277,6 @@
 	@keyframes vt-fade-out {
 		to {
 			opacity: 0;
-		}
-	}
-
-	@keyframes vt-slide-in-end {
-		from {
-			transform: translateX(32px);
-		}
-	}
-
-	@keyframes vt-slide-in-start {
-		from {
-			transform: translateX(-32px);
-		}
-	}
-
-	@keyframes vt-slide-out-start {
-		to {
-			transform: translateX(-16px);
-		}
-	}
-
-	@keyframes vt-slide-out-end {
-		to {
-			transform: translateX(16px);
-		}
-	}
-
-	@keyframes vt-rise {
-		from {
-			transform: translateY(8px);
 		}
 	}
 

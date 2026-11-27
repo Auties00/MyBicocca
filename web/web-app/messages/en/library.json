@@ -141,6 +141,7 @@
 	"library_go_to_bookings": "Go to bookings",
 	"library_offline_write": "You’re offline: you can book or cancel once you’re back online.",
 	"library_login_page_title": "Verify your email",
+	"library_login_page_subtitle": "Link Affluences to sync your library bookings",
 	"library_will_send_link": "We’ll send an access link to your institutional email to sync your bookings.",
 	"library_no_password": "Affluences, the libraries’ booking service, verifies your address with a link: no password needed.",
 	"library_email_label": "Institutional email",

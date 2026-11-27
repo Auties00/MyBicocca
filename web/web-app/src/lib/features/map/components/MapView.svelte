@@ -10,6 +10,7 @@
 	import { query } from '#lib/data/query.svelte.ts';
 	import { session } from '#lib/data/session.svelte.ts';
 	import { m } from '#lib/paraglide/messages.js';
+	import { rememberTabState } from '#lib/shell/tabMemory.svelte.ts';
 	import IconButton from '#lib/ui/IconButton.svelte';
 	import EmptyState from '#lib/ui/EmptyState.svelte';
 	import Button from '#lib/ui/Button.svelte';
@@ -36,11 +37,24 @@
 
 	let { building: buildingParam, room }: Props = $props();
 
-	/** Width of the map area from which the directory stays open beside a building or room. */
-	const SPLIT_WIDTH = 1280;
+	/* Phones open a building, or a search from a link, with the sheet raised enough to show it. */
+	function openingDetent(building: string | undefined): Detent {
+		return building || parseQuery(page.url.searchParams) ? 'half' : 'peek';
+	}
+
+	/**
+	 * Width of the map area from which the directory stays open beside a building or room: a
+	 * desktop with the sidebar open, leaving a third of the map in view.
+	 */
+	const SPLIT_WIDTH = 1150;
 
 	/* Phones: the sheet's detent; its body scrolls only once raised. */
-	let detent = $state<Detent>(untrack(() => (buildingParam ? 'half' : 'peek')));
+	let detent = $state<Detent>(untrack(() => openingDetent(buildingParam)));
+	rememberTabState(
+		'map-sheet',
+		() => detent,
+		(saved) => (detent = saved)
+	);
 	const catalog = query(() => {
 		const scope = session.current;
 		return scope && roomsCatalogQuery(scope);
@@ -101,6 +115,16 @@
 		return { peek, half, full };
 	});
 	const shown = $derived(drag ?? heights[detent]);
+
+	/* The corner's buttons follow the sheet only once it is measured, so the first layout doesn't slide them up from the screen's foot. */
+	let cornerSettled = $state(false);
+	$effect(() => {
+		if (cornerSettled || !height || !headHeight) return;
+		let frame = requestAnimationFrame(() => {
+			frame = requestAnimationFrame(() => (cornerSettled = true));
+		});
+		return () => cancelAnimationFrame(frame);
+	});
 
 	/** The level a map URL shows: `directory`, or the place id of its building or room. */
 	function levelOf(params: { building?: string; room?: string } | null | undefined): string {
@@ -165,7 +189,7 @@
 				? 'building'
 				: 'directory';
 		if (navigation.type === 'enter' || next === previous) {
-			if (navigation.type === 'enter') detent = next === 'directory' ? 'peek' : 'half';
+			if (navigation.type === 'enter') detent = openingDetent(params.building);
 			return;
 		}
 		if (previous === 'directory') directoryDetent = detent;
@@ -179,7 +203,7 @@
 		if (compact.current) {
 			/* Raised all the way the sheet leaves no map to frame in: the framing stays as it was. */
 			const covered = heights[detent === 'full' ? 'half' : detent];
-			/* The recentre button and the attribution stand on the sheet's edge. */
+			/* The recentre button stands on the sheet's edge. */
 			return {
 				top: top + 12 + (failure ? noteHeight : 0),
 				right: 12,
@@ -213,9 +237,12 @@
 	}
 
 	function hover(code: string, inside: boolean) {
-		view.hoveredRow = undefined;
-		if (inside) view.hovered = code;
-		else if (view.hovered === code) view.hovered = undefined;
+		if (inside) {
+			view.hoveredRow = undefined;
+			view.hovered = code;
+		} else if (view.hoveredRow === undefined && view.hovered === code) {
+			view.hovered = undefined;
+		}
 	}
 
 	/* On phones a tap on the map lowers the sheet, then closes the building. */
@@ -272,7 +299,7 @@
 {/snippet}
 
 <div
-	class={['view', { compact: compact.current, collapsed }]}
+	class={['view', { compact: compact.current, collapsed, split }]}
 	data-map-view
 	bind:this={root}
 	bind:clientWidth={width}
@@ -359,7 +386,7 @@
 	{/if}
 
 	<div
-		class={['corner', { hidden: compact.current && detent !== 'peek' }]}
+		class={['corner', { hidden: compact.current && detent !== 'peek', settled: cornerSettled }]}
 		bind:offsetHeight={cornerHeight}
 	>
 		{#if !compact.current}
@@ -387,12 +414,6 @@
 			tooltipPlacement="left"
 			onclick={() => canvas?.recenter()}
 		/>
-		<a
-			class="attribution"
-			href="https://www.openstreetmap.org/copyright"
-			target="_blank"
-			rel="external noopener noreferrer">{m.map_attribution()}</a
-		>
 	</div>
 </div>
 
@@ -408,6 +429,12 @@
 		min-block-size: 0;
 		overflow: hidden;
 		container: map / inline-size;
+	}
+
+	/* Both panels side by side share what the map leaves them. */
+	.split {
+		--panel-w: clamp(392px, 24cqi + 70px, 420px);
+		--detail-w: clamp(380px, 30cqi + 40px, 420px);
 	}
 
 	.probe {
@@ -457,6 +484,9 @@
 		flex-direction: column;
 		align-items: flex-end;
 		gap: var(--sp-2);
+	}
+
+	.corner.settled {
 		transition:
 			transform var(--dur-sheet) var(--ease-sheet),
 			opacity var(--dur-fast) var(--ease-out);
@@ -488,20 +518,6 @@
 
 	.corner > :global(.btn) {
 		box-shadow: var(--elev-2);
-	}
-
-	.attribution {
-		padding: 2px 8px;
-		border-radius: var(--r-pill);
-		background: color-mix(in oklch, var(--bg) 80%, transparent);
-		color: var(--text-muted);
-		font: 500 0.6875rem / 1.4 var(--font-ui);
-		text-decoration: none;
-	}
-
-	.attribution:hover {
-		color: var(--text);
-		text-decoration: underline;
 	}
 
 	.panels {

@@ -11,15 +11,11 @@
 </script>
 
 <script lang="ts">
-	import { untrack, type Snippet } from 'svelte';
+	import type { Snippet } from 'svelte';
 	import IconArrowLeft from '~icons/ph/arrow-left';
 	import { m } from '#lib/paraglide/messages.js';
-	import {
-		getPageChrome,
-		hasPageChrome,
-		topbarHeight,
-		type PageChrome
-	} from './pageChrome.svelte.ts';
+	import { compact } from './media.ts';
+	import { getPageChrome, hasPageChrome } from './pageChrome.svelte.ts';
 	import Skeleton from './Skeleton.svelte';
 	import { internalHref, type Href, type Icon } from './types.ts';
 
@@ -46,6 +42,8 @@
 		actions?: Snippet;
 		/** Extra row under the subtitle: filters, a status line, "aggiornato 5 min fa". */
 		meta?: Snippet;
+		/** The meta row is the page's filters: on phones it stays pinned under the top bar. */
+		pinMeta?: boolean;
 		/** A bigger editorial title, for the landing page. */
 		display?: boolean;
 		/** The title in the UI face, for pages whose serif moment is elsewhere (a grade). */
@@ -70,6 +68,7 @@
 		back,
 		actions,
 		meta,
+		pinMeta = false,
 		display = false,
 		sans = false,
 		titleLang,
@@ -85,39 +84,11 @@
 	);
 	const titleBars = $derived(skeleton !== undefined && !title);
 
-	/* What this header last wrote, to tell it from what the next page's header writes. */
-	let written: { title?: string; back?: PageChrome['back'] } = {};
-
-	/* Updated in place, never cleared first: the top bar never sees a header without its back. */
-	$effect(() => {
-		if (!chrome) return;
-		chrome.title = titleBars ? undefined : (chromeTitle ?? title);
-		chrome.back = back && { href: back.href, label: back.label };
-		written = untrack(() => ({ title: chrome.title, back: chrome.back }));
-	});
-
-	/* Cleared on unmount, unless the next page's header already wrote its own. */
-	$effect(() => {
-		if (!chrome) return;
-		return () => {
-			if (chrome.back === written.back) chrome.back = undefined;
-			if (chrome.title === written.title) chrome.title = undefined;
-			chrome.collapsed = false;
-		};
-	});
-
-	/* Collapsed once the title's baseline passes under the sticky top bar. */
-	function watch(heading: HTMLElement) {
-		if (!chrome) return;
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				chrome.collapsed = !entry.isIntersecting && entry.boundingClientRect.top < topbarHeight;
-			},
-			{ rootMargin: `-${topbarHeight}px 0px 0px 0px` }
-		);
-		observer.observe(heading);
-		return () => observer.disconnect();
-	}
+	const heading = chrome?.watchHeading(() => ({
+		title: titleBars ? undefined : (chromeTitle ?? title),
+		back,
+		inBar: compact.current
+	}));
 </script>
 
 <header class={['header', { display, sans }]}>
@@ -141,7 +112,7 @@
 				tabindex="-1"
 				lang={titleBars ? undefined : titleLang}
 				aria-busy={titleBars || undefined}
-				{@attach watch}
+				{@attach heading}
 			>
 				{#if titleBars}
 					<span class="sr-only">{m.common_loading()}</span>
@@ -170,15 +141,17 @@
 		</div>
 		{#if actions}<div class="actions">{@render actions()}</div>{/if}
 	</div>
-	{#if meta}<div class="meta">{@render meta()}</div>{/if}
+	{#if meta && !pinMeta}<div class="meta">{@render meta()}</div>{/if}
 </header>
+<!-- Outside the header, so the pinned row can stick for the length of the page. -->
+{#if meta && pinMeta}<div class="meta pinned" data-sticky-join>{@render meta()}</div>{/if}
 
 <style>
 	.header {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
 		gap: 12px;
-		padding-block: 8px 4px;
+		padding-block-end: 4px;
 		container-type: inline-size;
 	}
 
@@ -187,6 +160,8 @@
 		align-items: center;
 		gap: 6px;
 		justify-self: start;
+		/* The hover pill bleeds outside the page inset, so the label lines up with the title. */
+		margin-block-start: -6px;
 		margin-inline-start: -8px;
 		padding: 6px 10px 6px 8px;
 		border-radius: var(--r-pill);
@@ -246,6 +221,36 @@
 		min-inline-size: 0;
 	}
 
+	/*
+	 * On desktop the actions sit on the title's line, centred on it, rather than at the foot of the
+	 * subtitle: the eyebrow, title and subtitle join the row's grid so the actions can share a row.
+	 */
+	@media (width >= 1024px) {
+		.row {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			align-items: center;
+			gap: 6px 24px;
+		}
+
+		.titles {
+			display: contents;
+		}
+
+		.titles > :global(*) {
+			grid-column: 1;
+		}
+
+		.actions {
+			grid-column: 2;
+			grid-row: 1;
+		}
+
+		.row:has(.eyebrow) .actions {
+			grid-row: 2;
+		}
+	}
+
 	.eyebrow {
 		color: var(--accent-text);
 		font: var(--type-overline);
@@ -302,7 +307,8 @@
 		gap: 8px;
 	}
 
-	.actions:empty {
+	/* Svelte's anchors are text nodes, so :empty never matches: no element child means empty. */
+	.actions:not(:has(> *)) {
 		display: none;
 	}
 
@@ -312,5 +318,40 @@
 		align-items: center;
 		gap: 8px;
 		min-inline-size: 0;
+	}
+
+	/* As close under the title as the header's own meta row, whatever the page's gap. */
+	.pinned {
+		margin-block-start: calc(12px - 4px - var(--page-gap));
+	}
+
+	/*
+	 * Phones name the page in the top bar, so the header keeps its title only for screen readers;
+	 * a warning subtitle, the actions and the meta row stay. With nothing left to show, the header
+	 * takes no room at all.
+	 */
+	@media (width < 600px) {
+		.eyebrow,
+		.title,
+		.subtitle:not(.warning, .danger),
+		.header:not(:has(.actions > *, .meta, .subtitle.warning, .subtitle.danger)) {
+			position: absolute;
+			inline-size: 1px;
+			block-size: 1px;
+			margin: -1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+
+		.pinned {
+			position: sticky;
+			inset-block-start: var(--shell-inset-top);
+			z-index: var(--z-sticky);
+			margin-block-start: 0;
+			margin-inline: calc(-1 * var(--gutter));
+			padding: var(--sp-2) var(--gutter);
+			background: var(--bg);
+		}
 	}
 </style>

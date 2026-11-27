@@ -147,15 +147,13 @@
 		loading={waiting && { eyebrow: false }}
 	/>
 	{#if query.error && loaded}
-		<div class="stale">
-			<ErrorState
-				variant="stale"
-				message={errorMessage(query.error)}
-				{updatedAt}
-				onretry={query.refresh}
-				retrying={query.refreshing}
-			/>
-		</div>
+		<ErrorState
+			variant="stale"
+			message={errorMessage(query.error)}
+			{updatedAt}
+			onretry={query.refresh}
+			retrying={query.refreshing}
+		/>
 	{/if}
 {/if}
 
@@ -184,7 +182,7 @@
 		{/if}
 	</div>
 {:else}
-	<article class="preview">
+	<article class={['preview', { sheet: !inline }]}>
 		<DetailHeader title={name} titleLang="it" {subtitle} {actions} />
 
 		{#if inline}
@@ -198,7 +196,7 @@
 				</div>
 			{:else if file}
 				<iframe
-					class="paper"
+					class="paper view-enter"
 					src={viewerUrl(file.url, true)}
 					title={m.documents_certificates_preview_label()}
 					{@attach fitToWindow}
@@ -229,6 +227,7 @@
 								{m.documents_certificates_generating()}
 							{/if}
 						</p>
+						{#if subtitle}<p class="file-line">{subtitle}</p>{/if}
 					</div>
 					<div class="file-actions">
 						{#if mode === 'tab'}
@@ -279,10 +278,6 @@
 {/if}
 
 <style>
-	.stale {
-		margin-block-start: calc(var(--page-gap) * -0.5);
-	}
-
 	.preview {
 		display: grid;
 		gap: var(--sp-4);
@@ -325,9 +320,18 @@
 		background: var(--surface);
 	}
 
+	/* The file is all a narrow page holds: it stands in the middle of it, as a page's state does. */
+	.sheet {
+		min-block-size: min(60dvh, 480px);
+		align-content: center;
+	}
+
 	.file {
 		display: grid;
 		gap: var(--sp-5);
+		inline-size: 100%;
+		max-inline-size: 420px;
+		justify-self: center;
 		padding: var(--sp-5);
 		border-radius: var(--r-lg);
 		background: var(--surface);
@@ -335,9 +339,14 @@
 	}
 
 	.file-head {
-		display: flex;
-		align-items: center;
-		gap: var(--sp-4);
+		display: grid;
+		justify-items: center;
+		gap: var(--sp-2);
+		text-align: center;
+	}
+
+	.file-head .glyph {
+		margin-block-end: var(--sp-2);
 	}
 
 	.glyph {
@@ -355,6 +364,19 @@
 		block-size: 30px;
 	}
 
+	.file-line {
+		color: var(--text-muted);
+		font: var(--type-meta);
+		letter-spacing: var(--track-meta);
+	}
+
+	/* The page's header says it from 600 px up; a phone's header keeps only its title, in the top bar. */
+	@media (width >= 600px) {
+		.file-line {
+			display: none;
+		}
+	}
+
 	.file-status {
 		display: flex;
 		align-items: center;
@@ -366,19 +388,6 @@
 	.file-actions {
 		display: grid;
 		gap: var(--sp-2);
-	}
-
-	@media (prefers-reduced-motion: no-preference) {
-		iframe.paper {
-			animation: arrive var(--dur-base) var(--ease-out);
-		}
-	}
-
-	@keyframes arrive {
-		from {
-			opacity: 0;
-			transform: translateY(6px);
-		}
 	}
 
 	@supports (corner-shape: squircle) {

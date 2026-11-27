@@ -42,47 +42,6 @@
 			}
 		}
 	],
-	"services_badge_results": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} da decidere",
-				"countPlural=other": "{count} da decidere"
-			}
-		}
-	],
-	"services_badge_fees_overdue": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} scaduta",
-				"countPlural=other": "{count} scadute"
-			}
-		}
-	],
-	"services_badge_fees_due": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} da pagare",
-				"countPlural=other": "{count} da pagare"
-			}
-		}
-	],
-	"services_badge_exams_booked": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} prenotato",
-				"countPlural=other": "{count} prenotati"
-			}
-		}
-	],
-	"services_badge_exams_closing": "In chiusura",
 	"services_upcoming_title": "Prossime scadenze",
 	"services_upcoming_all": "Tutte le scadenze",
 	"services_deadlines_subtitle": [
@@ -267,25 +226,12 @@
 	"services_deadlines_unchecked_title": "Non è stato possibile controllare tutte le scadenze.",
 	"services_deadlines_unchecked": "Non è stato possibile caricare {sources}: potresti avere scadenze che qui non compaiono.",
 	"services_summary_partial": "alcune non caricate",
-	"services_badge_unverified": "Non verificato",
 	"services_card_partial": "Incomplete",
 	"services_card_stale": "Non aggiornate",
 	"services_tile_closings_unverified": "Chiusure non verificate",
 	"services_stale_line": "Non aggiornate · dati di {time}",
 	"services_stale_line_now": "Aggiornamento non riuscito",
 	"services_refresh": "Aggiorna le scadenze",
-	"services_badge_questionnaires": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} da compilare",
-				"countPlural=other": "{count} da compilare"
-			}
-		}
-	],
-	"services_badge_seat_now": "Posto in corso",
-	"services_badge_seat_today": "Posto alle {time}",
 	"services_tile_result_due": [
 		{
 			"declarations": ["input date", "input day"],

@@ -342,7 +342,7 @@
 	}
 
 	.restriction {
-		font-style: italic;
+		font-weight: 600;
 	}
 
 	.failure {

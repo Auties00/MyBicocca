@@ -168,7 +168,7 @@
 	.detail-header {
 		display: grid;
 		gap: var(--sp-3);
-		padding-block: var(--sp-1) var(--sp-2);
+		padding-block-end: var(--sp-2);
 	}
 
 	.pane {

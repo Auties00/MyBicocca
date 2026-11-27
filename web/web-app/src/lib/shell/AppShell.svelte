@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import IconCircleHalf from '~icons/ph/circle-half';
 	import IconPalette from '~icons/ph/palette';
 	import IconSidebar from '~icons/ph/sidebar-simple';
 	import IconKeyboard from '~icons/ph/keyboard';
 	import IconUserPlus from '~icons/ph/user-plus';
 	import { m } from '#lib/paraglide/messages.js';
+	import type { DestinationId } from '#lib/ui/destinations.ts';
 	import { PageChrome, setPageChrome } from '#lib/ui/pageChrome.svelte.ts';
 	import { internalHref } from '#lib/ui/types.ts';
 	import type { AccountModel } from './account.ts';
@@ -22,6 +23,7 @@
 	import ShortcutsDialog from './ShortcutsDialog.svelte';
 	import { installShortcuts } from './shortcuts.ts';
 	import TabBar from './TabBar.svelte';
+	import { setupTabMemory } from './tabMemory.svelte.ts';
 	import { palettes, theme, themeModes, type Palette } from '#lib/ui/theme.svelte.ts';
 	import TopBar from './TopBar.svelte';
 	import { compact, expanded } from '#lib/ui/media.ts';
@@ -42,7 +44,25 @@
 	let band = $state<BandStatus>(navigator.onLine ? 'online' : 'offline');
 	let bandHeight = $state(0);
 
-	setupPageTransitions();
+	const tabs = setupTabMemory(chrome);
+	const destinationHref = (id: DestinationId) => tabs.href(id);
+	setupPageTransitions((navigation) => tabs.scrollFor(navigation), chrome.syncHeading);
+	afterNavigate(({ type }) => {
+		if (type === 'popstate' && window.scrollY > 0) {
+			const release = chrome.holdScrollRestore();
+			// Let the restored header paint before re-enabling wordmark transitions.
+			requestAnimationFrame(() => requestAnimationFrame(release));
+		}
+		queueMicrotask(chrome.syncHeading);
+	});
+
+	let tabOwner: string | undefined;
+	$effect(() => {
+		const career = account.accounts.find((item) => item.id === account.activeId)?.selectedCareerId;
+		const owner = JSON.stringify([account.activeId, career]);
+		if (tabOwner !== undefined && tabOwner !== owner) tabs.clear();
+		tabOwner = owner;
+	});
 
 	$effect(() =>
 		installShortcuts({
@@ -148,18 +168,19 @@
 			mode={mode === 'sidebar' ? 'sidebar' : 'rail'}
 			collapsible={expanded.current}
 			{account}
+			{destinationHref}
 		/>
 	{/if}
 	<div class="column">
 		{#if !chrome.immersive}
-			<TopBar {chrome} compact={compact.current} {account} />
+			<TopBar {chrome} compact={compact.current} {account} {destinationHref} />
 		{/if}
 		<main id="main" class="main" tabindex="-1">
 			{@render children()}
 		</main>
 	</div>
 	{#if tabBar}
-		<TabBar />
+		<TabBar {destinationHref} />
 	{/if}
 	<OfflineBand bind:status={band} onheight={(height) => (bandHeight = height)} />
 </div>
@@ -192,6 +213,7 @@
 	 * while the offline band shows, the distance from the top to just below it.
 	 */
 	.shell {
+		--shell-content-top: var(--sp-2);
 		--shell-inset-top: calc(var(--topbar-h) + var(--safe-top));
 		--shell-inset-bottom: var(--safe-bottom);
 		--shell-band: 0px;
@@ -212,6 +234,7 @@
 
 	.rail {
 		--nav-w: var(--rail-w);
+		--navigation-pane-padding: var(--sp-2);
 	}
 
 	.sidebar {
@@ -249,7 +272,7 @@
 		flex-direction: column;
 		min-inline-size: 0;
 		outline: none;
-		padding-block-start: var(--sp-2);
+		padding-block-start: var(--shell-content-top);
 	}
 
 	.tabs .main {
@@ -283,12 +306,8 @@
 		}
 	}
 
-	/*
-	 * Page transitions animate the content pane, or only the innermost detail pane of a list-detail
-	 * page: nested list-details (Services around a service's own) can't share the name.
-	 */
-	.main:not(:has(:global([data-vt-page]))),
-	.main :global([data-vt-page]:not(:has([data-vt-page]))) {
+	/* Only the sign-in handoff needs a snapshot of the app content. */
+	:global(:root:active-view-transition-type(auth-enter)) .main {
 		view-transition-name: page;
 	}
 

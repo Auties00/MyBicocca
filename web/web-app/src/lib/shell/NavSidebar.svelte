@@ -11,14 +11,18 @@
 	import {
 		primaryDestinations,
 		secondaryDestinations,
-		type Destination
+		type Destination,
+		type DestinationId
 	} from '#lib/ui/destinations.ts';
+	import { getPageChrome } from '#lib/ui/pageChrome.svelte.ts';
 	import Wordmark from '#lib/ui/Wordmark.svelte';
 	import type { AccountModel } from './account.ts';
 	import AccountMenu from './AccountMenu.svelte';
 	import { activeDestination, shellHref } from './nav.ts';
 	import { shownPath } from './pending.svelte.ts';
 	import { shell } from './shell.svelte.ts';
+	import { reselectDestination } from './reselect.ts';
+	import { keepCurrentDestination } from './tabMemory.svelte.ts';
 
 	interface Props {
 		/** rail: icons with small labels (medium, or expanded and collapsed); sidebar: labelled list. */
@@ -26,11 +30,13 @@
 		/** Whether the sidebar can be toggled here (expanded size class). */
 		collapsible: boolean;
 		account: AccountModel;
+		destinationHref: (id: DestinationId) => string;
 	}
 
-	let { mode, collapsible, account }: Props = $props();
+	let { mode, collapsible, account, destinationHref }: Props = $props();
 
 	const active = $derived(activeDestination(page.url.pathname));
+	const reselect = reselectDestination(getPageChrome());
 	/* A click is answered at once: the destination being loaded already shows as current. */
 	const shown = $derived(activeDestination(shownPath()));
 	const primaryIndex = $derived(primaryDestinations.findIndex((d) => d.id === shown));
@@ -42,11 +48,15 @@
 {#snippet item(destination: Destination)}
 	{@const current = destination.id === shown}
 	<li>
+		<!-- eslint-disable svelte/no-navigation-without-resolve -- a resolved shell path or the URL last shown -->
 		<a
 			class={['item', { current }]}
-			href={shellHref(destination.path)}
+			href={destinationHref(destination.id)}
+			data-shell-destination
+			onclick={destination.id === active ? reselect : keepCurrentDestination}
 			aria-current={destination.id === active ? 'page' : undefined}
 		>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 			<span class="icon" aria-hidden="true">
 				<destination.icon class="regular" />
 				<destination.iconActive class="filled" />
@@ -113,7 +123,11 @@
 
 	<div class="foot">
 		{#if me}
-			<AccountMenu model={account} placement={mode === 'rail' ? 'right-end' : 'top-start'}>
+			<AccountMenu
+				model={account}
+				placement={mode === 'rail' ? 'right-end' : 'top-start'}
+				destinations={mode === 'rail'}
+			>
 				{#snippet trigger(props)}
 					{#if mode === 'sidebar'}
 						<button type="button" class="account" {...props}>
@@ -151,10 +165,10 @@
 		flex-direction: column;
 		gap: 4px;
 		block-size: 100dvh;
-		padding: 12px 12px max(12px, var(--safe-bottom));
+		padding: 12px var(--navigation-pane-padding) max(12px, var(--safe-bottom));
 		overflow-y: auto;
 		scrollbar-width: none;
-		box-shadow: inset -1px 0 0 var(--hairline);
+		box-shadow: inset -1px 0 0 var(--navigation-pane-divider);
 	}
 
 	.sidebar {
@@ -166,7 +180,6 @@
 		--gap: 4px;
 		inline-size: var(--rail-w);
 		align-items: stretch;
-		padding-inline: 8px;
 	}
 
 	.brand {

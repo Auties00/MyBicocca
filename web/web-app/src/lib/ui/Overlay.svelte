@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import { tick, type Snippet } from 'svelte';
 	import IconX from '~icons/ph/x';
 	import IconArrowLeft from '~icons/ph/arrow-left';
 	import { m } from '#lib/paraglide/messages.js';
@@ -22,6 +22,8 @@
 		/** Shows a back arrow, for a page pushed inside the overlay. */
 		onback?: () => void;
 		dismissible?: boolean;
+		/** Show the sheet and backdrop immediately when opened. */
+		instantEntrance?: boolean;
 		/** The user dismissed it (close button, Escape, outside click, drag down). */
 		onclose?: () => void;
 	}
@@ -37,6 +39,7 @@
 		size = 'md',
 		onback,
 		dismissible = true,
+		instantEntrance = false,
 		onclose
 	}: Props = $props();
 
@@ -45,6 +48,8 @@
 	let sheet = $state<HTMLDialogElement>();
 	let drag = $state(0);
 	let dragging = $state(false);
+	let closing = $state(false);
+	let pointer: number | undefined;
 	let startY = 0;
 	let lastY = 0;
 	let lastT = 0;
@@ -55,13 +60,38 @@
 		onclose?.();
 	}
 
+	async function requestDismiss() {
+		if (!open || !dismissible || closing) return;
+		const dialog = sheet;
+		if (compact.current && dialog?.open) {
+			// Keep the sheet and its content mounted until it slides offscreen.
+			pointer = undefined;
+			dragging = false;
+			closing = true;
+			await tick();
+			const slide = dialog
+				.getAnimations()
+				.find(
+					(animation) =>
+						animation instanceof CSSTransition && animation.transitionProperty === 'transform'
+				);
+			await slide?.finished.catch(() => {});
+			closing = false;
+			drag = 0;
+			if (sheet !== dialog || !dialog.open) return;
+		}
+		if (open) dismiss();
+	}
+
 	function pointerdown(event: PointerEvent) {
-		if (!compact.current || !dismissible || event.button !== 0) return;
+		if (!compact.current || !dismissible || closing || pointer !== undefined || event.button !== 0)
+			return;
 		if (
 			event.target instanceof Element &&
 			event.target.closest('button, a, input, select, textarea')
 		)
 			return;
+		pointer = event.pointerId;
 		dragging = true;
 		startY = lastY = event.clientY;
 		lastT = event.timeStamp;
@@ -71,7 +101,7 @@
 	}
 
 	function pointermove(event: PointerEvent) {
-		if (!dragging) return;
+		if (event.pointerId !== pointer) return;
 		const dy = event.clientY - startY;
 		/* Resist upward pulls: the sheet is already at full height. */
 		drag = dy > 0 ? dy : -Math.min(24, Math.sqrt(-dy) * 2);
@@ -81,12 +111,14 @@
 		lastT = event.timeStamp;
 	}
 
-	function pointerup() {
-		if (!dragging) return;
+	function pointerup(event: PointerEvent) {
+		if (event.pointerId !== pointer) return;
+		pointer = undefined;
 		dragging = false;
 		const height = sheet?.offsetHeight ?? 1;
-		if (drag > height * 0.3 || (drag > 24 && velocity > 0.5)) dismiss();
-		drag = 0;
+		const flick = drag > 24 && velocity > 0.5 && event.timeStamp - lastT < 100;
+		if (event.type === 'pointerup' && (drag > height * 0.3 || flick)) void requestDismiss();
+		else drag = 0;
 	}
 
 	/* On phones the header is the sheet's grip: drag it down to dismiss. */
@@ -95,21 +127,34 @@
 		header.addEventListener('pointermove', pointermove);
 		header.addEventListener('pointerup', pointerup);
 		header.addEventListener('pointercancel', pointerup);
+		header.addEventListener('lostpointercapture', pointerup);
 		return () => {
 			header.removeEventListener('pointerdown', pointerdown);
 			header.removeEventListener('pointermove', pointermove);
 			header.removeEventListener('pointerup', pointerup);
 			header.removeEventListener('pointercancel', pointerup);
+			header.removeEventListener('lostpointercapture', pointerup);
 		};
 	}
 </script>
 
 <dialog
 	bind:this={sheet}
-	class={['overlay', `wide-${wide}`, size, { dragging }]}
+	class={[
+		'overlay',
+		`wide-${wide}`,
+		size,
+		{ dragging, closing, 'instant-entrance': instantEntrance }
+	]}
 	aria-labelledby="{id}-title"
+	inert={closing}
 	style:--drag="{drag}px"
-	{@attach modal({ open: () => open, dismissible: () => dismissible, close: dismiss })}
+	{@attach modal({
+		open: () => open,
+		dismissible: () => dismissible,
+		requestClose: requestDismiss,
+		close: dismiss
+	})}
 >
 	<header class={['head', { 'has-back': !!onback }]} {@attach draggable}>
 		<span class="handle" aria-hidden="true"></span>
@@ -123,7 +168,7 @@
 		<div class="actions">
 			{#if actions}{@render actions()}{/if}
 			{#if dismissible}
-				<IconButton icon={IconX} label={m.ui_close()} onclick={dismiss} />
+				<IconButton icon={IconX} label={m.ui_close()} onclick={requestDismiss} />
 			{/if}
 		</div>
 	</header>
@@ -156,12 +201,12 @@
 			display var(--dur-slow) allow-discrete;
 	}
 
-	.overlay[open]::backdrop {
+	.overlay[open]:not(.closing)::backdrop {
 		opacity: 1;
 	}
 
 	@starting-style {
-		.overlay[open]::backdrop {
+		.overlay[open]:not(.closing, .instant-entrance)::backdrop {
 			opacity: 0;
 		}
 	}
@@ -258,8 +303,16 @@
 			transform: translateY(var(--drag));
 		}
 
+		.overlay.closing[open] {
+			transform: translateY(100%);
+		}
+
+		.overlay.closing::backdrop {
+			transition-duration: var(--dur-sheet);
+		}
+
 		@starting-style {
-			.overlay[open] {
+			.overlay[open]:not(.instant-entrance) {
 				transform: translateY(100%);
 			}
 		}
@@ -301,8 +354,8 @@
 			transition:
 				opacity 140ms var(--ease-out),
 				transform 140ms var(--ease-out),
-				overlay 140ms allow-discrete,
-				display 140ms allow-discrete;
+				overlay var(--dur-slow) allow-discrete,
+				display var(--dur-slow) allow-discrete;
 		}
 
 		.wide-dialog[open] {

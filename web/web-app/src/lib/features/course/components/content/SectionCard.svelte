@@ -1,7 +1,6 @@
 <script lang="ts">
 	import IconCaretDown from '~icons/ph/caret-down';
 	import IconInfo from '~icons/ph/info';
-	import { shapePath, type ShapeName } from '#lib/features/elearning/shapes.ts';
 	import { formatNumber } from '#lib/format/numbers.ts';
 	import { m } from '#lib/paraglide/messages.js';
 	import type { CountKind, OutlineSection } from '../../content.ts';
@@ -35,16 +34,6 @@
 		deferred = false
 	}: Props = $props();
 
-	/* An open section's badge turns into one of Android's expressive shapes, by its number. */
-	const OPEN_SHAPES: readonly ShapeName[] = [
-		'sunny',
-		'cookie',
-		'cookie4',
-		'puffy',
-		'burst',
-		'cookie6'
-	];
-
 	const counts: Record<CountKind, (inputs: { count: number }) => string> = {
 		video: m.course_count_video,
 		pdf: m.course_count_pdf,
@@ -66,7 +55,6 @@
 	const finished = $derived(
 		completion !== undefined && completion.tracked > 0 && completion.done === completion.tracked
 	);
-	const shape = $derived(shapePath(OPEN_SHAPES[(card.ordinal - 1) % OPEN_SHAPES.length]));
 	const id = $props.id();
 </script>
 
@@ -82,21 +70,13 @@
 			onclick={() => (open = !open)}
 		>
 			<span class="badge" aria-hidden="true">
-				<svg class="bloom" viewBox="0 0 100 100"><path d={shape} /></svg>
-				<span class="digit">{formatNumber(card.ordinal)}</span>
+				{formatNumber(card.ordinal)}
 			</span>
 			<span class="titles">
 				<span class="title"
 					>{card.title ?? m.course_section_fallback({ number: card.ordinal })}</span
 				>
-				<span class="subtitle">
-					{subtitle}
-					{#if completion && completion.tracked > 0}
-						<span class="done">
-							· {m.course_section_done({ done: completion.done, total: completion.tracked })}
-						</span>
-					{/if}
-				</span>
+				<span class="subtitle">{subtitle}</span>
 			</span>
 			<IconCaretDown class="chevron" aria-hidden="true" />
 		</button>
@@ -176,7 +156,6 @@
 	}
 
 	.badge {
-		position: relative;
 		display: grid;
 		place-items: center;
 		inline-size: 44px;
@@ -184,43 +163,15 @@
 		border-radius: 14px;
 		background: var(--course-container);
 		color: var(--course-ink);
-		transition: background-color var(--dur-base) var(--ease-out);
-	}
-
-	.bloom {
-		position: absolute;
-		inset: -2px;
-		inline-size: calc(100% + 4px);
-		block-size: calc(100% + 4px);
-		fill: var(--course-bar);
-		opacity: 0;
-		transform: scale(0.6) rotate(0deg);
-		transition:
-			opacity var(--dur-base) var(--ease-out),
-			transform var(--dur-spring) var(--spring-pop);
-	}
-
-	.digit {
-		position: relative;
 		font: var(--type-title-m);
 		font-variant-numeric: tabular-nums;
-		transition: color var(--dur-base) var(--ease-out);
+		transition:
+			background-color var(--dur-base) var(--ease-out),
+			color var(--dur-base) var(--ease-out);
 	}
 
-	.open .badge {
-		background: transparent;
-	}
-
-	.open .bloom {
-		opacity: 1;
-		transform: scale(1) rotate(120deg);
-	}
-
-	.open .digit {
-		color: var(--surface);
-	}
-
-	.finished:not(.open) .badge {
+	.open .badge,
+	.finished .badge {
 		background: var(--course-bar);
 		color: var(--surface);
 	}
@@ -240,10 +191,6 @@
 	.subtitle {
 		color: var(--text-muted);
 		font: var(--type-meta);
-	}
-
-	.done {
-		white-space: nowrap;
 	}
 
 	.toggle :global(.chevron) {
@@ -298,7 +245,7 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.bloom,
+		.badge,
 		.toggle :global(.chevron) {
 			transition: none;
 		}

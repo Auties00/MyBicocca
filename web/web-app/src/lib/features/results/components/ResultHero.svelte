@@ -149,7 +149,6 @@
 	.laude {
 		font-family: var(--font-display);
 		font-size: 1.75rem;
-		font-style: italic;
 	}
 
 	.word {

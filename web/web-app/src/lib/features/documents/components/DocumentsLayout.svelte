@@ -32,7 +32,7 @@
 		detailMin?: number;
 		listLabel: string;
 		detailLabel: string;
-		/** A line under the header, above both panes. */
+		/** A line under the subtitle, above both panes. */
 		note?: Snippet;
 		/** The list, told the open item while it shows beside it. */
 		list: Snippet<[string | undefined]>;
@@ -78,26 +78,22 @@
 
 <Page width="dashboard" focusOnQuery>
 	{#if !alone}
-		<div class={['head', { wide: twoPanes }]}>
-			<PageHeader
-				{title}
-				{subtitle}
-				back={{ href: shellHref('services'), label: m.shell_services() }}
-				loading={!loaded && query.status === 'pending' && { eyebrow: false, title: 1 }}
-			/>
-		</div>
+		<PageHeader
+			{title}
+			{subtitle}
+			back={{ href: shellHref('services'), label: m.shell_services() }}
+			loading={!loaded && query.status === 'pending' && { eyebrow: false, title: 1 }}
+			meta={failed ? undefined : note}
+		/>
 		{#if query.error && loaded}
-			<div class="stale">
-				<ErrorState
-					variant="stale"
-					message={errorMessage(query.error)}
-					{updatedAt}
-					onretry={query.refresh}
-					retrying={query.refreshing}
-				/>
-			</div>
+			<ErrorState
+				variant="stale"
+				message={errorMessage(query.error)}
+				{updatedAt}
+				onretry={query.refresh}
+				retrying={query.refreshing}
+			/>
 		{/if}
-		{#if note && !failed}{@render note()}{/if}
 	{/if}
 
 	{#if failed && query.error}
@@ -142,18 +138,6 @@
 {/snippet}
 
 <style>
-	.stale {
-		margin-block-start: calc(var(--page-gap) * -0.5);
-	}
-
-	/*
-	 * Beside the list an item opens without moving the header: it gets its own view-transition
-	 * name, so only the detail pane takes part in the page transition.
-	 */
-	.head.wide {
-		view-transition-name: documents-head;
-	}
-
 	.list,
 	.item {
 		container: documents / inline-size;

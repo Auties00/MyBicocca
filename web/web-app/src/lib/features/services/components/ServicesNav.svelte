@@ -3,16 +3,12 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { serviceGroupLabels } from '#lib/shell/catalog.ts';
 	import { shellHref } from '#lib/shell/nav.ts';
-	import Badge from '#lib/ui/Badge.svelte';
 	import IconChip from '#lib/ui/IconChip.svelte';
-	import { badgeInput, useAlerts } from '../alerts.svelte.ts';
 	import { useDeadlines } from '../deadlines.svelte.ts';
-	import { serviceBadge, serviceGroups, servicesOf } from '../hub.ts';
+	import { serviceGroups, servicesOf } from '../hub.ts';
 	import DeadlinesCard from './DeadlinesCard.svelte';
 
 	const deadlines = useDeadlines();
-	const alerts = useAlerts();
-	const badges = $derived(badgeInput(deadlines, alerts));
 
 	const path = $derived(page.url.pathname);
 	const within = (href: string) => path === href || path.startsWith(`${href}/`);
@@ -29,12 +25,10 @@
 				{#each servicesOf(group) as service (service.id)}
 					{@const href = shellHref(service.path)}
 					{@const current = within(href)}
-					{@const badge = serviceBadge(service.id, badges)}
 					<li>
 						<a class={['item', { current }]} {href} aria-current={current ? 'page' : undefined}>
 							<IconChip icon={service.icon} tone={service.tone} size="sm" />
 							<span class="label">{service.label()}</span>
-							{#if badge}<Badge tone={badge.tone}>{badge.label}</Badge>{/if}
 						</a>
 					</li>
 				{/each}

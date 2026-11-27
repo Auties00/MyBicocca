@@ -5,8 +5,8 @@
 	import IconX from '~icons/ph/x-bold';
 	import { bookHref } from '#lib/features/exams/links.ts';
 	import { m } from '#lib/paraglide/messages.js';
-	import { shellHref } from '#lib/shell/nav.ts';
 	import Button from '#lib/ui/Button.svelte';
+	import type { Href } from '#lib/ui/types.ts';
 	import Outcome from '#lib/ui/Outcome.svelte';
 	import type { Choice } from '../model.ts';
 
@@ -14,12 +14,14 @@
 		choice: Choice;
 		/** The activity's code, to book its next call after a rejection. */
 		code: string | null;
+		/** The exam in the study plan, where an accepted grade is recorded. */
+		recordHref: Href;
 		level: 2 | 3;
 		/** The heading, for the confirmation to give the focus to as it closes. */
 		heading?: HTMLElement;
 	}
 
-	let { choice, code, level, heading = $bindable() }: Props = $props();
+	let { choice, code, recordHref, level, heading = $bindable() }: Props = $props();
 
 	const accepted = $derived(choice === 'accepted');
 </script>
@@ -35,8 +37,8 @@
 >
 	{#snippet actions()}
 		{#if accepted}
-			<Button variant="outline" trailingIcon={IconArrowRight} href={shellHref('profile/exams')}>
-				{m.results_go_transcript()}
+			<Button variant="outline" trailingIcon={IconArrowRight} href={recordHref}>
+				{m.results_open_study_plan()}
 			</Button>
 		{:else}
 			<Button variant="solid" icon={IconCalendarPlus} href={bookHref({ course: code })}>

@@ -65,7 +65,7 @@
 	"results_accepted_body": "The grade will be recorded in your transcript.",
 	"results_rejected_title": "Result rejected",
 	"results_rejected_body": "To pass the exam, book a new exam call.",
-	"results_go_transcript": "Go to transcript",
+	"results_open_study_plan": "See in study plan",
 	"results_book_call": "Book an exam call",
 	"results_refused": "Esse3 didn’t accept the request: {reason}",
 	"results_unconfirmed_title": "Esse3 didn’t confirm your answer",

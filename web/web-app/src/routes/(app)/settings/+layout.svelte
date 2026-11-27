@@ -25,7 +25,7 @@
 	below, the list is a page of its own (the index page) and each section replaces it.
 -->
 <ListDetail
-	centered
+	navigation
 	listWidth={288}
 	detailMin={640}
 	listLabel={m.settings_nav_label()}
@@ -33,12 +33,6 @@
 	bind:twoPanes
 >
 	{#snippet list()}
-		<div class="nav"><SettingsNav /></div>
+		<SettingsNav />
 	{/snippet}
 </ListDetail>
-
-<style>
-	.nav {
-		padding: var(--sp-6) 0 var(--sp-2) var(--gutter);
-	}
-</style>

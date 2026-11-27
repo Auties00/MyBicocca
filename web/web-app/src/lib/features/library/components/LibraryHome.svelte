@@ -23,6 +23,8 @@
 	import { LoadingGate } from '#lib/ui/loadingGate.svelte.ts';
 	import Menu from '#lib/ui/Menu.svelte';
 	import Page from '#lib/ui/Page.svelte';
+	import { expanded } from '#lib/ui/media.ts';
+	import PullToRefresh from '#lib/ui/PullToRefresh.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
 	import SectionHeader from '#lib/ui/SectionHeader.svelte';
 	import { libraryLinks } from '../account.svelte.ts';
@@ -172,177 +174,182 @@
 	</BookingCard>
 {/snippet}
 
-<Page width="dashboard">
-	<PageHeader
-		title={m.library_title()}
-		{subtitle}
-		back={{ href: shellHref('services'), label: m.shell_services() }}
-		loading={subtitleLoading && { eyebrow: false }}
-	/>
-
-	{#if allFailed && reservations.error}
-		<ErrorState
-			title={m.library_service_down()}
-			message={errorMessage(reservations.error)}
-			onretry={retryAll}
-			retrying={refreshing}
+<!-- Below 1024 px a pull refreshes, in place of the button. -->
+<PullToRefresh onrefresh={retryAll} {refreshing}>
+	<Page width="dashboard">
+		<PageHeader
+			title={m.library_title()}
+			{subtitle}
+			back={{ href: shellHref('services'), label: m.shell_services() }}
+			loading={subtitleLoading && { eyebrow: false }}
 		/>
-	{:else}
-		<div class="layout">
-			<section class="section" aria-labelledby="library-bookings">
-				<SectionHeader
-					id="library-bookings"
-					title={m.library_bookings_heading()}
-					description={link === undefined
-						? NBSP
-						: linked && link.email
-							? m.library_linked_as({ email: link.email })
-							: undefined}
-				>
-					{#snippet actions()}
-						<IconButton
-							icon={IconArrowClockwise}
-							label={m.common_refresh()}
-							variant="outline"
-							size="sm"
-							loading={refreshing}
-							onclick={retryAll}
-						/>
-						<Menu
-							label={m.library_account_menu()}
-							placement="bottom-end"
-							items={[
-								{
-									label: m.library_cancel_link_title(),
-									icon: IconCalendarSlash,
-									href: cancelHref()
-								},
-								...(linked
-									? [
-											{
-												label: m.library_unlink(),
-												icon: IconLinkBreak,
-												tone: 'danger' as const,
-												onselect: () => (unlinking = true)
-											}
-										]
-									: [])
-							]}
-						>
-							{#snippet trigger(props)}
-								<IconButton
-									{...props}
-									icon={IconDotsThree}
-									label={m.library_account_menu()}
-									variant="ghost"
-									size="sm"
-								/>
-							{/snippet}
-						</Menu>
-					{/snippet}
-				</SectionHeader>
 
-				{#if link !== undefined && !linked}
-					{#if link.expired}
-						<Banner tone="warning" message={m.library_session_expired()} />
-					{/if}
-					<SectionNote
-						icon={IconEnvelope}
-						tone="accent"
-						title={m.library_verify_email()}
-						body={m.library_verify_email_body()}
-						bind:heading={connectHeading}
+		{#if allFailed && reservations.error}
+			<ErrorState
+				title={m.library_service_down()}
+				message={errorMessage(reservations.error)}
+				onretry={retryAll}
+				retrying={refreshing}
+			/>
+		{:else}
+			<div class="layout">
+				<section class="section" aria-labelledby="library-bookings">
+					<SectionHeader
+						id="library-bookings"
+						title={m.library_bookings_heading()}
+						description={link === undefined
+							? NBSP
+							: linked && link.email
+								? m.library_linked_as({ email: link.email })
+								: undefined}
 					>
-						{#snippet action()}
-							<Button variant="solid" icon={IconEnvelope} href={loginHref()}>
-								{m.library_verify()}
-							</Button>
+						{#snippet actions()}
+							{#if expanded.current}
+								<IconButton
+									icon={IconArrowClockwise}
+									label={m.common_refresh()}
+									variant="outline"
+									size="sm"
+									loading={refreshing}
+									onclick={retryAll}
+								/>
+							{/if}
+							<Menu
+								label={m.library_account_menu()}
+								placement="bottom-end"
+								items={[
+									{
+										label: m.library_cancel_link_title(),
+										icon: IconCalendarSlash,
+										href: cancelHref()
+									},
+									...(linked
+										? [
+												{
+													label: m.library_unlink(),
+													icon: IconLinkBreak,
+													tone: 'danger' as const,
+													onselect: () => (unlinking = true)
+												}
+											]
+										: [])
+								]}
+							>
+								{#snippet trigger(props)}
+									<IconButton
+										{...props}
+										icon={IconDotsThree}
+										label={m.library_account_menu()}
+										variant="ghost"
+										size="sm"
+									/>
+								{/snippet}
+							</Menu>
 						{/snippet}
-					</SectionNote>
-				{:else if bookingsFailed && reservations.error}
-					<ErrorState
-						title={m.library_bookings_failed()}
-						message={errorMessage(reservations.error)}
-						onretry={reservations.refresh}
-						retrying={reservations.refreshing}
-					/>
-				{:else if active === undefined && expected === 0}
-					<div class="hidden" aria-hidden="true">{@render noBookings()}</div>
-				{:else if active === undefined}
-					<ul class="bookings" aria-busy="true" aria-label={m.library_bookings_heading()}>
-						{#each { length: expected }, index (index)}
-							<li class={{ hidden: !bookingsGate.visible }}><BookingCardSkeleton /></li>
-						{/each}
-					</ul>
-				{:else}
-					{#if reservations.error}
+					</SectionHeader>
+
+					{#if link !== undefined && !linked}
+						{#if link.expired}
+							<Banner tone="warning" message={m.library_session_expired()} />
+						{/if}
+						<SectionNote
+							icon={IconEnvelope}
+							tone="accent"
+							title={m.library_verify_email()}
+							body={m.library_verify_email_body()}
+							bind:heading={connectHeading}
+						>
+							{#snippet action()}
+								<Button variant="solid" icon={IconEnvelope} href={loginHref()}>
+									{m.library_verify()}
+								</Button>
+							{/snippet}
+						</SectionNote>
+					{:else if bookingsFailed && reservations.error}
 						<ErrorState
-							variant="stale"
+							title={m.library_bookings_failed()}
 							message={errorMessage(reservations.error)}
-							updatedAt={date(reservations.updatedAt)}
 							onretry={reservations.refresh}
 							retrying={reservations.refreshing}
 						/>
-					{/if}
-					{#if active.length === 0}
-						{@render noBookings()}
-					{:else}
-						<ul class="bookings">
-							{#each active as reservation (reservation.id)}
-								<li>{@render card(reservation)}</li>
+					{:else if active === undefined && expected === 0}
+						<div class="hidden" aria-hidden="true">{@render noBookings()}</div>
+					{:else if active === undefined}
+						<ul class="bookings" aria-busy="true" aria-label={m.library_bookings_heading()}>
+							{#each { length: expected }, index (index)}
+								<li class={{ hidden: !bookingsGate.visible }}><BookingCardSkeleton /></li>
 							{/each}
 						</ul>
+					{:else}
+						{#if reservations.error}
+							<ErrorState
+								variant="stale"
+								message={errorMessage(reservations.error)}
+								updatedAt={date(reservations.updatedAt)}
+								onretry={reservations.refresh}
+								retrying={reservations.refreshing}
+							/>
+						{/if}
+						{#if active.length === 0}
+							{@render noBookings()}
+						{:else}
+							<ul class="bookings">
+								{#each active as reservation (reservation.id)}
+									<li>{@render card(reservation)}</li>
+								{/each}
+							</ul>
+						{/if}
 					{/if}
-				{/if}
-				{#if linked && !reservations.error}
-					<p class="synced">{synced}</p>
-				{/if}
-			</section>
+					{#if linked && !reservations.error}
+						<p class="synced">{synced}</p>
+					{/if}
+				</section>
 
-			<section class="section" aria-labelledby="library-libraries">
-				<SectionHeader id="library-libraries" title={m.library_libraries_heading()} />
+				<section class="section" aria-labelledby="library-libraries">
+					<SectionHeader id="library-libraries" title={m.library_libraries_heading()} />
 
-				{#if librariesFailed && libraries.error}
-					<ErrorState
-						title={m.library_libraries_loading_failed()}
-						message={errorMessage(libraries.error)}
-						onretry={libraries.refresh}
-						retrying={libraries.refreshing}
-					/>
-				{:else if list === undefined}
-					<ul class="libraries" aria-busy="true" aria-label={m.library_libraries_heading()}>
-						{#each { length: 2 }, index (index)}
-							<li class={{ hidden: !librariesGate.visible }}><LibraryCardSkeleton /></li>
-						{/each}
-					</ul>
-				{:else}
-					{#if libraries.error}
+					{#if librariesFailed && libraries.error}
 						<ErrorState
-							variant="stale"
+							title={m.library_libraries_loading_failed()}
 							message={errorMessage(libraries.error)}
-							updatedAt={date(libraries.updatedAt)}
 							onretry={libraries.refresh}
 							retrying={libraries.refreshing}
 						/>
-					{/if}
-					{#if list.length === 0}
-						<SectionNote
-							icon={IconBooks}
-							title={m.library_no_libraries()}
-							body={m.library_no_libraries_body()}
-						/>
-					{:else}
-						<ul class="libraries">
-							{#each list as library, index (library.id)}
-								<li><LibraryCard {library} eager={index < 2} /></li>
+					{:else if list === undefined}
+						<ul class="libraries" aria-busy="true" aria-label={m.library_libraries_heading()}>
+							{#each { length: 2 }, index (index)}
+								<li class={{ hidden: !librariesGate.visible }}><LibraryCardSkeleton /></li>
 							{/each}
 						</ul>
+					{:else}
+						{#if libraries.error}
+							<ErrorState
+								variant="stale"
+								message={errorMessage(libraries.error)}
+								updatedAt={date(libraries.updatedAt)}
+								onretry={libraries.refresh}
+								retrying={libraries.refreshing}
+							/>
+						{/if}
+						{#if list.length === 0}
+							<SectionNote
+								icon={IconBooks}
+								title={m.library_no_libraries()}
+								body={m.library_no_libraries_body()}
+							/>
+						{:else}
+							<ul class="libraries">
+								{#each list as library, index (library.id)}
+									<li><LibraryCard {library} eager={index < 2} /></li>
+								{/each}
+							</ul>
+						{/if}
 					{/if}
-				{/if}
-			</section>
-		</div>
-	{/if}
-</Page>
+				</section>
+			</div>
+		{/if}
+	</Page>
+</PullToRefresh>
 
 <ConfirmDialog
 	bind:open={unlinking}

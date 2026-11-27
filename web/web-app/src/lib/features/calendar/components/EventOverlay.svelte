@@ -18,6 +18,7 @@
 <!-- The open event on phones (a bottom sheet) and tablets (a dialog). -->
 <Overlay
 	open={ctl.nav.eventId !== null && (selected !== undefined || ctl.missing)}
+	instantEntrance={ctl.compact && ctl.view === 'week'}
 	title={courses
 		? m.calendar_course_picker_title()
 		: selected

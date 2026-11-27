@@ -44,6 +44,8 @@
 		detailMin?: number;
 		/** List and detail stay together, centred, the detail at reading width (settings). */
 		centered?: boolean;
+		/** A page-level section menu that stays beside each route in this section. */
+		navigation?: boolean;
 		/** Accessible names of the two regions. */
 		listLabel: string;
 		detailLabel?: string;
@@ -79,6 +81,7 @@
 		listWidth = 360,
 		detailMin = 480,
 		centered = false,
+		navigation = false,
 		listLabel,
 		detailLabel,
 		twoPanes = $bindable(),
@@ -267,14 +270,20 @@
 <svelte:window onkeydown={items || closeHref ? keydown : undefined} />
 
 <div
-	class={['list-detail', { centered }]}
+	class={['list-detail', { centered, navigation }]}
 	style:--list="{listWidth}px"
 	style:--detail-min="{detailMin}px"
 >
 	<div class="frame">
 		<div class={['split', { open: !!detail }]}>
-			<section class="list" aria-label={listLabel} bind:this={listPane}>{@render list()}</section>
-			<!-- Beside the list, page transitions animate only this pane (see AppShell). -->
+			<section
+				class="list"
+				aria-label={listLabel}
+				data-tab-scroll={twoPanes ? `list:${listLabel}` : undefined}
+				bind:this={listPane}
+			>
+				{@render list()}
+			</section>
 			<section
 				class="detail"
 				aria-label={detail ? detailLabel : undefined}
@@ -347,12 +356,33 @@
 		display: none;
 	}
 
-	@media (width >= 1024px) {
+	@media screen and (width >= 1024px) {
 		@container list-detail (width >= 1em) {
 			.split {
+				position: relative;
 				grid-template-columns: var(--list-pane) minmax(0, 1fr);
 				align-items: start;
 				gap: var(--gap);
+			}
+
+			.split::after {
+				content: '';
+				position: absolute;
+				grid-area: 1 / 1 / 2 / 2;
+				inset-block: 0;
+				inset-inline-end: 0;
+				inline-size: 1px;
+				background: var(--navigation-pane-divider);
+				pointer-events: none;
+			}
+
+			.navigation > .frame > .split {
+				min-block-size: calc(100dvh - var(--shell-content-top, 0px));
+				column-gap: 0;
+			}
+
+			.navigation > .frame > .split::after {
+				inset-block-start: calc(-1 * var(--shell-content-top, 0px));
 			}
 
 			.split.open > .list,
@@ -361,14 +391,29 @@
 			}
 
 			.list {
+				--list-inset-top: 0px;
 				position: sticky;
-				inset-block-start: calc(var(--topbar-h) + var(--safe-top));
-				max-block-size: calc(100dvh - var(--topbar-h) - var(--safe-top));
+				inset-block-start: var(--list-inset-top);
+				max-block-size: calc(100dvh - var(--list-inset-top));
 				overflow: auto;
 				overscroll-behavior: contain;
-				scrollbar-width: thin;
-				scrollbar-gutter: stable;
+				scrollbar-width: none;
 				padding-block-end: var(--sp-6);
+				padding-inline: var(--navigation-pane-padding);
+			}
+
+			:global(.shell:has(.topbar.collapsed)) .list {
+				--list-inset-top: var(--shell-inset-top);
+			}
+
+			.navigation > .frame > .split > .list {
+				padding-block-start: var(--page-padding-top);
+			}
+
+			/* Every section's page starts at the same distance from the menu, whatever its width. */
+			.navigation > .frame > .split > .detail > :global(.page),
+			.navigation > .frame > .split > .detail > :global(.pull > .page) {
+				margin-inline-start: 0;
 			}
 
 			.centered .split {

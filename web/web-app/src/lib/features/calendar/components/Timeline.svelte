@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { flushSync, untrack, type Snippet } from 'svelte';
 	import { on } from 'svelte/events';
+	import { rememberTabState, restoreTabRegion } from '#lib/shell/tabMemory.svelte.ts';
 	import { addDays, type IsoDate } from '#lib/format/days.ts';
 	import type { WallClock } from '#lib/format/rome.ts';
 	import { m } from '#lib/paraglide/messages.js';
@@ -92,6 +93,8 @@
 	const bodyHeight = $derived((span.end - span.start) * minutePx);
 	const oddAlpha = $derived(oddHourAlpha(minutePx));
 	const inset = $derived(step === 1 ? 2 : 1);
+	/* Cards at a column's start stand off its edge, clear of the divider and the now marker. */
+	const leadInset = $derived(step === 1 ? 8 : 4);
 	const nowVisible = $derived(now.minutes >= span.start && now.minutes <= span.end);
 	const isEmpty = $derived(!loading && days.every((day) => (byDay.get(day)?.length ?? 0) === 0));
 
@@ -143,11 +146,22 @@
 	const openedOn = untrack(() => days[0]);
 	let scrolledByUser = false;
 	let quietUntil = 0;
+	const savedScroll = restoreTabRegion('calendar');
+	rememberTabState(
+		'calendar-timeline',
+		() => scrolledByUser,
+		() => (scrolledByUser = true)
+	);
 
 	/** Scroll a grid this much taller than its viewport doesn't need: it opens at the top. */
 	const FITS_SLACK = 150;
 
 	function watchScroll(element: HTMLElement) {
+		const remembered = savedScroll();
+		if (remembered !== undefined) {
+			scrolledByUser = true;
+			element.scrollTop = remembered;
+		}
 		return on(
 			element,
 			'scroll',
@@ -396,12 +410,13 @@
 	function frame(placed: Placement<CalendarEvent>, columnWidth: number) {
 		const top = (placed.start - span.start) * minutePx + 1;
 		const height = Math.max(8, (placed.end - placed.start) * minutePx - 2);
-		const width = Math.max(6, columnWidth * placed.width - inset * 2);
+		const start = placed.x === 0 ? leadInset : inset;
+		const width = Math.max(6, columnWidth * placed.width - start - inset);
 		return {
 			top: `${top}px`,
 			height: `${height}px`,
-			left: `calc(${placed.x * 100}% + ${inset}px)`,
-			width: `max(6px, calc(${placed.width * 100}% - ${inset * 2}px))`,
+			left: `calc(${placed.x * 100}% + ${start}px)`,
+			width: `max(6px, calc(${placed.width * 100}% - ${start + inset}px))`,
 			widthPx: width,
 			heightPx: height,
 			density: cardDensity(width, height, cardText(placed.item))
@@ -432,6 +447,7 @@
 >
 	<div
 		class="scroller"
+		data-tab-scroll="calendar"
 		role="region"
 		aria-label={label}
 		bind:this={scroller}
@@ -482,11 +498,12 @@
 										style:top="{(hour * 60 - span.start) * minutePx}px"
 									></span>
 								{/each}
-								{#if page.includes(now.date) && nowVisible && page.length > 1}
+								{#if nowVisible && page.includes(now.date)}
 									<span
-										class="now-faint"
+										class="now"
 										style:top="{(now.minutes - span.start) * minutePx}px"
-										aria-hidden="true"
+										role="img"
+										aria-label={m.ui_now_at({ time: clockTime(now.minutes) })}
 									></span>
 								{/if}
 								<div class="columns">
@@ -521,19 +538,6 @@
 													/>
 												{/each}
 											{/if}
-											{#if day === now.date && nowVisible}
-												<span
-													class="now"
-													style:top="{(now.minutes - span.start) * minutePx}px"
-													role="img"
-													aria-label={m.ui_now_at({ time: clockTime(now.minutes) })}
-												></span>
-												<span
-													class="now-dot"
-													style:top="{(now.minutes - span.start) * minutePx}px"
-													aria-hidden="true"
-												></span>
-											{/if}
 										</div>
 									{/each}
 								</div>
@@ -556,7 +560,7 @@
 
 <style>
 	.timeline {
-		--gutter-w: 56px;
+		--gutter-w: var(--timeline-label-w, 56px);
 		position: relative;
 		display: flex;
 		flex-direction: column;
@@ -637,11 +641,6 @@
 		touch-action: pan-y;
 	}
 
-	/* The now dot sits half outside its column: on the first one, that is over the hour labels. */
-	.timeline:not(.narrow) .viewport {
-		overflow-clip-margin: 6px;
-	}
-
 	.track {
 		display: grid;
 		grid-template-columns: repeat(var(--pages), 100%);
@@ -718,46 +717,33 @@
 		flex: 1;
 	}
 
-	/* The line runs over the cards, so it shows through an event in progress; the faint one that
-	   marks the time across the other days of the week stays under them. */
-	.now,
-	.now-faint {
+	/* Match Android's marker at the grid edge, with the line behind event cards. */
+	.now {
 		position: absolute;
 		inset-inline: 0;
-		z-index: 0;
-		block-size: 2px;
-		margin-block-start: -1px;
 		pointer-events: none;
 	}
 
-	.now {
-		z-index: 4;
+	.now::before,
+	.now::after {
+		content: '';
+		position: absolute;
 		background: var(--accent);
 	}
 
-	.now-dot {
-		position: absolute;
-		inset-inline-start: -4px;
+	.now::before {
+		inset-inline: 4px 0;
+		inset-block-start: -1px;
+		block-size: 2px;
+	}
+
+	.now::after {
+		inset-inline-start: 0;
+		inset-block-start: -4px;
 		z-index: 4;
 		inline-size: 8px;
 		block-size: 8px;
-		margin-block-start: -4px;
 		border-radius: 50%;
-		background: var(--accent);
-		box-shadow: 0 0 0 1.5px var(--calendar-bg, var(--bg));
-		pointer-events: none;
-	}
-
-	/* Phones swipe between pages that must not show at the edges, so the dot stays in its column. */
-	.narrow .now-dot {
-		inset-inline-start: 0;
-	}
-
-	.now-faint {
-		z-index: 0;
-		block-size: 1px;
-		margin-block-start: 0;
-		background: color-mix(in oklch, var(--accent) 45%, transparent);
 	}
 
 	.empty-wrap {
@@ -821,7 +807,7 @@
 
 	.empty p {
 		color: var(--text-muted);
-		font: italic 400 1.375rem / 1.25 var(--font-display);
+		font: 400 1.375rem / 1.25 var(--font-display);
 		letter-spacing: -0.01em;
 	}
 

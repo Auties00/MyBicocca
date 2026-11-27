@@ -44,6 +44,6 @@
 	.stale {
 		flex: none;
 		padding: 0 var(--calendar-inline-end, var(--gutter)) var(--sp-3)
-			var(--calendar-inline-start, var(--sp-5));
+			var(--calendar-inline-start, var(--gutter));
 	}
 </style>

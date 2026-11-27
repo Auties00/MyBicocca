@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { resolve } from '$app/paths';
 	import IconBookOpen from '~icons/ph/book-open-text-duotone';
 	import IconCaretDown from '~icons/ph/caret-down';
@@ -9,6 +10,7 @@
 	import { toDataError } from '#lib/data/errors.ts';
 	import { query } from '#lib/data/query.svelte.ts';
 	import { session } from '#lib/data/session.svelte.ts';
+	import { setCourseFrame } from '#lib/features/profile/courseFrame.ts';
 	import { recordBookRowsQuery } from '#lib/features/profile/queries.ts';
 	import { toLibrettoRow, type LibrettoRow } from '#lib/features/profile/transcript.ts';
 	import { formatDate } from '#lib/format/dates.ts';
@@ -21,16 +23,28 @@
 	import { openPdf } from '#lib/ui/files.ts';
 	import { LoadingGate } from '#lib/ui/loadingGate.svelte.ts';
 	import Menu, { type MenuEntry } from '#lib/ui/Menu.svelte';
+	import Fab from '#lib/ui/Fab.svelte';
+	import ListDetail from '#lib/ui/ListDetail.svelte';
+	import { expanded } from '#lib/ui/media.ts';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
 	import { tooltip } from '#lib/ui/tooltip.svelte.ts';
 	import { StudyPlanData } from '../data.svelte.ts';
 	import { planSubtitle } from '../labels.ts';
+	import { studyPlanExamHref } from '../links.ts';
 	import { groupByYear } from '../plan.ts';
 	import PlanSkeleton from './PlanSkeleton.svelte';
 	import PlanSummary from './PlanSummary.svelte';
 	import PrintSheet from './PrintSheet.svelte';
 	import YearGroup from './YearGroup.svelte';
+
+	interface Props {
+		/** `adsceId` of the exam open beside the plan or over it. */
+		selected?: number;
+		detail?: Snippet;
+	}
+
+	let { selected, detail }: Props = $props();
 
 	const data = new StudyPlanData();
 	const records = query(() => session.current && recordBookRowsQuery(session.current));
@@ -48,6 +62,7 @@
 	const editable = $derived(data.request !== undefined && !stale);
 	/* Edit path is a header action, so whether the window is open never moves the page. */
 	const canEdit = $derived(!!plan && editable);
+	const printable = $derived(plan !== null && !(plan === undefined && data.error));
 	const windowText = $derived(
 		data.path?.windowEnd
 			? m.studyplan_window_until({ date: formatDate(data.path.windowEnd, 'long') })
@@ -95,6 +110,26 @@
 	);
 
 	const editHref = resolve('services/study-plan/edit');
+	const planHref = resolve('services/study-plan');
+	/* Arrow keys step through the exams in the plan's order. */
+	const order = $derived(
+		years.flatMap((group) =>
+			group.courses.flatMap((course) => {
+				const record = recordOf(course.code);
+				return record ? [studyPlanExamHref(record.id)] : [];
+			})
+		)
+	);
+
+	let twoPanes = $state<boolean>();
+	/* Before ListDetail measures, the size class guesses, so the header never changes after paint. */
+	const docked = $derived(twoPanes ?? expanded.current);
+	setCourseFrame({
+		get docked() {
+			return docked;
+		},
+		back: { href: planHref, label: m.shell_service_study_plan() }
+	});
 
 	const student = $derived({
 		name: session.current?.account.displayName ?? '',
@@ -136,96 +171,135 @@
 	</Button>
 {/snippet}
 
+{#snippet list()}
+	<div class="plan">
+		{#if pdfError}
+			<Banner
+				tone="danger"
+				title={m.studyplan_pdf_failed()}
+				message={pdfError}
+				role="alert"
+				ondismiss={() => (pdfError = undefined)}
+			>
+				{#snippet actions()}
+					<Button size="sm" loading={downloading} onclick={openOfficial}>{m.common_retry()}</Button>
+				{/snippet}
+			</Banner>
+		{/if}
+
+		{#if stale && data.error}
+			<ErrorState
+				variant="stale"
+				message={errorMessage(data.error)}
+				{updatedAt}
+				retrying={data.refreshing}
+				onretry={() => void data.retry()}
+			/>
+		{/if}
+
+		{#if loading}
+			<PlanSkeleton />
+		{:else if plan}
+			<PlanSummary {plan} {years} {earned} />
+
+			<section class="years" aria-label={m.studyplan_years_label()}>
+				{#each years as group (group.year)}
+					<YearGroup {group} {recordOf} known={records.data !== undefined} />
+				{/each}
+			</section>
+
+			<PrintSheet {plan} {years} {student} path={planSubtitle(plan, data.path ?? null) ?? ''} />
+		{:else if plan === null}
+			<EmptyState
+				size="page"
+				icon={IconBookOpen}
+				title={m.studyplan_empty_title()}
+				body={editable ? m.studyplan_empty_compile_body() : m.studyplan_empty_body()}
+				action={editable ? compile : undefined}
+			/>
+		{:else if data.error}
+			<ErrorState
+				message={errorMessage(data.error)}
+				title={m.studyplan_load_failed()}
+				retrying={data.refreshing}
+				onretry={() => void data.retry()}
+			/>
+		{/if}
+	</div>
+{/snippet}
+
 <svelte:head>
 	<title>{m.shell_service_study_plan()} · {m.app_name()}</title>
 </svelte:head>
 
 <Page width="dashboard">
-	<PageHeader
-		title={m.shell_service_study_plan()}
-		{subtitle}
-		back={{ href: shellHref('services'), label: m.shell_services() }}
-		loading={subtitleLoading && { eyebrow: false }}
-	>
-		{#snippet actions()}
-			{#if plan !== null && !(plan === undefined && data.error)}
-				<Menu label={m.studyplan_print_menu()} items={printouts} placement="bottom-end">
-					{#snippet trigger(props)}
-						<Button
-							{...props}
-							icon={IconPrinter}
-							trailingIcon={IconCaretDown}
-							disabled={!plan}
-							loading={downloading}
-						>
-							{m.studyplan_print()}
-						</Button>
-					{/snippet}
-				</Menu>
-				{#if canEdit}
+	{#if docked || detail === undefined}
+		<PageHeader
+			title={m.shell_service_study_plan()}
+			{subtitle}
+			back={{ href: shellHref('services'), label: m.shell_services() }}
+			loading={subtitleLoading && { eyebrow: false }}
+		>
+			{#snippet actions()}
+				{#if printable && expanded.current}
+					<Menu label={m.studyplan_print_menu()} items={printouts} placement="bottom-end">
+						{#snippet trigger(props)}
+							<Button
+								{...props}
+								icon={IconPrinter}
+								trailingIcon={IconCaretDown}
+								disabled={!plan}
+								loading={downloading}
+							>
+								{m.studyplan_print()}
+							</Button>
+						{/snippet}
+					</Menu>
+				{/if}
+				{#if canEdit && expanded.current}
 					<Button variant="solid" icon={IconPencil} href={editHref} {@attach tooltip(windowText)}>
 						{m.studyplan_edit_path()}
 					</Button>
 				{/if}
-			{/if}
-		{/snippet}
-	</PageHeader>
-
-	{#if pdfError}
-		<Banner
-			tone="danger"
-			title={m.studyplan_pdf_failed()}
-			message={pdfError}
-			role="alert"
-			ondismiss={() => (pdfError = undefined)}
-		>
-			{#snippet actions()}
-				<Button size="sm" loading={downloading} onclick={openOfficial}>{m.common_retry()}</Button>
 			{/snippet}
-		</Banner>
+		</PageHeader>
 	{/if}
 
-	{#if stale && data.error}
-		<ErrorState
-			variant="stale"
-			message={errorMessage(data.error)}
-			{updatedAt}
-			retrying={data.refreshing}
-			onretry={() => void data.retry()}
+	{#if detail}
+		<ListDetail
+			{list}
+			{detail}
+			listWidth={440}
+			detailMin={448}
+			listLabel={m.shell_service_study_plan()}
+			detailLabel={m.profile_course_label()}
+			current={selected === undefined ? undefined : studyPlanExamHref(selected)}
+			items={order}
+			closeHref={planHref}
+			bind:twoPanes
 		/>
+	{:else}
+		{@render list()}
 	{/if}
-
-	{#if loading}
-		<PlanSkeleton />
-	{:else if plan}
-		<PlanSummary {plan} {years} {earned} />
-
-		<section class="years" aria-label={m.studyplan_years_label()}>
-			{#each years as group (group.year)}
-				<YearGroup {group} {recordOf} known={records.data !== undefined} />
-			{/each}
-		</section>
-
-		<PrintSheet {plan} {years} {student} path={planSubtitle(plan, data.path ?? null) ?? ''} />
-	{:else if plan === null}
-		<EmptyState
-			size="page"
-			icon={IconBookOpen}
-			title={m.studyplan_empty_title()}
-			body={editable ? m.studyplan_empty_compile_body() : m.studyplan_empty_body()}
-			action={editable ? compile : undefined}
-		/>
-	{:else if data.error}
-		<ErrorState
-			message={errorMessage(data.error)}
-			title={m.studyplan_load_failed()}
-			retrying={data.refreshing}
-			onretry={() => void data.retry()}
-		/>
+	<!-- An open exam brings its own actions: the plan's give way while it is shown. -->
+	{#if canEdit && detail === undefined}
+		<Fab icon={IconPencil} label={m.studyplan_edit_path()} href={editHref} />
+	{/if}
+	{#if printable && plan && !expanded.current && detail === undefined}
+		<Menu label={m.studyplan_print_menu()} items={printouts} placement="top-end">
+			{#snippet trigger(props)}
+				<Fab {...props} secondary={canEdit} icon={IconPrinter} label={m.studyplan_print()} />
+			{/snippet}
+		</Menu>
 	{/if}
 </Page>
 
 <style>
+	.plan {
+		display: grid;
+		gap: var(--page-gap);
+	}
+
 	.years {
 		display: grid;
 		gap: var(--sp-6);

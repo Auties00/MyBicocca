@@ -1,11 +1,11 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import IconArrowRight from '~icons/ph/arrow-right';
 	import IconCheck from '~icons/ph/check-bold';
 	import IconHourglass from '~icons/ph/hourglass-medium';
 	import IconX from '~icons/ph/x-bold';
 	import { formatNumber } from '#lib/format/numbers.ts';
 	import { m } from '#lib/paraglide/messages.js';
-	import { shellHref } from '#lib/shell/nav.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import { resultHref } from '../format.ts';
 	import { summarizeArchive } from '../model.ts';
@@ -74,9 +74,9 @@
 						variant="ghost"
 						size="sm"
 						trailingIcon={IconArrowRight}
-						href={shellHref('profile/exams')}
+						href={resolve('services/study-plan')}
 					>
-						{m.results_go_transcript()}
+						{m.results_open_study_plan()}
 					</Button>
 				</div>
 			</section>

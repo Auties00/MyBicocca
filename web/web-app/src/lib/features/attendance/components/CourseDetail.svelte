@@ -199,7 +199,15 @@
 			retrying={courses.refreshing}
 		/>
 	{/if}
-	{#if course && sources}
+	{#if course && sources && !course.classroom && !sources.lead && sources.registers.length === 0}
+		<!-- Nothing recorded anywhere: alone, the notice is the page. -->
+		<EmptyState
+			size={shell.wide ? 'section' : 'page'}
+			icon={IconCalendarXDuotone}
+			title={m.attendance_no_classroom()}
+			body={m.attendance_easystaff_no_records()}
+		/>
+	{:else if course && sources}
 		<div class="sources">
 			{#if course.classroom}
 				{@render classroomLead(course.classroom)}

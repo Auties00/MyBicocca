@@ -141,6 +141,7 @@
 	"library_go_to_bookings": "Vai alle prenotazioni",
 	"library_offline_write": "Sei offline: potrai prenotare o cancellare quando torni online.",
 	"library_login_page_title": "Verifica la tua email",
+	"library_login_page_subtitle": "Collega Affluences per sincronizzare le prenotazioni in biblioteca",
 	"library_will_send_link": "Ti invieremo un link di accesso alla tua email istituzionale per sincronizzare le tue prenotazioni.",
 	"library_no_password": "Affluences, il servizio di prenotazione delle biblioteche, verifica l’indirizzo con un link: nessuna password.",
 	"library_email_label": "Email istituzionale",

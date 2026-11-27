@@ -105,6 +105,7 @@
 		--border: var(--g6);
 		--border-strong: var(--g8);
 		--hairline: color-mix(in oklch, var(--text) 9%, transparent);
+		--navigation-pane-divider: var(--hairline);
 		--hairline-strong: color-mix(in oklch, var(--text) 16%, transparent);
 		--focus: light-dark(var(--c9), var(--c11));
 		--state-hover: color-mix(in oklch, currentColor 8%, transparent);
@@ -348,6 +349,8 @@
 		);
 		--dur-instant: 80ms;
 		--dur-fast: 140ms;
+		--view-enter-duration: var(--dur-fast);
+		--view-enter-opacity: 0.78;
 		--dur-base: 200ms;
 		--dur-slow: 300ms;
 		--dur-spring: 380ms;
@@ -365,6 +368,8 @@
 		--w-form: 640px;
 		--w-dashboard: 1200px;
 		--gutter: 16px;
+		--page-padding-top: var(--sp-2);
+		--navigation-pane-padding: var(--sp-3);
 		--topbar-h: 56px;
 		--tabbar-h: 64px;
 		--rail-w: 80px;
@@ -385,12 +390,14 @@
 	@media (width >= 600px) {
 		:root {
 			--gutter: 24px;
+			--page-padding-top: var(--sp-4);
 		}
 	}
 
 	@media (width >= 1024px) {
 		:root {
 			--gutter: 40px;
+			--page-padding-top: var(--sp-6);
 		}
 	}
 

@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { fly } from 'svelte/transition';
+	import { untrack } from 'svelte';
 	import IconCalendarDots from '~icons/ph/calendar-dots';
 	import { monthOf } from '#lib/format/days.ts';
 	import { m } from '#lib/paraglide/messages.js';
 	import Button from '#lib/ui/Button.svelte';
 	import Overlay from '#lib/ui/Overlay.svelte';
+	import PageHeader from '#lib/ui/PageHeader.svelte';
 	import SegmentedControl from '#lib/ui/SegmentedControl.svelte';
 	import type { CalendarController } from '../controller.svelte.ts';
 	import { monthName, weekSpan, weekdayDay } from '../format.ts';
@@ -14,11 +15,10 @@
 	import CalendarTimeline from './CalendarTimeline.svelte';
 	import MiniMonth from './MiniMonth.svelte';
 	import MonthGrid from './MonthGrid.svelte';
-	import PullToRefresh from './PullToRefresh.svelte';
+	import PullToRefresh from '#lib/ui/PullToRefresh.svelte';
 	import SyncStatus from './SyncStatus.svelte';
 	import TurnoPrompt from './TurnoPrompt.svelte';
 	import WeekStrip from './WeekStrip.svelte';
-	import { reducedMotion } from '#lib/ui/media.ts';
 
 	interface Props {
 		ctl: CalendarController;
@@ -26,10 +26,14 @@
 
 	let { ctl }: Props = $props();
 
-	const slide = $derived(reducedMotion.current ? 0 : 1);
 	const view = $derived(ctl.view);
 	const date = $derived(ctl.date);
 	const data = $derived(ctl.data);
+	const initialView = untrack(() => view);
+	let switchedView = $state(false);
+	$effect.pre(() => {
+		if (view !== initialView) switchedView = true;
+	});
 
 	let drag = $state(0);
 	let agendaProgress = $state(0);
@@ -75,9 +79,17 @@
 	}
 </script>
 
-<h1 class="sr-only">{m.calendar_title()}</h1>
+<PageHeader title={m.calendar_title()}>
+	{#snippet subtitle()}<span aria-live="polite">{ctl.title}</span>{/snippet}
+</PageHeader>
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="segments" onpointerdown={segmentDown} onclick={segmentClick} onkeydown={segmentKey}>
+<div
+	class={['segments', { week: view === 'week' }]}
+	data-sticky-join={view === 'week' ? 'below' : undefined}
+	onpointerdown={segmentDown}
+	onclick={segmentClick}
+	onkeydown={segmentKey}
+>
 	<SegmentedControl
 		options={segments}
 		value={view}
@@ -89,12 +101,13 @@
 </div>
 <SyncStatus {data} />
 {#if !data.failed}
-	<PullToRefresh onrefresh={data.refresh}>
+	<PullToRefresh
+		onrefresh={data.refresh}
+		refreshing={data.refreshing && data.hydrated}
+		label={m.calendar_refreshing()}
+	>
 		{#key view}
-			<div
-				class="mode"
-				in:fly={{ x: (view === 'month' ? 1 : -1) * 40 * slide, duration: 280 * slide, opacity: 0 }}
-			>
+			<div class={['mode', { 'view-enter': switchedView }]}>
 				{#if view === 'day'}
 					<div class="day-strip">
 						<WeekStrip
@@ -140,14 +153,13 @@
 		{/key}
 	</PullToRefresh>
 {/if}
-<!-- Floating over the timeline's foot, above the tab bar: arriving late, they move nothing. -->
+<!-- Floating over the timeline's foot, above the tab bar. -->
 <div class="dock">
 	{#if !ctl.todayOnScreen && !data.failed}
 		<div
 			class="fab"
 			style:opacity={view === 'month' ? 1 - agendaProgress : 1}
 			style:--fab-scale={view === 'month' ? 1 - agendaProgress * 0.2 : 1}
-			transition:fly={{ y: 16, duration: 200 * slide }}
 		>
 			<Button variant="solid" size="lg" icon={IconCalendarDots} onclick={() => ctl.goTo(ctl.today)}>
 				{m.calendar_go_to_today()}
@@ -156,7 +168,7 @@
 	{/if}
 	{#if ctl.prompt && !data.failed}
 		{@const course = ctl.prompt}
-		<div class="prompt" transition:fly={{ y: 16, duration: 200 * slide }}>
+		<div class="prompt">
 			<TurnoPrompt
 				{course}
 				compact
@@ -166,7 +178,12 @@
 	{/if}
 </div>
 
-<Overlay bind:open={ctl.picking} title={m.calendar_pick_day()} size="sm">
+<Overlay
+	bind:open={ctl.picking}
+	title={m.calendar_pick_day()}
+	size="sm"
+	instantEntrance={view === 'week'}
+>
 	{#if ctl.picking}
 		<MiniMonth
 			selected={date}
@@ -184,8 +201,16 @@
 
 <style>
 	.segments {
+		position: relative;
+		z-index: 1;
 		flex: none;
-		padding: var(--sp-3) var(--sp-4);
+		padding: var(--page-padding-top) var(--gutter) var(--sp-3);
+		background: var(--calendar-bg, var(--bg));
+	}
+
+	.week {
+		--sticky-join-bg: var(--calendar-bg, var(--bg));
+		padding-block-end: 0;
 	}
 
 	.dock {
@@ -225,7 +250,7 @@
 	.month {
 		display: grid;
 		gap: var(--sp-5);
-		padding: var(--sp-1) 14px 0;
+		padding: var(--sp-1) var(--gutter) 0;
 	}
 
 	.fab {

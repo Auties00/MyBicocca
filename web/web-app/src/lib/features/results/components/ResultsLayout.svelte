@@ -112,18 +112,16 @@
 {/snippet}
 
 <Page width="dashboard">
-	<div class={['head', { wide: twoPanes }]}>
-		<PageHeader
-			{title}
-			{subtitle}
-			eyebrow={alone ? (open?.code ?? undefined) : undefined}
-			eyebrowCode
-			{back}
-			loading={headerLoading}
-			meta={offline && loaded ? staleness : undefined}
-			sans={alone && open !== undefined}
-		/>
-	</div>
+	<PageHeader
+		{title}
+		{subtitle}
+		eyebrow={alone ? (open?.code ?? undefined) : undefined}
+		eyebrowCode
+		{back}
+		loading={headerLoading}
+		meta={offline && loaded ? staleness : undefined}
+		sans={alone && open !== undefined}
+	/>
 	{#if query.error && loaded && !offline}
 		<ErrorState
 			variant="stale"
@@ -184,14 +182,6 @@
 	.updated {
 		color: var(--text-muted);
 		font: var(--type-meta);
-	}
-
-	/*
-	 * Beside the list a result opens without moving the header: it gets its own view-transition
-	 * name, so only the detail pane takes part in the page transition.
-	 */
-	.head.wide {
-		view-transition-name: results-head;
 	}
 
 	.list {

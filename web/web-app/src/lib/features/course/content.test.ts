@@ -240,7 +240,7 @@ describe('moduleTarget', () => {
 });
 
 describe('typeCounts', () => {
-	it('keeps the three most frequent kinds, subsections included', () => {
+	it('summarizes the three most frequent kinds in the section itself', () => {
 		const video = () => module({ modName: 'kalvidres', contents: [] });
 		const child = section([video(), video()], { component: 'mod_subsection', itemId: 9 });
 		const parent = section([
@@ -253,9 +253,9 @@ describe('typeCounts', () => {
 		]);
 		const [card] = courseOutline([parent, child], 'it');
 		expect(typeCounts(card.blocks)).toEqual([
-			{ kind: 'video', count: 3 },
 			{ kind: 'folder', count: 2 },
-			{ kind: 'pdf', count: 1 }
+			{ kind: 'pdf', count: 1 },
+			{ kind: 'quiz', count: 1 }
 		]);
 	});
 });

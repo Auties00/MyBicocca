@@ -11,6 +11,7 @@
 	import { shellHref } from '#lib/shell/nav.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import ListDetail from '#lib/ui/ListDetail.svelte';
+	import Fab from '#lib/ui/Fab.svelte';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader, { type HeaderSkeleton } from '#lib/ui/PageHeader.svelte';
 	import Skeleton from '#lib/ui/Skeleton.svelte';
@@ -20,7 +21,7 @@
 	import { attendanceQuery } from '../queries.ts';
 	import { setAttendanceShell } from '../shell.ts';
 	import CourseList from './CourseList.svelte';
-	import { compact } from '#lib/ui/media.ts';
+	import { expanded } from '#lib/ui/media.ts';
 
 	interface Props {
 		/** The open level: a course, or the check-in (also the default pane beside the list). */
@@ -70,7 +71,6 @@
 	const level = $derived<'list' | 'course' | 'check-in'>(
 		slug !== undefined ? 'course' : page.route.id === CHECK_IN ? 'check-in' : 'list'
 	);
-	const docked = $derived(compact.current && level === 'list');
 
 	const listHref = resolve('services/attendance');
 	const checkInHref = resolve('services/attendance/check-in');
@@ -98,7 +98,7 @@
 				subtitle: count,
 				back: { href: shellHref('services'), label: m.shell_services() },
 				action:
-					checkInOpen || compact.current
+					checkInOpen || !expanded.current
 						? undefined
 						: {
 								href: checkInHref,
@@ -180,7 +180,7 @@
 {/snippet}
 
 {#snippet list()}
-	<div class={['list', { docked }]}>
+	<div class="list">
 		<CourseList {courses} selected={wide ? slug : undefined} dense={wide} />
 	</div>
 {/snippet}
@@ -207,35 +207,13 @@
 		items={courses.data?.map((item) => courseHref(item.slug))}
 		closeHref={listHref}
 	/>
-	{#if docked}
-		<div class="dock">
-			<Button variant="solid" size="lg" full icon={IconQrCode} href={checkInHref}>
-				{m.attendance_check_in()}
-			</Button>
-		</div>
+	{#if level === 'list' && !wide}
+		<Fab icon={IconQrCode} label={m.attendance_check_in()} href={checkInHref} />
 	{/if}
 </Page>
 
 <style>
 	.list {
 		max-inline-size: var(--w-reading);
-	}
-
-	/* The last rows scroll clear of the docked button. */
-	.docked {
-		padding-block-end: calc(var(--control-h-lg) + var(--sp-4));
-	}
-
-	/*
-	 * Above the tab bar, where the thumb is: Android's footer button. Fixed rather than following
-	 * the list, so it stands still while the list loads in.
-	 */
-	.dock {
-		position: fixed;
-		inset-inline: var(--gutter);
-		inset-block-end: calc(var(--shell-inset-bottom) + var(--sp-3));
-		z-index: var(--z-sticky);
-		border-radius: var(--r-sm);
-		box-shadow: var(--elev-2);
 	}
 </style>

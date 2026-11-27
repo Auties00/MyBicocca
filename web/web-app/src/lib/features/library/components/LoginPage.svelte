@@ -158,6 +158,7 @@
 <Page width="reading">
 	<PageHeader
 		title={m.library_login_page_title()}
+		subtitle={m.library_login_page_subtitle()}
 		back={{ href: homeHref(), label: m.library_title() }}
 	/>
 

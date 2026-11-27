@@ -1,20 +1,18 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import IconArrowClockwise from '~icons/ph/arrow-clockwise';
 	import IconBooks from '~icons/ph/books-duotone';
 	import IconCalculator from '~icons/ph/calculator';
 	import { errorMessage } from '#lib/data/errorMessage.ts';
 	import { query } from '#lib/data/query.svelte.ts';
 	import { session } from '#lib/data/session.svelte.ts';
 	import { formatAverage } from '#lib/format/grades.ts';
+	import { careerTitle } from '#lib/format/names.ts';
 	import { formatCredits } from '#lib/format/numbers.ts';
 	import { m } from '#lib/paraglide/messages.js';
-	import { careerTitle } from '#lib/format/names.ts';
 	import Button from '#lib/ui/Button.svelte';
 	import Card from '#lib/ui/Card.svelte';
 	import EmptyState from '#lib/ui/EmptyState.svelte';
 	import ErrorState from '#lib/ui/ErrorState.svelte';
-	import IconButton from '#lib/ui/IconButton.svelte';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
 	import SectionHeader from '#lib/ui/SectionHeader.svelte';
@@ -53,6 +51,18 @@
 	});
 
 	const scope = $derived(session.current);
+	const subtitle = $derived.by(() => {
+		if (!scope) return undefined;
+		const programme = careerTitle(scope.career);
+		switch (scope.career.level) {
+			case 'bachelor':
+				return m.profile_subtitle_bachelor({ programme });
+			case 'master':
+				return m.profile_subtitle_master({ programme });
+			default:
+				return programme;
+		}
+	});
 	const summary = $derived(libretto.summary);
 	const rollup = $derived(libretto.rollup);
 	const points = $derived(libretto.plan && trendPoints(libretto.plan));
@@ -78,17 +88,7 @@
 </svelte:head>
 
 <Page width="dashboard">
-	<PageHeader title={m.profile_title()} subtitle={scope ? careerTitle(scope.career) : undefined}>
-		{#snippet actions()}
-			<IconButton
-				icon={IconArrowClockwise}
-				label={m.common_refresh()}
-				variant="outline"
-				loading={libretto.refreshing}
-				onclick={libretto.refresh}
-			/>
-		{/snippet}
-	</PageHeader>
+	<PageHeader title={m.profile_title()} {subtitle} />
 
 	{#if libretto.staleError}
 		<ErrorState
@@ -298,6 +298,11 @@
 		grid-area: years;
 	}
 
+	.years :global(.section-header) {
+		flex-wrap: wrap;
+		align-items: center;
+	}
+
 	section {
 		display: grid;
 		gap: var(--sp-4);
@@ -337,7 +342,7 @@
 	}
 
 	/*
-	 * Tablets and up: the card and the four tiles form one band under the page title. The tiles
+	 * Tablets and up: the card and the four tiles form one band. The tiles
 	 * stretch to the card's height where it is the taller; otherwise the card centres on them.
 	 */
 	@container board (width >= 640px) {

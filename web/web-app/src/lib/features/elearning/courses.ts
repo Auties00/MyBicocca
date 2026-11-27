@@ -1,6 +1,6 @@
 import type { MoodleEnrolledCourse } from '@mybicocca/data-api/elearning';
 import type { CourseCareers, CareerLike } from './careers.ts';
-import { parseCourseCode, periodLabel, type CourseCode } from './courseCode.ts';
+import { parseCourseCode, type CourseCode } from './courseCode.ts';
 import { stripMlang } from './mlang.ts';
 
 /** A Moodle course the student is enrolled in, as the course list shows it. */
@@ -261,33 +261,4 @@ export function filterCourses(
 		default:
 			return { filter, options, groups };
 	}
-}
-
-/** Course groups of one academic year, or of none (`year` null: cross-year spaces). */
-export interface PeriodSection {
-	/** The September the year starts. */
-	year: number | null;
-	/** "2025/26"; null for cross-year spaces. */
-	label: string | null;
-	groups: CourseGroup[];
-}
-
-/**
- * Splits the list by its latest editions' academic year, newest first, cross-year spaces last;
- * each section keeps the list's order.
- */
-export function sectionsByPeriod(groups: readonly CourseGroup[]): PeriodSection[] {
-	const sections = new Map<number | null, PeriodSection>();
-	for (const group of groups) {
-		const { code } = latestEdition(group);
-		const section = sections.get(code.academicYear);
-		if (section) section.groups.push(group);
-		else
-			sections.set(code.academicYear, {
-				year: code.academicYear,
-				label: periodLabel({ ...code, stream: null }),
-				groups: [group]
-			});
-	}
-	return [...sections.values()].toSorted((a, b) => (b.year ?? NO_YEAR) - (a.year ?? NO_YEAR));
 }

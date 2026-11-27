@@ -127,8 +127,6 @@
 		step?.kind === 'starting' || (autostart && (step?.kind === 'ready' || loading))
 	);
 
-	/** +1 moving on, -1 going back: the side the next page slides in from. */
-	let direction = $state(1);
 	let content = $state<HTMLElement>();
 
 	const working = $derived(compilation?.working ?? null);
@@ -181,7 +179,6 @@
 	async function begin() {
 		const current = compilation;
 		if (!current) return;
-		direction = 1;
 		await current.start();
 		if (current.step.kind === 'page') await settle();
 	}
@@ -204,7 +201,6 @@
 	async function advance() {
 		const current = compilation;
 		if (!current) return;
-		direction = 1;
 		const result = await current.next();
 		if (result === 'missing') {
 			await tick();
@@ -217,7 +213,6 @@
 	async function retreat(index?: number) {
 		const current = compilation;
 		if (!current || current.working) return;
-		direction = -1;
 		const before = current.step;
 		await current.back(index);
 		if (current.step !== before) await settle();
@@ -334,12 +329,7 @@
 				<div class="pages">
 					{#if step.kind === 'page'}
 						{#key step.page.id}
-							<div
-								class="page"
-								style:--from={direction}
-								inert={working !== null}
-								aria-busy={working !== null}
-							>
+							<div class="page view-enter" inert={working !== null} aria-busy={working !== null}>
 								<h2 class="sr-only" tabindex="-1" data-step-heading>
 									{m.questionnaires_page_number({ number: step.index + 1 })}
 								</h2>
@@ -364,7 +354,7 @@
 							</div>
 						{/key}
 					{:else}
-						<div class="page" style:--from={direction}>
+						<div class="page view-enter">
 							<SummaryStep
 								complete={step.complete}
 								anonymous={compilation.target.anonymous}
@@ -475,7 +465,7 @@
 	.layout {
 		display: grid;
 		grid-template-columns: minmax(0, var(--w-reading));
-		justify-content: center;
+		justify-content: start;
 		align-items: start;
 		gap: var(--sp-8);
 	}
@@ -513,19 +503,9 @@
 		gap: var(--sp-4);
 	}
 
-	/*
-	 * Clipped at the gutter: a page sliding in would otherwise overhang the screen's edge, and a
-	 * phone would scroll sideways while it does.
-	 */
-	.pages {
-		overflow: clip;
-		overflow-clip-margin: var(--gutter);
-	}
-
 	.page {
 		display: grid;
 		gap: var(--sp-4);
-		animation: arrive var(--dur-slow) var(--ease-out) both;
 		transition: opacity var(--dur-fast) var(--ease-out);
 	}
 
@@ -546,18 +526,5 @@
 		margin-block-end: var(--sp-1);
 		font: var(--type-title-m);
 		letter-spacing: var(--track-title-m);
-	}
-
-	@keyframes arrive {
-		from {
-			opacity: 0;
-			transform: translateX(calc(var(--from) * 24px));
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.page {
-			animation: none;
-		}
 	}
 </style>

@@ -2,7 +2,7 @@ import { resolve } from '$app/paths';
 import type { ResolvedPathname } from '$app/types';
 import { academicYearLabel } from '#lib/data/academicYear.ts';
 import { calendarDays, formatDate, type DateStyle } from '#lib/format/dates.ts';
-import { sentenceCase } from '#lib/format/names.ts';
+import { careerTitle, sentenceCase } from '#lib/format/names.ts';
 import { m } from '#lib/paraglide/messages.js';
 import type { Status } from '#lib/ui/types.ts';
 import type { ItemHeading } from './context.ts';
@@ -52,7 +52,7 @@ export function invoiceHeading(invoice: Invoice): ItemHeading {
 export function iseeHeading(year: IseeYear): ItemHeading {
 	return {
 		title: m.payments_academic_year({ year: academicYearLabel(year.year) }),
-		subtitle: year.course ?? undefined
+		subtitle: year.course === null ? undefined : careerTitle({ description: year.course })
 	};
 }
 

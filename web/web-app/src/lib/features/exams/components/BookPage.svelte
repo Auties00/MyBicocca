@@ -188,6 +188,7 @@
 		{back}
 		loading={pending && { eyebrow: false, title: single ? 2 : 1 }}
 		meta={!single && (switchable || course) ? controls : undefined}
+		pinMeta
 	/>
 
 	{#if calls.error && calls.data}
@@ -276,6 +277,7 @@
 									/>
 								{:else if course && !focused}
 									<EmptyState
+										size={wide ? 'section' : 'page'}
 										icon={IconCalendarX}
 										title={m.exams_no_course_calls_title({ course })}
 										body={m.exams_no_calls_body()}
@@ -349,6 +351,7 @@
 		</div>
 	{:else if alreadyBooked}
 		<EmptyState
+			size="page"
 			icon={IconCalendarCheck}
 			title={m.exams_already_booked()}
 			body={alreadyBooked.at ? longWhen(alreadyBooked.at, alreadyBooked.timed) : undefined}
@@ -361,6 +364,7 @@
 		</EmptyState>
 	{:else}
 		<EmptyState
+			size="page"
 			icon={IconCalendarX}
 			title={m.exams_call_missing_title()}
 			body={m.exams_call_missing_body()}

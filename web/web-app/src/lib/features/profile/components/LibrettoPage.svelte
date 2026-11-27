@@ -16,6 +16,7 @@
 	import ListDetail from '#lib/ui/ListDetail.svelte';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
+	import PullToRefresh from '#lib/ui/PullToRefresh.svelte';
 	import SegmentedControl from '#lib/ui/SegmentedControl.svelte';
 	import Skeleton from '#lib/ui/Skeleton.svelte';
 	import { setCourseFrame } from '../courseFrame.ts';
@@ -197,7 +198,10 @@
 
 {#snippet list()}
 	<div class="libretto" bind:this={listRoot}>
-		<div class={['toolbar', { docked, idle: libretto.failed || groups?.length === 0 }]}>
+		<div
+			class={['toolbar', { docked, idle: libretto.failed || groups?.length === 0 }]}
+			data-sticky-join
+		>
 			<SegmentedControl
 				label={m.profile_view_label()}
 				full
@@ -220,44 +224,48 @@
 	{/if}
 </svelte:head>
 
-<Page width="dashboard">
-	{#if docked || detail === undefined}
-		<PageHeader
-			title={m.profile_libretto_title()}
-			subtitle={subtitle ?? ''}
-			loading={subtitle === undefined && !libretto.statsFailed ? { eyebrow: false } : false}
-			back={{ href: resolve('profile'), label: m.profile_title() }}
-		>
-			{#snippet actions()}
-				<IconButton
-					icon={IconArrowClockwise}
-					label={m.common_refresh()}
-					variant="outline"
-					loading={libretto.refreshing}
-					onclick={libretto.refresh}
-				/>
-			{/snippet}
-		</PageHeader>
-	{/if}
-	<div bind:clientWidth={width}>
-		{#if detail || !table}
-			<ListDetail
-				{list}
-				{detail}
-				listWidth={380}
-				detailMin={448}
-				listLabel={m.profile_libretto_title()}
-				detailLabel={m.profile_course_label()}
-				current={selected === undefined ? undefined : courseHref({ id: selected }, view)}
-				items={order}
-				closeHref={listHref}
-				bind:twoPanes
+{#snippet refresh()}
+	<IconButton
+		icon={IconArrowClockwise}
+		label={m.common_refresh()}
+		variant="outline"
+		loading={libretto.refreshing}
+		onclick={libretto.refresh}
+	/>
+{/snippet}
+
+<!-- Below 1024 px a pull refreshes, in place of the header's button. -->
+<PullToRefresh onrefresh={libretto.refresh} refreshing={libretto.refreshing}>
+	<Page width="dashboard">
+		{#if docked || detail === undefined}
+			<PageHeader
+				title={m.profile_libretto_title()}
+				subtitle={subtitle ?? ''}
+				loading={subtitle === undefined && !libretto.statsFailed ? { eyebrow: false } : false}
+				back={{ href: resolve('profile'), label: m.profile_title() }}
+				actions={expanded.current ? refresh : undefined}
 			/>
-		{:else}
-			<div class="overview" bind:this={overview}>{@render body(true)}</div>
 		{/if}
-	</div>
-</Page>
+		<div bind:clientWidth={width}>
+			{#if detail || !table}
+				<ListDetail
+					{list}
+					{detail}
+					listWidth={380}
+					detailMin={448}
+					listLabel={m.profile_libretto_title()}
+					detailLabel={m.profile_course_label()}
+					current={selected === undefined ? undefined : courseHref({ id: selected }, view)}
+					items={order}
+					closeHref={listHref}
+					bind:twoPanes
+				/>
+			{:else}
+				<div class="overview" bind:this={overview}>{@render body(true)}</div>
+			{/if}
+		</div>
+	</Page>
+</PullToRefresh>
 
 <style>
 	.libretto {

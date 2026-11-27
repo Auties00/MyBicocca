@@ -266,7 +266,6 @@
 	.when {
 		color: var(--text-muted);
 		font: var(--type-meta);
-		font-style: italic;
 	}
 
 	.to {
@@ -283,7 +282,6 @@
 
 	.deleted {
 		color: var(--text-muted);
-		font-style: italic;
 	}
 
 	.files {

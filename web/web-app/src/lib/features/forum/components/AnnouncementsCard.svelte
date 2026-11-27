@@ -316,7 +316,6 @@
 	.by {
 		color: var(--text-muted);
 		font: var(--type-meta);
-		font-style: italic;
 	}
 
 	.empty {
@@ -324,7 +323,6 @@
 		border-radius: var(--r-lg);
 		background: color-mix(in oklab, var(--surface) 55%, transparent);
 		color: var(--text-muted);
-		font-style: italic;
 	}
 
 	.problem {

@@ -19,6 +19,7 @@
 	import { discussionId as idOf, PENDING_LINE } from '../forum.ts';
 	import { getForum } from '../forumState.svelte.ts';
 	import PostTime from './PostTime.svelte';
+	import { expanded } from '#lib/ui/media.ts';
 
 	interface Props {
 		discussionId: number;
@@ -89,13 +90,18 @@
 	{/if}
 {/snippet}
 
-{#snippet details()}
+{#snippet startedBy()}
 	{#if starter}
-		<p class="byline">
-			{m.forum_thread_started({ name: starter.name })}
-			<PostTime at={starter.at} />
-			· {replies === 0 ? m.forum_no_replies() : m.forum_reply_count({ count: replies })}
-		</p>
+		{m.forum_thread_started({ name: starter.name })}
+		<PostTime at={starter.at} />
+		· {replies === 0 ? m.forum_no_replies() : m.forum_reply_count({ count: replies })}
+	{/if}
+{/snippet}
+
+<!-- On one pane the byline is the page header's subtitle. -->
+{#snippet details(byline: boolean)}
+	{#if starter}
+		{#if byline}<p class="byline">{@render startedBy()}</p>{/if}
 		<div class="tools">
 			{#if summary?.canFavourite}
 				<IconButton
@@ -119,13 +125,15 @@
 					{following ? m.forum_unfollow() : m.forum_follow()}
 				</Button>
 			{/if}
-			<IconButton
-				icon={IconArrowClockwise}
-				label={m.forum_refresh_thread()}
-				variant="outline"
-				loading={refreshing}
-				onclick={onrefresh}
-			/>
+			{#if expanded.current}
+				<IconButton
+					icon={IconArrowClockwise}
+					label={m.forum_refresh_thread()}
+					variant="outline"
+					loading={refreshing}
+					onclick={onrefresh}
+				/>
+			{/if}
 			{#if canReply}
 				<span class="spacer"></span>
 				<Button
@@ -146,7 +154,9 @@
 		{/if}
 	{:else}
 		<!-- In the byline's and the tools' own boxes, so the lines take their final height. -->
-		<p class="byline" aria-hidden="true"><Skeleton variant="text" width="44%" /></p>
+		{#if byline}
+			<p class="byline" aria-hidden="true"><Skeleton variant="text" width="44%" /></p>
+		{/if}
 		<div class="tools" aria-hidden="true">
 			<Skeleton width="220px" height="var(--control-h)" radius="var(--r-pill)" />
 		</div>
@@ -163,7 +173,7 @@
 		{#if summary?.pinned || locked || !gone}
 			<div class="wide-meta">
 				{@render flags()}
-				{#if !gone}{@render details()}{/if}
+				{#if !gone}{@render details(true)}{/if}
 			</div>
 		{/if}
 	</DetailHeader>
@@ -171,12 +181,14 @@
 	<PageHeader
 		eyebrow={forum.name ?? PENDING_LINE}
 		title={subject}
+		subtitle={starter && !gone ? startedBy : undefined}
+		loading={starter === undefined && !gone ? { subtitle: true } : false}
 		back={{ href: forumHref, label: forum.name ?? m.forum_back() }}
 	>
 		{#snippet meta()}
 			<div class="narrow-meta">
 				{@render flags()}
-				{#if !gone}{@render details()}{/if}
+				{#if !gone}{@render details(false)}{/if}
 			</div>
 		{/snippet}
 	</PageHeader>

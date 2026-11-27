@@ -22,10 +22,12 @@
 	import Button from '#lib/ui/Button.svelte';
 	import DetailHeader from '#lib/ui/DetailHeader.svelte';
 	import EmptyState from '#lib/ui/EmptyState.svelte';
+	import Fab from '#lib/ui/Fab.svelte';
 	import ErrorState from '#lib/ui/ErrorState.svelte';
 	import Grade from '#lib/ui/Grade.svelte';
 	import ListGroup from '#lib/ui/ListGroup.svelte';
 	import ListRow from '#lib/ui/ListRow.svelte';
+	import { expanded } from '#lib/ui/media.ts';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
 	import SectionHeader from '#lib/ui/SectionHeader.svelte';
 	import Skeleton from '#lib/ui/Skeleton.svelte';
@@ -73,10 +75,9 @@
 	const bookable = $derived(live.data?.bookableCallsNumber ?? row?.bookableCalls ?? 0);
 	const title = $derived(row ? italianTitleCase(row.name) : m.profile_course_label());
 	const view = $derived(page.url.searchParams.get('view') === 'credits' ? '?view=credits' : '');
-	const back = $derived({
-		href: resolve(`profile/exams${view}`),
-		label: m.profile_libretto_title()
-	});
+	const back = $derived(
+		frame.back ?? { href: resolve(`profile/exams${view}`), label: m.profile_libretto_title() }
+	);
 	function attemptTitle(attempt: Attempt): string {
 		if (attempt.callDate) return formatDate(attempt.callDate, 'long');
 		return attempt.session ?? m.profile_course_attempt();
@@ -111,7 +112,7 @@
 			body={m.profile_course_not_found_body()}
 		>
 			{#snippet action()}
-				<Button href={back.href}>{m.profile_libretto_open()}</Button>
+				<Button href={back.href}>{frame.back ? back.label : m.profile_libretto_open()}</Button>
 			{/snippet}
 		</EmptyState>
 	{:else if !ready || !row}
@@ -177,8 +178,9 @@
 						{/each}
 					</ListGroup>
 				{:else if !passed}
+					<!-- On a page of its own, with the actions in floating buttons, it is all the page holds. -->
 					<EmptyState
-						size="panel"
+						size={frame.docked || expanded.current ? 'panel' : 'page'}
 						icon={IconScroll}
 						title={m.profile_course_no_exams_title()}
 						body={m.profile_course_no_exams_body()}
@@ -186,7 +188,7 @@
 				{/if}
 			</section>
 
-			{#if !passed}
+			{#if !passed && expanded.current}
 				<div class="cta">
 					{#if bookable > 0}
 						<Button
@@ -213,6 +215,20 @@
 						{m.profile_course_simulate()}
 					</Button>
 				</div>
+			{:else if !passed}
+				{#if bookable > 0}
+					<Fab
+						icon={IconCalendarCheck}
+						label={m.profile_course_go_to_appelli()}
+						href={bookHref({ course: courseKey(row) })}
+					/>
+				{/if}
+				<Fab
+					secondary={bookable > 0}
+					icon={IconCalculator}
+					label={m.profile_course_simulate_short()}
+					href={resolve(`profile/simulator?exam=${row.id}`)}
+				/>
 			{/if}
 		</div>
 	{/if}
@@ -251,6 +267,14 @@
 	{/if}
 {/snippet}
 
+{#snippet factsLine()}
+	{#if row}
+		{formatCredits(row.credits)}
+		{#if row.academicYear !== null}· {academicYearLabel(row.academicYear)}{/if}
+		{#if row.code}· <span class="code" translate="no">{row.code}</span>{/if}
+	{/if}
+{/snippet}
+
 {#if frame.docked}
 	<article class="detail pane">
 		<DetailHeader
@@ -263,14 +287,13 @@
 		{@render body()}
 	</article>
 {:else}
-	<!-- While the rows load, bars and the facts' skeleton hold the header's size. -->
 	<div class="detail">
 		<PageHeader
 			title={loadingRow ? '' : title}
 			eyebrow={row ? yearTitle(row.year) : undefined}
-			loading={loadingRow ? { title: 1, subtitle: false } : false}
+			subtitle={row ? factsLine : undefined}
+			loading={loadingRow ? { title: 1 } : false}
 			{back}
-			meta={row || loadingRow ? facts : undefined}
 		/>
 		{@render body()}
 	</div>
@@ -282,11 +305,9 @@
 		gap: var(--sp-6);
 		inline-size: 100%;
 		max-inline-size: var(--w-reading);
-		margin-inline: auto;
 	}
 
 	.pane {
-		margin-inline: 0;
 		padding-block: var(--sp-2) var(--sp-8);
 	}
 
@@ -308,7 +329,7 @@
 		font-variant-numeric: tabular-nums;
 	}
 
-	.facts .code {
+	.code {
 		font-variant-numeric: tabular-nums slashed-zero;
 		letter-spacing: 0.02em;
 	}

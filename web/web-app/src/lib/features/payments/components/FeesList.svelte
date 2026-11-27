@@ -114,7 +114,6 @@
 	.settled-title {
 		font-family: var(--font-display);
 		font-size: 1.1875rem;
-		font-style: italic;
 		line-height: 1.25;
 	}
 

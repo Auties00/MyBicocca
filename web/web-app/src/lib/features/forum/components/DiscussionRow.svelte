@@ -216,7 +216,6 @@
 		overflow: hidden;
 		color: var(--text-muted);
 		font: var(--type-meta);
-		font-style: italic;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}

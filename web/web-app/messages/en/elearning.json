@@ -2,30 +2,14 @@
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"elearning_title": "E-learning",
 	"elearning_add_course": "Add course",
-	"elearning_updated": "updated {time}",
-	"elearning_course_count": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} course",
-				"countPlural=other": "{count} courses"
-			}
-		}
-	],
 	"elearning_filter_label": "Filter courses",
 	"elearning_filter_all": "All",
 	"elearning_filter_favourites": "Favourites",
-	"elearning_filter_year": "Year {year}",
+	"elearning_filter_year": "Year\u00a0{year}",
 	"elearning_course_level_bachelor": "Bachelor’s",
 	"elearning_course_level_master": "Master’s",
 	"elearning_career_chip": "{label} {year}",
-	"elearning_period_section": "Academic year {year}",
-	"elearning_period_current": "Current",
 	"elearning_period_none": "Cross-year",
-	"elearning_tab_year_stream": "Year {year} · T{stream}",
-	"elearning_period_none_section": "Cross-year spaces",
-	"elearning_period_none_hint": "Announcements, tutoring and other spaces with no academic year.",
 	"elearning_editions_label": "Editions of {name}",
 	"elearning_add_favorite": "Add to favourites",
 	"elearning_remove_favorite": "Remove from favourites",
@@ -55,7 +39,6 @@
 	"elearning_deadlines_failed": "The course deadlines couldn’t be loaded.",
 	"elearning_deadlines_stale": "Deadlines not updated: these were loaded {time}.",
 	"elearning_deadlines_stale_now": "Deadlines not updated: these were loaded moments ago.",
-	"elearning_pull_to_refresh": "Release to refresh",
 	"elearning_catalog_title": "Add course",
 	"elearning_select_area": "Select a teaching area",
 	"elearning_catalog_root": "Catalogue",
