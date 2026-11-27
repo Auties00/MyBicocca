@@ -1,0 +1,29 @@
+{
+  "type": "design",
+  "designSystems": [],
+  "primaryDesignSystem": null,
+  "assets": {
+    "MyBicocca Beacons M3 Prototype": {
+      "versions": [
+        {
+          "path": "MyBicocca Beacons Prototype.html",
+          "createdAt": "2026-11-21T14:15:38.554Z",
+          "status": "needs-review",
+          "subtitle": "List/Grid + 3D Hero Transition + 4 MyBicocca Layouts"
+        }
+      ]
+    },
+    "BLE Beacon 3D Model": {
+      "versions": [
+        {
+          "path": "Beacon 3D Model.html",
+          "createdAt": "2026-11-21T14:15:38.595Z",
+          "status": "needs-review",
+          "subtitle": "Three.js GLB / OBJ + Lottie JSON Exporter"
+        }
+      ]
+    }
+  },
+  "createdAt": "2026-11-21T14:15:38.555Z",
+  "updatedAt": "2026-11-21T14:15:38.595Z"
+}

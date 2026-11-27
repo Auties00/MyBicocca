@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BLE Beacon 3D Model — GLB / OBJ / Lottie Exporter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+      "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+      "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+      "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+    },
+    "integrity": {
+      "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+      "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+      "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+      "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+      "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+    }
+  }
+  </script>
+  <style>
+    :root {
+      --primary: #D81648;
+      --on-primary: #FFFFFF;
+      --primary-container: #FFD9DF;
+      --on-primary-container: #400014;
+      --surface: #FFFBFB;
+      --surface-container: #F6EEEF;
+      --surface-container-high: #F0E8E9;
+      --on-surface: #211A1B;
+      --on-surface-variant: #5C4B4E;
+      --outline-variant: #DFCDCF;
+    }
+    [data-theme="dark"] {
+      --primary: #D81648;
+      --on-primary: #FFFFFF;
+      --primary-container: #7A1530;
+      --on-primary-container: #FFD9DF;
+      --surface: #0B0808;
+      --surface-container: #1A0D10;
+      --surface-container-high: #261317;
+      --on-surface: #F3E7E9;
+      --on-surface-variant: #B89398;
+      --outline-variant: #3A1B22;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: var(--surface-container);
+      color: var(--on-surface);
+      overflow: hidden;
+    }
+    three-d-stage:not(:defined) { visibility: hidden; }
+    three-d-stage {
+      width: 100vw;
+      height: 100vh;
+    }
+    .hud {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 328px;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+      background: var(--surface);
+      border: 1px solid var(--outline-variant);
+      border-radius: 24px;
+      padding: 16px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14);
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      z-index: 20;
+    }
+    .hud-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .brand {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand span { color: #D81648; }
+    .chip-link {
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--on-primary-container);
+      background: var(--primary-container);
+      padding: 6px 11px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .field-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--on-surface-variant);
+      margin-bottom: 5px;
+      display: block;
+    }
+    .row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--outline-variant);
+      background: var(--surface-container);
+      color: var(--on-surface);
+      border-radius: 12px;
+      padding: 8px 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      font-size: 14px;
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: var(--primary);
+    }
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 4px;
+      background: var(--surface-container);
+      padding: 4px;
+      border-radius: 14px;
+      border: 1px solid var(--outline-variant);
+    }
+    .seg button, .btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--on-surface-variant);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 6px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, transform 0.1s;
+    }
+    .seg button.active {
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+    }
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .btn {
+      background: var(--surface-container-high);
+      color: var(--on-surface);
+      padding: 9px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .btn:hover { filter: brightness(0.97); }
+    .btn:active { transform: scale(0.98); }
+    .btn.primary {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+    .btn.tonal {
+      background: var(--primary-container);
+      color: var(--on-primary-container);
+    }
+    .ref-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      background: var(--surface-container);
+      border-radius: 14px;
+    }
+    .ref-row img {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .ref-meta {
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--on-surface-variant);
+    }
+    .ref-meta strong { color: var(--on-surface); display: block; }
+    .swap-note {
+      font-size: 11px;
+      color: var(--on-surface-variant);
+      line-height: 1.4;
+      background: var(--surface-container);
+      padding: 8px 10px;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <three-d-stage id="stage" name="ble_beacon_b2" background="#f6eeef"></three-d-stage>
+
+  <aside class="hud" aria-label="3D Beacon Model Controls">
+    <div class="hud-header">
+      <div class="brand">My<span>Bicocca</span> · 3D Beacon</div>
+      <a class="chip-link" href="MyBicocca%20Beacons%20Prototype.html">App Prototype →</a>
+    </div>
+
+    <div class="ref-row">
+      <img src="beacon-ref.jpg" alt="Physical BLE beacon photo">
+      <div class="ref-meta">
+        <strong>Confidex Viking Slim (.blend)</strong>
+        32 × 74.6 × 14.4 mm · Y-up meters · Programmatic tape &amp; label
+      </div>
+    </div>
+
+    <div>
+      <label class="field-label" for="labelInput">Beacon Label (Minimal Side Padding)</label>
+      <div class="row">
+        <input id="labelInput" type="text" value="B2" maxlength="8" placeholder="B2">
+        <button id="themeBtn" class="btn" type="button" title="Toggle Light/Dark">Dark</button>
+      </div>
+    </div>
+
+    <div>
+      <span class="field-label">Label Visual Style</span>
+      <div class="seg" id="styleSeg">
+        <button type="button" data-style="tape">Masking Tape</button>
+        <button type="button" data-style="printed" class="active">Printed</button>
+        <button type="button" data-style="tonal">Tonal Band</button>
+      </div>
+    </div>
+
+    <div>
+      <span class="field-label">MyBicocca Palette</span>
+      <div class="seg" id="paletteSeg">
+        <button type="button" data-palette="default" class="active">Bicocca</button>
+        <button type="button" data-palette="oceano">Oceano</button>
+        <button type="button" data-palette="bosco">Bosco</button>
+      </div>
+    </div>
+
+    <div>
+      <span class="field-label">Hero Pose (Vertical ↔ Table-Top 3/4)</span>
+      <div class="btn-grid">
+        <button id="btnFront" class="btn" type="button">Vertical Front (0°)</button>
+        <button id="btnThreeQ" class="btn" type="button">3/4 Table View</button>
+        <button id="btnAnimate" class="btn tonal" type="button" style="grid-column: span 2;">▶ Animate Vertical → Table 3/4</button>
+      </div>
+    </div>
+
+    <div>
+      <span class="field-label">Blender Swap &amp; Exports</span>
+      <div class="btn-grid">
+        <button id="btnSwapGlb" class="btn" type="button">Load Blender .glb</button>
+        <button id="btnResetMesh" class="btn" type="button">Reset Built-in</button>
+        <button id="btnLottie" class="btn primary" type="button" style="grid-column: span 2;">Download Lottie (.json)</button>
+      </div>
+      <input id="glbFileInput" type="file" accept=".glb" style="display:none">
+      <div id="swapStatus" class="swap-note" style="margin-top:8px;">
+        Blender tip: Export as <strong>.glb</strong> with a mesh or material named <code>label_face_decal</code> (or <code>tape</code>) and drop it here — the dynamic label texture maps automatically.
+      </div>
+    </div>
+  </aside>
+
+  <script src="three-d-stage.js?v=18"></script>
+  <script src="viking-slim-mesh.js?v=18"></script>
+  <script src="beacon-3d.js?v=18"></script>
+  <script type="module">
+    const stage = document.getElementById('stage');
+    const { THREE } = await stage.ready;
+    const DEG = Math.PI / 180;
+
+    const PALETTES = {
+      default: {
+        light: { bg: '#f6eeef', primary: '#D81648', primaryContainer: '#FFD9DF', onPrimaryContainer: '#400014' },
+        dark:  { bg: '#140a0c', primary: '#D81648', primaryContainer: '#7A1530', onPrimaryContainer: '#FFD9DF' },
+      },
+      oceano: {
+        light: { bg: '#ededf4', primary: '#415F91', primaryContainer: '#D6E3FF', onPrimaryContainer: '#284777' },
+        dark:  { bg: '#191c20', primary: '#AAC7FF', primaryContainer: '#284777', onPrimaryContainer: '#D6E3FF' },
+      },
+      bosco: {
+        light: { bg: '#ebefe5', primary: '#386A20', primaryContainer: '#B7F397', onPrimaryContainer: '#205107' },
+        dark:  { bg: '#191d16', primary: '#9CD67D', primaryContainer: '#205107', onPrimaryContainer: '#B7F397' },
+      },
+    };
+
+    const state = {
+      label: 'B2',
+      subLabel: 'U14 - Floor 1',
+      labelStyle: 'printed',
+      paletteKey: 'default',
+      dark: true,
+      pose: 'tableThreeQuarter', // 'front' | 'tableThreeQuarter'
+      customGlbBuffer: null,
+      customGlbName: '',
+    };
+
+    function createDecalTexture() {
+      const pal = PALETTES[state.paletteKey][state.dark ? 'dark' : 'light'];
+      const src = window.Beacon3D.getLabelDecalCanvas(state.label, state.labelStyle, pal, state.subLabel);
+
+      const texCanvas = document.createElement('canvas');
+      texCanvas.width = 512;
+      texCanvas.height = 592;
+      const g = texCanvas.getContext('2d');
+
+      if (state.labelStyle === 'tape') {
+        g.fillStyle = '#F2EDE0';
+      } else if (state.labelStyle === 'tonal') {
+        g.fillStyle = pal.primaryContainer;
+      } else {
+        g.fillStyle = '#F5F6F8';
+      }
+      g.fillRect(0, 0, texCanvas.width, texCanvas.height);
+      g.drawImage(src, 0, 0, texCanvas.width, texCanvas.height);
+
+      const tex = new THREE.CanvasTexture(texCanvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      return tex;
+    }
+
+    /**
+     * Minimal self-contained GLB 2.0 binary parser using core THREE only,
+     * allowing Blender .glb models to be swapped directly into the stage with live label UV mapping.
+     */
+    function parseGlbIntoGroup(buffer, decalTex) {
+      const view = new DataView(buffer);
+      const magic = view.getUint32(0, true);
+      if (magic !== 0x46546C67) {
+        throw new Error('Invalid GLB header (expected glTF binary).');
+      }
+      let offset = 12;
+      let json = null;
+      let binStart = 0;
+
+      while (offset < buffer.byteLength) {
+        const chunkLen = view.getUint32(offset, true);
+        const chunkType = view.getUint32(offset + 4, true);
+        const dataOffset = offset + 8;
+        if (chunkType === 0x4E4F534A) {
+          const text = new TextDecoder().decode(new Uint8Array(buffer, dataOffset, chunkLen));
+          json = JSON.parse(text);
+        } else if (chunkType === 0x004E4942) {
+          binStart = dataOffset;
+        }
+        offset = dataOffset + chunkLen;
+      }
+      if (!json || !json.meshes) throw new Error('GLB contains no meshes.');
+
+      function readAccessor(idx) {
+        const acc = json.accessors[idx];
+        const bv = json.bufferViews[acc.bufferView || 0];
+        const byteOffset = binStart + (bv.byteOffset || 0) + (acc.byteOffset || 0);
+        const typeCounts = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
+        const compCount = typeCounts[acc.type] || 1;
+        const count = acc.count * compCount;
+        const stride = bv.byteStride || 0;
+
+        if (stride && stride !== compCount * 4 && acc.componentType === 5126) {
+          const out = new Float32Array(count);
+          for (let i = 0; i < acc.count; i++) {
+            const base = byteOffset + i * stride;
+            for (let c = 0; c < compCount; c++) {
+              out[i * compCount + c] = view.getFloat32(base + c * 4, true);
+            }
+          }
+          return { array: out, itemSize: compCount };
+        }
+
+        if (acc.componentType === 5126) {
+          const slice = (byteOffset % 4 === 0)
+            ? new Float32Array(buffer, byteOffset, count)
+            : new Float32Array(buffer.slice(byteOffset, byteOffset + count * 4));
+          return { array: slice, itemSize: compCount };
+        }
+        if (acc.componentType === 5123) {
+          const slice = (byteOffset % 2 === 0)
+            ? new Uint16Array(buffer, byteOffset, count)
+            : new Uint16Array(buffer.slice(byteOffset, byteOffset + count * 2));
+          return { array: slice, itemSize: compCount };
+        }
+        if (acc.componentType === 5125) {
+          const slice = (byteOffset % 4 === 0)
+            ? new Uint32Array(buffer, byteOffset, count)
+            : new Uint32Array(buffer.slice(byteOffset, byteOffset + count * 4));
+          return { array: slice, itemSize: compCount };
+        }
+        if (acc.componentType === 5121) {
+          return { array: new Uint8Array(buffer, byteOffset, count), itemSize: compCount };
+        }
+        throw new Error(`Unsupported accessor componentType ${acc.componentType}`);
+      }
+
+      const root = new THREE.Group();
+      root.name = 'blender_custom_beacon';
+      let matchedLabel = 0;
+
+      function buildNode(nodeIdx) {
+        const node = json.nodes[nodeIdx];
+        const g = new THREE.Group();
+        g.name = node.name || `node_${nodeIdx}`;
+        if (node.translation) g.position.set(...node.translation);
+        if (node.rotation) g.quaternion.set(...node.rotation);
+        if (node.scale) g.scale.set(...node.scale);
+        if (node.matrix) {
+          const m = new THREE.Matrix4().fromArray(node.matrix);
+          m.decompose(g.position, g.quaternion, g.scale);
+        }
+
+        if (typeof node.mesh === 'number') {
+          const meshDef = json.meshes[node.mesh];
+          meshDef.primitives.forEach((prim, pIdx) => {
+            const geom = new THREE.BufferGeometry();
+            if (prim.attributes.POSITION !== undefined) {
+              const pos = readAccessor(prim.attributes.POSITION);
+              geom.setAttribute('position', new THREE.BufferAttribute(pos.array, pos.itemSize));
+            }
+            if (prim.attributes.NORMAL !== undefined) {
+              const norm = readAccessor(prim.attributes.NORMAL);
+              geom.setAttribute('normal', new THREE.BufferAttribute(norm.array, norm.itemSize));
+            }
+            if (prim.attributes.TEXCOORD_0 !== undefined) {
+              const uv = readAccessor(prim.attributes.TEXCOORD_0);
+              geom.setAttribute('uv', new THREE.BufferAttribute(uv.array, uv.itemSize));
+            }
+            if (prim.indices !== undefined) {
+              const idxAcc = readAccessor(prim.indices);
+              geom.setIndex(new THREE.BufferAttribute(idxAcc.array, 1));
+            }
+            if (!geom.attributes.normal) geom.computeVertexNormals();
+
+            const matDef = typeof prim.material === 'number' && json.materials ? json.materials[prim.material] : null;
+            const matName = (matDef && matDef.name) || 'blender_material';
+            const meshName = meshDef.name || node.name || `mesh_${node.mesh}_${pIdx}`;
+            const isLabelTarget = /label|tape|decal|band/i.test(meshName) || /label|tape|decal/i.test(matName);
+
+            const pbr = (matDef && matDef.pbrMetallicRoughness) || {};
+            const col = pbr.baseColorFactor ? new THREE.Color(pbr.baseColorFactor[0], pbr.baseColorFactor[1], pbr.baseColorFactor[2]) : new THREE.Color(0xf4f5f7);
+
+            const mat = new THREE.MeshStandardMaterial({
+              name: matName,
+              color: isLabelTarget ? 0xffffff : col,
+              roughness: typeof pbr.roughnessFactor === 'number' ? pbr.roughnessFactor : 0.45,
+              metalness: typeof pbr.metallicFactor === 'number' ? Math.min(pbr.metallicFactor, 0.35) : 0.05,
+              map: isLabelTarget ? decalTex : null,
+            });
+            if (isLabelTarget) matchedLabel += 1;
+
+            const mesh = new THREE.Mesh(geom, mat);
+            mesh.name = meshName;
+            g.add(mesh);
+          });
+        }
+
+        if (node.children) {
+          node.children.forEach((cIdx) => g.add(buildNode(cIdx)));
+        }
+        return g;
+      }
+
+      const scene = json.scenes && json.scenes[json.scene || 0];
+      const topNodes = scene ? scene.nodes : json.nodes.map((_, i) => i);
+      topNodes.forEach((nIdx) => root.add(buildNode(nIdx)));
+
+      const box = new THREE.Box3().setFromObject(root);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      const scaleFactor = 0.075 / maxDim;
+      root.scale.multiplyScalar(scaleFactor);
+      const center = new THREE.Box3().setFromObject(root).getCenter(new THREE.Vector3());
+      root.position.sub(center);
+
+      return { group: root, matchedLabel };
+    }
+
+    function buildBuiltinBeaconGroup(decalTex) {
+      const pal = PALETTES[state.paletteKey][state.dark ? 'dark' : 'light'];
+      const group = new THREE.Group();
+      group.name = `viking_slim_${state.label.toLowerCase()}`;
+
+      const absWhiteMat = new THREE.MeshStandardMaterial({
+        name: 'abs_white_matte',
+        color: 0xf4f5f7,
+        roughness: 0.40,
+        metalness: 0.04,
+      });
+      const bandColor = state.labelStyle === 'tape'
+        ? 0xf2ede0
+        : state.labelStyle === 'tonal'
+          ? new THREE.Color(pal.primaryContainer)
+          : 0xf4f5f7;
+      const bandMat = new THREE.MeshStandardMaterial({
+        name: state.labelStyle === 'tape' ? 'masking_tape_crepe' : 'label_band',
+        color: bandColor,
+        roughness: state.labelStyle === 'tape' ? 0.85 : 0.40,
+        metalness: 0.02,
+      });
+
+      // 1. Real Confidex Viking Slim mesh exported from Blender (.blend)
+      const meshSrc = window.VIKING_SLIM_MESH && window.VIKING_SLIM_MESH.three;
+      const hullGeo = new THREE.BufferGeometry();
+      hullGeo.setAttribute('position', new THREE.Float32BufferAttribute(meshSrc.positions, 3));
+      hullGeo.setAttribute('normal', new THREE.Float32BufferAttribute(meshSrc.normals, 3));
+      hullGeo.setIndex(meshSrc.indices);
+      const hullMesh = new THREE.Mesh(hullGeo, absWhiteMat);
+      hullMesh.name = 'hull_viking_slim';
+      group.add(hullMesh);
+
+      // 2. Programmatic wrap-around center band hugging the exact Viking Slim cross-section
+      const prof = window.VIKING_SLIM_MESH.profile;
+      const bandHalfH = prof.bandHalfH * 0.001;
+      const xPlat = (prof.plateauHalfW + 0.04) * 0.001;
+      const zPlat = (prof.plateauZ + 0.18) * 0.001;
+      const xMid = (prof.midHalfW + 0.10) * 0.001;
+      const zMid = (prof.midZ + 0.05) * 0.001;
+      const xBot = (prof.baseHalfW + 0.12) * 0.001;
+      const zBot = (prof.baseZ + 0.25) * 0.001;
+
+      if (state.labelStyle !== 'printed') {
+        const t = 0.00028;
+        const wrapShape = new THREE.Shape();
+        wrapShape.moveTo(-xBot, zBot);
+        wrapShape.lineTo(-xMid, zMid);
+        wrapShape.lineTo(-xPlat, zPlat);
+        wrapShape.lineTo(xPlat, zPlat);
+        wrapShape.lineTo(xMid, zMid);
+        wrapShape.lineTo(xBot, zBot);
+        wrapShape.lineTo(xBot - t, zBot);
+        wrapShape.lineTo(xMid - t, zMid - t * 0.4);
+        wrapShape.lineTo(xPlat - t * 0.5, zPlat - t);
+        wrapShape.lineTo(-xPlat + t * 0.5, zPlat - t);
+        wrapShape.lineTo(-xMid + t, zMid - t * 0.4);
+        wrapShape.lineTo(-xBot + t, zBot);
+        wrapShape.closePath();
+
+        const wrapGeo = new THREE.ExtrudeGeometry(wrapShape, {
+          depth: bandHalfH * 2,
+          bevelEnabled: false,
+          curveSegments: 16,
+        });
+        wrapGeo.rotateX(Math.PI / 2);
+        wrapGeo.translate(0, bandHalfH, 0);
+        const wrapMesh = new THREE.Mesh(wrapGeo, bandMat);
+        wrapMesh.name = 'center_label_band';
+        group.add(wrapMesh);
+      }
+
+      // 3. Programmatic dynamic label decal on top plateau
+      const decalMat = new THREE.MeshStandardMaterial({
+        name: 'label_decal_material',
+        map: decalTex,
+        roughness: state.labelStyle === 'tape' ? 0.84 : 0.36,
+        metalness: 0.02,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4,
+        side: THREE.DoubleSide,
+      });
+      const decalW = (prof.plateauHalfW * 2 - 0.16) * 0.001;
+      const decalH = (prof.bandHalfH * 2 - 0.24) * 0.001;
+      const decalGeo = new THREE.PlaneGeometry(decalW, decalH);
+      const decalMesh = new THREE.Mesh(decalGeo, decalMat);
+      decalMesh.name = 'label_face_decal';
+      decalMesh.position.set(
+        0,
+        0,
+        state.labelStyle === 'printed' ? (prof.plateauZ + 0.08) * 0.001 : (prof.plateauZ + 0.34) * 0.001
+      );
+      group.add(decalMesh);
+
+      return group;
+    }
+
+    let currentGroup = null;
+    let animFrame = null;
+
+    function applyPoseInstant(pose) {
+      if (!currentGroup || !stage._camera || !stage._controls) return;
+      state.pose = pose;
+      currentGroup.rotation.order = 'YXZ';
+      if (pose === 'front') {
+        currentGroup.rotation.set(0, 0, 0);
+      } else {
+        // Horizontal table-top 3/4 view rotated more anticlockwise
+        currentGroup.rotation.set(-58 * DEG, -12 * DEG, 56 * DEG);
+      }
+      currentGroup.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(currentGroup);
+      if (!box.isEmpty()) stage._ground.position.y = box.min.y;
+
+      stage._camera.position.set(0, 0, 0.165);
+      stage._controls.target.set(0, 0, 0);
+      stage._controls.update();
+    }
+
+    function animateToPose(targetPose) {
+      if (!currentGroup) return;
+      if (animFrame) cancelAnimationFrame(animFrame);
+      state.pose = targetPose;
+      currentGroup.rotation.order = 'YXZ';
+
+      const startRot = currentGroup.rotation.clone();
+      const endRot = targetPose === 'front'
+        ? new THREE.Euler(0, 0, 0, 'YXZ')
+        : new THREE.Euler(-58 * DEG, -12 * DEG, 56 * DEG, 'YXZ');
+
+      const startCam = stage._camera.position.clone();
+      const endCam = new THREE.Vector3(0, 0, 0.165);
+      const startTarget = stage._controls.target.clone();
+      const endTarget = new THREE.Vector3(0, 0, 0);
+      const t0 = performance.now();
+      const dur = 760;
+
+      function tick(now) {
+        const raw = Math.min(1, (now - t0) / dur);
+        const ease = raw < 0.5 ? 4 * raw * raw * raw : 1 - Math.pow(-2 * raw + 2, 3) / 2;
+        currentGroup.rotation.x = startRot.x + (endRot.x - startRot.x) * ease;
+        currentGroup.rotation.y = startRot.y + (endRot.y - startRot.y) * ease;
+        currentGroup.rotation.z = startRot.z + (endRot.z - startRot.z) * ease;
+        currentGroup.updateMatrixWorld(true);
+
+        const box = new THREE.Box3().setFromObject(currentGroup);
+        if (!box.isEmpty()) stage._ground.position.y = box.min.y;
+
+        stage._camera.position.lerpVectors(startCam, endCam, ease);
+        stage._controls.target.lerpVectors(startTarget, endTarget, ease);
+        stage._controls.update();
+
+        if (raw < 1) animFrame = requestAnimationFrame(tick);
+      }
+      animFrame = requestAnimationFrame(tick);
+    }
+
+    function rebuildModel(preserveCamera = false) {
+      const camPos = stage._camera ? stage._camera.position.clone() : null;
+      const target = stage._controls ? stage._controls.target.clone() : null;
+      const pal = PALETTES[state.paletteKey][state.dark ? 'dark' : 'light'];
+      if (stage.setSoftwareViewOpts) {
+        stage.setSoftwareViewOpts({
+          label: state.label,
+          subLabel: state.subLabel,
+          labelStyle: state.labelStyle,
+          themePalette: pal,
+          dark: state.dark,
+        });
+      }
+      stage.setAttribute('name', `ble_beacon_${(state.label || 'b2').toLowerCase()}`);
+
+      const decalTex = createDecalTexture();
+      let group;
+      if (state.customGlbBuffer) {
+        const parsed = parseGlbIntoGroup(state.customGlbBuffer, decalTex);
+        group = parsed.group;
+        document.getElementById('swapStatus').textContent =
+          `Loaded "${state.customGlbName}" (${parsed.matchedLabel} label mesh${parsed.matchedLabel === 1 ? '' : 'es'} bound dynamically).`;
+      } else {
+        group = buildBuiltinBeaconGroup(decalTex);
+      }
+
+      currentGroup = group;
+      stage.setObject(group);
+
+      if (preserveCamera && camPos && target) {
+        applyPoseInstant(state.pose);
+        stage._camera.position.copy(camPos);
+        stage._controls.target.copy(target);
+        stage._controls.update();
+      } else {
+        applyPoseInstant(state.pose);
+      }
+    }
+
+    function applyAppearance() {
+      const pal = PALETTES[state.paletteKey][state.dark ? 'dark' : 'light'];
+      document.documentElement.setAttribute('data-theme', state.dark ? 'dark' : 'light');
+      document.documentElement.style.setProperty('--primary', pal.primary);
+      document.documentElement.style.setProperty('--primary-container', pal.primaryContainer);
+      document.documentElement.style.setProperty('--on-primary-container', pal.onPrimaryContainer);
+      stage.style.setProperty('--stage-bg', pal.bg);
+      if (stage.setSoftwareViewOpts) {
+        stage.setSoftwareViewOpts({
+          label: state.label,
+          subLabel: state.subLabel,
+          labelStyle: state.labelStyle,
+          themePalette: pal,
+          dark: state.dark,
+        });
+      }
+      document.getElementById('themeBtn').textContent = state.dark ? 'Light' : 'Dark';
+    }
+
+    document.getElementById('labelInput').addEventListener('input', (e) => {
+      state.label = e.target.value.trim() || 'B2';
+      rebuildModel(true);
+    });
+
+    document.getElementById('styleSeg').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-style]');
+      if (!btn) return;
+      state.labelStyle = btn.dataset.style;
+      document.querySelectorAll('#styleSeg button').forEach((b) => b.classList.toggle('active', b === btn));
+      rebuildModel(true);
+    });
+
+    document.getElementById('paletteSeg').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-palette]');
+      if (!btn) return;
+      state.paletteKey = btn.dataset.palette;
+      document.querySelectorAll('#paletteSeg button').forEach((b) => b.classList.toggle('active', b === btn));
+      applyAppearance();
+      rebuildModel(true);
+    });
+
+    document.getElementById('themeBtn').addEventListener('click', () => {
+      state.dark = !state.dark;
+      applyAppearance();
+      rebuildModel(true);
+    });
+
+    document.getElementById('btnFront').addEventListener('click', () => animateToPose('front'));
+    document.getElementById('btnThreeQ').addEventListener('click', () => animateToPose('tableThreeQuarter'));
+    document.getElementById('btnAnimate').addEventListener('click', () => {
+      applyPoseInstant('front');
+      requestAnimationFrame(() => animateToPose('tableThreeQuarter'));
+    });
+
+    const glbInput = document.getElementById('glbFileInput');
+    document.getElementById('btnSwapGlb').addEventListener('click', () => glbInput.click());
+    glbInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const buf = await file.arrayBuffer();
+        state.customGlbBuffer = buf;
+        state.customGlbName = file.name;
+        rebuildModel(false);
+      } catch (err) {
+        document.getElementById('swapStatus').textContent = `GLB load error: ${err.message}`;
+      }
+      glbInput.value = '';
+    });
+
+    document.getElementById('btnResetMesh').addEventListener('click', () => {
+      state.customGlbBuffer = null;
+      state.customGlbName = '';
+      document.getElementById('swapStatus').innerHTML =
+        'Blender tip: Export as <strong>.glb</strong> with a mesh or material named <code>label_face_decal</code> (or <code>tape</code>) and drop it here — the dynamic label texture maps automatically.';
+      rebuildModel(false);
+    });
+
+    document.getElementById('btnLottie').addEventListener('click', () => {
+      const pal = PALETTES[state.paletteKey][state.dark ? 'dark' : 'light'];
+      window.Beacon3D.downloadLottie({
+        label: state.label,
+        labelStyle: state.labelStyle,
+        themePalette: pal,
+      });
+    });
+
+    applyAppearance();
+    rebuildModel(false);
+  </script>
+</body>
+</html>
