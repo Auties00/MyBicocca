@@ -72,6 +72,7 @@ jobs:
         with:
           name: web-app-build
           path: web/web-app/build
+          include-hidden-files: true
           retention-days: 1
 
   preview:
