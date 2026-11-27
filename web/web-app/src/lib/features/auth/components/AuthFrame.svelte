@@ -12,7 +12,7 @@
 
 <div class="frame">
 	<header class="bar">
-		<span class="brand"><Wordmark /></span>
+		<span class="brand view-enter"><Wordmark /></span>
 	</header>
 	<main id="main" class="content" tabindex="-1">
 		{@render children()}
@@ -59,20 +59,6 @@
 
 	.brand {
 		display: inline-flex;
-	}
-
-	/* The wordmark settles in once, when the sign-in pages first open. */
-	@media (prefers-reduced-motion: no-preference) {
-		.brand {
-			animation: brand-in 500ms var(--ease-out-expo) both;
-		}
-	}
-
-	@keyframes brand-in {
-		from {
-			opacity: 0;
-			transform: translateY(6px) scale(0.96);
-		}
 	}
 
 	.content {
@@ -154,35 +140,20 @@
 		}
 	}
 
-	/*
-	 * Between the sign-in pages the content cross-fades, and the wordmark and footer glide to the
-	 * new page's column.
-	 */
+	/* Between sign-in pages, the new content fades in place. */
 	:global(:root:active-view-transition-type(auth-step)) .content {
 		view-transition-name: auth-page;
 	}
 
-	:global(:root:active-view-transition-type(auth-step)) .bar {
-		view-transition-name: auth-bar;
-	}
-
-	:global(:root:active-view-transition-type(auth-step)) .foot {
-		view-transition-name: auth-foot;
+	:global(::view-transition-group(auth-page)) {
+		animation: none;
 	}
 
 	:global(::view-transition-old(auth-page)) {
-		animation: vt-fade-out 120ms var(--ease-in) both;
+		opacity: 0;
 	}
 
 	:global(::view-transition-new(auth-page)) {
-		animation: vt-fade-in var(--dur-base) var(--ease-out) 60ms both;
-	}
-
-	@media (prefers-reduced-motion: no-preference) {
-		:global(::view-transition-new(auth-page)) {
-			animation:
-				vt-fade-in var(--dur-base) var(--ease-out) 60ms both,
-				vt-rise var(--dur-slow) var(--spring-standard) both;
-		}
+		animation: view-enter var(--view-enter-duration) var(--ease-out);
 	}
 </style>

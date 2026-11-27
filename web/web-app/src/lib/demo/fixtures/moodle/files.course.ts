@@ -128,7 +128,7 @@ const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width
 <circle cx="260" cy="280" r="30" fill="#fff" stroke="#9c0c35" stroke-width="3"/><text x="260" y="289">6</text>
 <circle cx="520" cy="280" r="30" fill="#fff" stroke="#9c0c35" stroke-width="3"/><text x="520" y="289">14</text>
 </g>
-<text x="320" y="370" font-family="Georgia, serif" font-size="18" font-style="italic" text-anchor="middle" fill="#6b5f61">Albero binario di ricerca</text>
+<text x="320" y="370" font-family="Georgia, serif" font-size="18" text-anchor="middle" fill="#6b5f61">Albero binario di ricerca</text>
 </svg>
 `;
 

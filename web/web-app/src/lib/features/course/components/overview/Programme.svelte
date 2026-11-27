@@ -103,7 +103,6 @@
 	.count {
 		color: var(--text-muted);
 		font: var(--type-meta);
-		font-style: italic;
 	}
 
 	.topics {

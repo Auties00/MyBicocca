@@ -23,6 +23,7 @@
 -->
 <div class={['services', { beside: frame.twoPanes }]}>
 	<ListDetail
+		navigation
 		listWidth={NAV_WIDTH}
 		detailMin={PAGE_MIN}
 		listLabel={m.shell_services()}
@@ -32,7 +33,7 @@
 		{#snippet list()}
 			<!-- Mounted only beside a page, so a phone never loads what the column shows. -->
 			{#if frame.twoPanes}
-				<div class="nav"><ServicesNav /></div>
+				<ServicesNav />
 			{/if}
 		{/snippet}
 	</ListDetail>
@@ -47,18 +48,8 @@
 		min-inline-size: 0;
 	}
 
-	.nav {
-		padding: var(--sp-1) 0 var(--sp-2) var(--gutter);
-	}
-
 	/* Beside the column, a page's link back to the hub repeats it. */
 	.beside :global(header > a.back[href$='/services']) {
 		display: none;
-	}
-
-	@media print {
-		.nav {
-			display: none;
-		}
 	}
 </style>

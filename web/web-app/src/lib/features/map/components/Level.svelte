@@ -45,7 +45,12 @@
 	<div class="head" data-level-head {@attach measureHead}>
 		{@render head()}
 	</div>
-	<div class={['body', { scrollable: view.scrollable }]} data-level-body {@attach keepScroll}>
+	<div
+		class={['body', { scrollable: view.scrollable }]}
+		data-level-body
+		data-tab-scroll="map-{key}"
+		{@attach keepScroll}
+	>
 		{@render children()}
 	</div>
 </div>

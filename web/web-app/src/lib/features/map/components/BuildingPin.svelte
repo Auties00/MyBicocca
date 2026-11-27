@@ -84,9 +84,9 @@
 		style:--tip-x={`${shape.tipX}px`}
 		style:--r={`${(selected ? SELECTED : IDLE).head / 2}px`}
 		onclick={onselect}
-		onpointerenter={(event) => event.pointerType === 'mouse' && onhover(true)}
+		onpointermove={(event) => event.pointerType === 'mouse' && event.buttons === 0 && onhover(true)}
 		onpointerleave={(event) => event.pointerType === 'mouse' && onhover(false)}
-		onfocus={() => onhover(true)}
+		onfocus={(event) => event.currentTarget.matches(':focus-visible') && onhover(true)}
 		onblur={() => onhover(false)}
 	>
 		{#key selected}

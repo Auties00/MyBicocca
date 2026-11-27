@@ -6,7 +6,6 @@ import {
 	groupEditions,
 	parseFilter,
 	filterToken,
-	sectionsByPeriod,
 	type EnrolledCourse
 } from './courses.ts';
 
@@ -159,19 +158,5 @@ describe('filter tokens', () => {
 		}
 		expect(parseFilter('year:x')).toBeNull();
 		expect(parseFilter(null)).toBeNull();
-	});
-});
-
-describe('sectionsByPeriod', () => {
-	it('splits by the latest edition year, newest first, cross-year spaces last', () => {
-		const groups = groupEditions([
-			course(1, '2425-1-A'),
-			course(2, null, 'Board'),
-			course(3, '2526-2-B'),
-			course(4, '2526-2-A')
-		]);
-		const sections = sectionsByPeriod(groups);
-		expect(sections.map((section) => section.label)).toEqual(['2025/26', null]);
-		expect(sections.map((section) => ids(section.groups))).toEqual([[[4, 1], [3]], [[2]]]);
 	});
 });

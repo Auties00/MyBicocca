@@ -18,6 +18,7 @@
 	import AliasBadge from './AliasBadge.svelte';
 	import GroupHead from './GroupHead.svelte';
 	import Level from './Level.svelte';
+	import LevelHeader from './LevelHeader.svelte';
 	import PlaceRow from './PlaceRow.svelte';
 
 	interface Props {
@@ -102,9 +103,13 @@
 <Level key="directory" {transition}>
 	{#snippet head()}
 		<!-- Beside an open building the directory is secondary: the building has the h1. -->
-		<svelte:element this={open ? 'h2' : 'h1'} class="sr-only" tabindex="-1">
-			{m.map_title()}
-		</svelte:element>
+		<div class="intro">
+			<LevelHeader
+				title={m.map_title()}
+				subtitle={m.map_site_count({ count: view.shown.length })}
+				level={open ? 2 : 1}
+			/>
+		</div>
 		<SearchField label={m.map_search_label()} bind:value={view.search} onsearch={openFirst} />
 		{#if counts.size > 1}
 			<div class="chips" role="group" aria-label={m.map_filter_label()} {@attach edgeFade}>
@@ -178,9 +183,8 @@
 			{/if}
 		{/if}
 	{:else}
-		<div class={['title', { beside: open }]}>
+		<div class="title">
 			<h2>{m.map_buildings_title()}</h2>
-			<span class="count">{m.map_site_count({ count: view.shown.length })}</span>
 			{#if view.filter.length > 0}
 				<Button variant="ghost" size="sm" onclick={() => onfilter([])}>
 					{m.map_filter_clear()}
@@ -199,6 +203,23 @@
 </Level>
 
 <style>
+	.intro {
+		margin-block-end: var(--sp-4);
+	}
+
+	/* Phones show no page title, as on every other page: the heading stays for screen readers. */
+	@media (width < 600px) {
+		.intro {
+			position: absolute;
+			inline-size: 1px;
+			block-size: 1px;
+			margin: -1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+	}
+
 	.chips {
 		display: flex;
 		flex-wrap: wrap;
@@ -237,27 +258,16 @@
 
 	.title {
 		display: flex;
-		align-items: baseline;
+		align-items: center;
+		justify-content: space-between;
 		gap: var(--sp-3);
 		min-block-size: 44px;
 		padding: var(--sp-2) var(--sp-2) 0;
 	}
 
 	.title h2 {
-		font: var(--type-title-l);
-		letter-spacing: var(--track-title-l);
-	}
-
-	/* Beside an open building or room, whose title is the view's serif line. */
-	.beside h2 {
 		font: var(--type-title-m);
 		letter-spacing: var(--track-title-m);
-	}
-
-	.count {
-		margin-inline-start: auto;
-		color: var(--text-muted);
-		font: var(--type-meta);
 	}
 
 	.more {

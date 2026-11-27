@@ -427,15 +427,14 @@
 		<PageHeader
 			title={m.assignment_editor_title()}
 			eyebrow={assignment?.name ?? (model.list.data === undefined ? BLANK : undefined)}
-			subtitle={schedule && phase && editable
-				? editorContext(schedule, phase, clock.now, timerEnd)
-				: undefined}
+			subtitle={schedule && phase ? editorContext(schedule, phase, clock.now, timerEnd) : undefined}
 			back={{ href: detailHref, label: m.assignment_title_fallback() }}
 		/>
 
 		{#if model.list.data === undefined && model.list.error}
 			<ErrorState
 				title={m.assignment_load_failed()}
+				size="page"
 				message={errorMessage(model.list.error)}
 				onretry={model.refresh}
 				retrying={model.list.refreshing}
@@ -453,6 +452,7 @@
 		{:else if fresh && submission === undefined && model.statusError}
 			<ErrorState
 				title={m.assignment_status_failed()}
+				size="page"
 				message={errorMessage(model.statusError)}
 				onretry={model.status.refresh}
 				retrying={model.status.refreshing}
@@ -684,7 +684,7 @@
 <style>
 	.editor {
 		display: grid;
-		gap: var(--sp-6);
+		gap: var(--page-gap);
 	}
 
 	/* What takes focus or news scrolls clear of the floating action bar. */

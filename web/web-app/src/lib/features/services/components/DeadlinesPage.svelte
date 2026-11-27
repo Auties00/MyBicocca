@@ -16,6 +16,7 @@
 	import { LoadingGate } from '#lib/ui/loadingGate.svelte.ts';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
+	import PullToRefresh from '#lib/ui/PullToRefresh.svelte';
 	import { useDeadlines } from '../deadlines.svelte.ts';
 	import { DEADLINE_SOURCES, parseKinds, type DeadlineSource } from '../deadlines.ts';
 	import { kindFilters, staleLine } from '../labels.ts';
@@ -25,7 +26,7 @@
 	import DeadlineTimeline from './DeadlineTimeline.svelte';
 	import PartialNotice from './PartialNotice.svelte';
 	import StaleNotice from './StaleNotice.svelte';
-	import { compact } from '#lib/ui/media.ts';
+	import { expanded } from '#lib/ui/media.ts';
 
 	const deadlines = useDeadlines();
 	const gate = new LoadingGate(() => deadlines.status === 'pending');
@@ -120,57 +121,61 @@
 	/>
 {/snippet}
 
-<Page width="dashboard">
-	<PageHeader
-		title={m.shell_service_deadlines()}
-		{subtitle}
-		back={{ href: shellHref('services'), label: m.shell_services() }}
-		actions={!compact.current ? refresh : undefined}
-		meta={filters}
-	/>
+<!-- Below 1024 px a pull refreshes, in place of the button. -->
+<PullToRefresh onrefresh={() => deadlines.refresh()} refreshing={deadlines.refreshing}>
+	<Page width="dashboard">
+		<PageHeader
+			title={m.shell_service_deadlines()}
+			{subtitle}
+			back={{ href: shellHref('services'), label: m.shell_services() }}
+			actions={expanded.current ? refresh : undefined}
+			meta={filters}
+			pinMeta
+		/>
 
-	<div class="layout">
-		<div class="main">
-			{#if loading}
-				<DeadlinesSkeleton rows={5} />
-			{:else if unchecked}
-				<DeadlinesError {deadlines} />
-			{:else}
-				<PartialNotice {deadlines} />
-				{#if shown.length > 0}
-					<DeadlineTimeline deadlines={shown} today={deadlines.today} />
-				{:else if all.length > 0}
-					<EmptyState icon={IconFunnelX} title={m.services_deadlines_filtered_none()}>
-						{#snippet action()}
-							<Button onclick={() => setKinds([])}>{m.services_deadlines_show_all()}</Button>
-						{/snippet}
-					</EmptyState>
+		<div class="layout">
+			<div class="main">
+				{#if loading}
+					<DeadlinesSkeleton rows={5} />
+				{:else if unchecked}
+					<DeadlinesError {deadlines} />
 				{:else}
-					<EmptyState
-						size="page"
-						icon={IconCalendarCheck}
-						title={m.services_deadlines_none_title()}
-						body={m.services_deadlines_none_body()}
-					>
-						{#snippet action()}
-							<Button icon={IconMagnifyingGlass} href={resolve('services/exams/book')}>
-								{m.services_deadlines_none_action()}
-							</Button>
-						{/snippet}
-					</EmptyState>
+					<PartialNotice {deadlines} />
+					{#if shown.length > 0}
+						<DeadlineTimeline deadlines={shown} today={deadlines.today} />
+					{:else if all.length > 0}
+						<EmptyState icon={IconFunnelX} title={m.services_deadlines_filtered_none()}>
+							{#snippet action()}
+								<Button onclick={() => setKinds([])}>{m.services_deadlines_show_all()}</Button>
+							{/snippet}
+						</EmptyState>
+					{:else}
+						<EmptyState
+							size="page"
+							icon={IconCalendarCheck}
+							title={m.services_deadlines_none_title()}
+							body={m.services_deadlines_none_body()}
+						>
+							{#snippet action()}
+								<Button icon={IconMagnifyingGlass} href={resolve('services/exams/book')}>
+									{m.services_deadlines_none_action()}
+								</Button>
+							{/snippet}
+						</EmptyState>
+					{/if}
+					{#if all.length > 0}<p class="scope">{m.services_deadlines_intro()}</p>{/if}
+					<StaleNotice {deadlines} />
 				{/if}
-				{#if all.length > 0}<p class="scope">{m.services_deadlines_intro()}</p>{/if}
-				<StaleNotice {deadlines} />
+			</div>
+
+			{#if !loading && all.length > 0}
+				<aside class="aside" aria-label={m.services_calendar_label()}>
+					<DeadlineCalendar deadlines={shown} today={deadlines.today} />
+				</aside>
 			{/if}
 		</div>
-
-		{#if !loading && all.length > 0}
-			<aside class="aside" aria-label={m.services_calendar_label()}>
-				<DeadlineCalendar deadlines={shown} today={deadlines.today} />
-			</aside>
-		{/if}
-	</div>
-</Page>
+	</Page>
+</PullToRefresh>
 
 <style>
 	/*

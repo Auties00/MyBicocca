@@ -2,7 +2,6 @@
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"map_title": "Mappa",
 	"map_canvas_label": "Mappa del campus. Usa le frecce per spostarti, + e − per lo zoom.",
-	"map_attribution": "© Contributori di OpenStreetMap",
 	"map_zoom_in": "Aumenta lo zoom",
 	"map_zoom_out": "Riduci lo zoom",
 	"map_recenter": "Ricentra la mappa",

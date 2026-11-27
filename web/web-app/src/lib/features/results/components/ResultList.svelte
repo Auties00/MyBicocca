@@ -56,7 +56,7 @@
 				description={m.results_archive_description()}
 			/>
 			{#if results.absences > 0}
-				<div class="filters">
+				<div class="filters" data-sticky-join>
 					<FilterChip
 						label={m.results_hide_absences()}
 						count={results.absences}
@@ -140,6 +140,18 @@
 		flex-wrap: wrap;
 		gap: var(--sp-2);
 		margin-block-start: calc(-1 * var(--sp-1));
+	}
+
+	/* On phones the archive's filter stays pinned under the top bar while its years scroll. */
+	@media (width < 600px) {
+		.filters {
+			position: sticky;
+			inset-block-start: var(--shell-inset-top);
+			z-index: var(--z-sticky);
+			margin-inline: calc(-1 * var(--gutter));
+			padding: var(--sp-2) var(--gutter);
+			background: var(--bg);
+		}
 	}
 
 	.only-absences {

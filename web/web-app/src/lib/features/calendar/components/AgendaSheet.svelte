@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { on } from 'svelte/events';
-	import { fly } from 'svelte/transition';
 	import { m } from '#lib/paraglide/messages.js';
 	import { haptics } from '#lib/ui/haptics.svelte.ts';
 
@@ -108,18 +107,17 @@
 
 <svelte:window onkeydown={keydown} />
 
-{#if progress > 0}
-	<button
-		type="button"
-		class="scrim"
-		data-no-pull
-		style:opacity={progress}
-		tabindex={-1}
-		aria-label={m.calendar_agenda_collapse()}
-		onclick={() => settle(0)}
-	></button>
-{/if}
-<div class="presence" data-no-pull transition:fly={{ y: 60, duration: 220 }} {@attach measure}>
+<button
+	type="button"
+	class={['scrim', { dragging }]}
+	data-no-pull
+	style:opacity={progress}
+	inert={progress === 0}
+	tabindex={-1}
+	aria-label={m.calendar_agenda_collapse()}
+	onclick={() => settle(0)}
+></button>
+<div class="presence" data-no-pull {@attach measure}>
 	<div
 		bind:this={sheet}
 		class={['sheet', { dragging, expanded }]}
@@ -151,6 +149,7 @@
 		z-index: calc(var(--z-nav) - 2);
 		background: var(--scrim);
 		cursor: default;
+		transition: opacity var(--dur-sheet) var(--spring-standard);
 	}
 
 	.presence {

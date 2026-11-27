@@ -4,8 +4,6 @@
 	export interface FilterOption {
 		token: string;
 		label: string;
-		/** Course cards the filter shows. */
-		count: number;
 		icon?: Icon;
 	}
 </script>
@@ -51,7 +49,6 @@
 				<span class="glyph"><option.icon aria-hidden="true" /></span>
 			{/if}
 			<span class="text">{option.label}</span>
-			<span class="count">{option.count}</span>
 		</label>
 	{/each}
 </div>
@@ -63,11 +60,10 @@
 	 */
 	.bar {
 		display: flex;
-		flex: 0 0 calc(100% + 2 * var(--gutter));
 		gap: 8px;
 		contain: inline-size;
 		margin-inline: calc(-1 * var(--gutter));
-		padding: 4px var(--gutter);
+		padding-inline: var(--gutter);
 		overflow-x: auto;
 		overscroll-behavior-x: contain;
 		scroll-padding-inline: var(--gutter);
@@ -87,13 +83,17 @@
 
 	@media (width >= 600px) {
 		.bar {
-			flex: 1 1 100%;
-			flex-wrap: wrap;
 			contain: none;
 			margin-inline: 0;
 			padding-inline: 0;
-			overflow: visible;
 			mask-image: none;
+		}
+	}
+
+	@media (width >= 1024px) {
+		.bar {
+			flex-wrap: wrap;
+			overflow: visible;
 		}
 	}
 
@@ -123,14 +123,29 @@
 
 	@media (pointer: fine) {
 		.chip {
-			--h: 32px;
 			padding-inline: 12px;
+		}
+	}
+
+	@media (width >= 600px) {
+		.chip {
+			--h: var(--control-h);
+		}
+	}
+
+	@media (600px <= width < 1024px) {
+		.bar {
+			gap: 6px;
+		}
+
+		.chip {
+			padding-inline: 10px;
 		}
 	}
 
 	.chip:has(input:focus-visible) {
 		outline: 2px solid var(--focus);
-		outline-offset: 2px;
+		outline-offset: -2px;
 	}
 
 	.glyph {
@@ -150,21 +165,11 @@
 		text-box: trim-both cap alphabetic;
 	}
 
-	.count {
-		color: var(--text-muted);
-		font-variant-numeric: tabular-nums;
-	}
-
 	.selected {
 		padding-inline-start: 10px;
 		background: var(--container);
 		color: var(--on-container);
 		box-shadow: none;
-	}
-
-	.selected .count {
-		color: inherit;
-		opacity: 0.75;
 	}
 
 	@media (hover: hover) {

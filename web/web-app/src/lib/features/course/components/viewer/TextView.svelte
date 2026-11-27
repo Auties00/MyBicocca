@@ -174,13 +174,11 @@
 
 	.comment {
 		color: var(--text-subtle);
-		font-style: italic;
 	}
 
 	.truncated {
 		padding: 0 20px 96px;
 		color: var(--text-muted);
 		font: var(--type-meta);
-		font-style: italic;
 	}
 </style>

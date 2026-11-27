@@ -1,5 +1,6 @@
 import { onNavigate } from '$app/navigation';
 import { resolve } from '$app/paths';
+import { reducedMotion } from '#lib/ui/media.ts';
 import { startTypedTransition } from '#lib/ui/viewTransition.ts';
 
 /**
@@ -9,7 +10,7 @@ import { startTypedTransition } from '#lib/ui/viewTransition.ts';
  */
 export function setupAuthTransitions(): void {
 	onNavigate((navigation) => {
-		if (!document.startViewTransition || navigation.willUnload) return;
+		if (!document.startViewTransition || reducedMotion.current || navigation.willUnload) return;
 		const from = navigation.from?.url.pathname;
 		const to = navigation.to?.url.pathname;
 		if (!from || !to || from === to) return;

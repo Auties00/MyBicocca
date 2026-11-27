@@ -36,7 +36,7 @@
 	});
 </script>
 
-<div class={['gauge', tone, size]} role="img" aria-label={label}>
+<div class={['gauge', 'view-enter', tone, size]} role="img" aria-label={label}>
 	<svg viewBox="0 0 200 200" aria-hidden="true">
 		<g transform="rotate(-90 100 100)">
 			<circle class="track" cx="100" cy="100" r={RADIUS} />
@@ -81,7 +81,6 @@
 		place-items: center;
 		aspect-ratio: 1;
 		flex: none;
-		animation: settle var(--dur-spring) var(--spring-pop) both;
 	}
 
 	.large {
@@ -179,18 +178,5 @@
 		color: var(--text-muted);
 		font: var(--type-meta);
 		letter-spacing: var(--track-meta);
-	}
-
-	@keyframes settle {
-		from {
-			opacity: 0;
-			transform: scale(0.94);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.gauge {
-			animation: none;
-		}
 	}
 </style>

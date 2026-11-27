@@ -77,23 +77,8 @@
 	"course_content_failed": "Couldn’t load the course content",
 	"course_content_empty_title": "No content yet.",
 	"course_content_empty_body": "Course materials will appear here as soon as the teacher publishes them.",
-	"course_sections_count": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} section",
-				"countPlural=other": "{count} sections"
-			}
-		}
-	],
-	"course_progress_label": "Completed activities",
-	"course_progress_value": "{done} of {total}",
-	"course_expand_all": "Expand all",
-	"course_collapse_all": "Collapse all",
 	"course_index_title": "Sections",
 	"course_index_label": "Section index",
-	"course_section_done": "{done}/{total} done",
 	"course_section_empty": "Nothing in this section yet.",
 	"course_no_resources": "No resources",
 	"course_count_video": [

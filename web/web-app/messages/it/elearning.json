@@ -2,30 +2,14 @@
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"elearning_title": "E-learning",
 	"elearning_add_course": "Aggiungi corso",
-	"elearning_updated": "aggiornato {time}",
-	"elearning_course_count": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} corso",
-				"countPlural=other": "{count} corsi"
-			}
-		}
-	],
 	"elearning_filter_label": "Filtra i corsi",
 	"elearning_filter_all": "Tutti",
 	"elearning_filter_favourites": "Preferiti",
-	"elearning_filter_year": "{year}° anno",
+	"elearning_filter_year": "{year}°\u00a0anno",
 	"elearning_course_level_bachelor": "Triennale",
 	"elearning_course_level_master": "Magistrale",
 	"elearning_career_chip": "{label} {year}",
-	"elearning_period_section": "Anno accademico {year}",
-	"elearning_period_current": "In corso",
 	"elearning_period_none": "Trasversale",
-	"elearning_tab_year_stream": "{year}° anno · T{stream}",
-	"elearning_period_none_section": "Spazi trasversali",
-	"elearning_period_none_hint": "Comunicazioni, tutorato e altri spazi senza anno accademico.",
 	"elearning_editions_label": "Edizioni di {name}",
 	"elearning_add_favorite": "Aggiungi ai preferiti",
 	"elearning_remove_favorite": "Rimuovi dai preferiti",
@@ -55,7 +39,6 @@
 	"elearning_deadlines_failed": "Non è stato possibile caricare le scadenze dei corsi.",
 	"elearning_deadlines_stale": "Scadenze non aggiornate: le ultime caricate risalgono a {time}.",
 	"elearning_deadlines_stale_now": "Scadenze non aggiornate: le ultime sono state caricate poco fa.",
-	"elearning_pull_to_refresh": "Rilascia per aggiornare",
 	"elearning_catalog_title": "Aggiungi corso",
 	"elearning_select_area": "Seleziona un’area didattica",
 	"elearning_catalog_root": "Catalogo",

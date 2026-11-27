@@ -26,7 +26,11 @@
 
 <svelte:window onkeydown={ctl.keydown} onpagehide={ctl.remember} />
 
-<div class={['calendar', { compact: ctl.compact }]} bind:this={ctl.root}>
+<div
+	class={['calendar', { compact: ctl.compact }]}
+	bind:this={ctl.root}
+	bind:clientWidth={ctl.width}
+>
 	<!-- Nothing for the few frames storage takes: the grid paints once, in its final shape. -->
 	{#if ctl.data.primed}
 		{#if ctl.compact}

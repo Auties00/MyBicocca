@@ -36,47 +36,6 @@
 			}
 		}
 	],
-	"services_badge_results": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} to decide",
-				"countPlural=other": "{count} to decide"
-			}
-		}
-	],
-	"services_badge_fees_overdue": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} overdue",
-				"countPlural=other": "{count} overdue"
-			}
-		}
-	],
-	"services_badge_fees_due": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} to pay",
-				"countPlural=other": "{count} to pay"
-			}
-		}
-	],
-	"services_badge_exams_booked": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} booked",
-				"countPlural=other": "{count} booked"
-			}
-		}
-	],
-	"services_badge_exams_closing": "Closing soon",
 	"services_upcoming_title": "Coming up",
 	"services_upcoming_all": "All deadlines",
 	"services_deadlines_subtitle": [
@@ -246,25 +205,12 @@
 	"services_deadlines_unchecked_title": "Couldn’t check all your deadlines.",
 	"services_deadlines_unchecked": "Couldn’t load {sources}: you may have deadlines that don’t show here.",
 	"services_summary_partial": "some couldn’t load",
-	"services_badge_unverified": "Not checked",
 	"services_card_partial": "Incomplete",
 	"services_card_stale": "Out of date",
 	"services_tile_closings_unverified": "Closings not checked",
 	"services_stale_line": "Out of date · data from {time}",
 	"services_stale_line_now": "Couldn’t refresh",
 	"services_refresh": "Refresh deadlines",
-	"services_badge_questionnaires": [
-		{
-			"declarations": ["input count", "local countPlural = count: plural"],
-			"selectors": ["countPlural"],
-			"match": {
-				"countPlural=one": "{count} to fill in",
-				"countPlural=other": "{count} to fill in"
-			}
-		}
-	],
-	"services_badge_seat_now": "Seat now",
-	"services_badge_seat_today": "Seat at {time}",
 	"services_tile_result_due": [
 		{
 			"declarations": ["input date", "input day"],

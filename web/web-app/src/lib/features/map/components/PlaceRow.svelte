@@ -43,7 +43,7 @@
 	titleLines={1}
 	lines={1}
 	data-place={place}
-	onpointerenter={(event) => event.pointerType === 'mouse' && onhover?.(true)}
+	onpointermove={(event) => event.pointerType === 'mouse' && event.buttons === 0 && onhover?.(true)}
 	onpointerleave={(event) => event.pointerType === 'mouse' && onhover?.(false)}
 	onfocus={(event) => event.currentTarget.matches(':focus-visible') && onhover?.(true)}
 	onblur={() => onhover?.(false)}

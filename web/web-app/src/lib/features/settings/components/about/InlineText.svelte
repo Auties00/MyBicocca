@@ -12,7 +12,7 @@
 
 	const styles = (segment: InlineSegment) => ({
 		bold: segment.bold,
-		italic: segment.italic,
+		emphasis: segment.italic,
 		strike: segment.strike,
 		underline: segment.underline
 	});
@@ -30,12 +30,12 @@
 {/each}
 
 <style>
-	.bold {
-		font-weight: 650;
+	.emphasis {
+		font-weight: 550;
 	}
 
-	.italic {
-		font-style: italic;
+	.bold {
+		font-weight: 650;
 	}
 
 	.strike {

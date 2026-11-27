@@ -22,6 +22,7 @@
 	import TurnoPrompt from './TurnoPrompt.svelte';
 	import WeekHeads from './WeekHeads.svelte';
 	import IconButton from '#lib/ui/IconButton.svelte';
+	import PullToRefresh from '#lib/ui/PullToRefresh.svelte';
 	import { reducedMotion } from '#lib/ui/media.ts';
 
 	interface Props {
@@ -185,78 +186,148 @@
 </div>
 <SyncStatus {data} />
 {#if !data.failed}
-	<div
-		class={[
-			'frame',
-			'panes',
-			{ docked, sided: view !== 'month', large: ctl.size === 'large', resizing }
-		]}
-		bind:this={frame}
-		style:--pane-user={paneUser}
+	<!-- Phones and tablets refresh with a pull, in place of the toolbar's button. -->
+	<PullToRefresh
+		onrefresh={data.refresh}
+		refreshing={data.refreshing && data.hydrated}
+		label={m.calendar_refreshing()}
 	>
-		<!-- Always there: in month its column folds away and it fades, rather than vanishing. -->
-		<div class="side-clip" inert={view === 'month'}>
-			<aside class="side">
-				<MiniMonth
-					selected={date}
-					today={ctl.today}
-					range={ctl.period}
-					byDay={data.byDay}
-					onpick={(day) => ctl.goTo(day)}
-				/>
-				<SourceLegend events={ctl.periodEvents} libraryLinked={data.libraryLinked} />
-				<div class="zoom" role="group" aria-label={m.calendar_density()}>
-					<IconButton
-						icon={IconMagnifyingGlassMinus}
-						label={m.calendar_zoom_out()}
-						shortcut={['-']}
-						disabled={ctl.zoom <= ZOOM_MIN}
-						onclick={() => ctl.zoomBy(1 / 1.2)}
-					/>
-					<IconButton
-						icon={IconMagnifyingGlassPlus}
-						label={m.calendar_zoom_in()}
-						shortcut={['+']}
-						disabled={ctl.zoom >= ZOOM_MAX}
-						onclick={() => ctl.zoomBy(1.2)}
-					/>
-				</div>
-			</aside>
-		</div>
-		<section
-			class="main wk-scope"
-			aria-label={ctl.title}
-			style:--wk-sat={weekend[0]}
-			style:--wk-sun={weekend[1]}
-			style:--wk-figure={view === 'month' ? 0 : 1}
-			style:--wk-gap={view === 'month' ? '4px' : '0px'}
+		<div
+			class={[
+				'frame',
+				'panes',
+				{ docked, sided: view !== 'month', large: ctl.size === 'large', resizing }
+			]}
+			bind:this={frame}
+			style:--pane-user={paneUser}
 		>
-			{#if view === 'month'}
-				<div class={['month', { split: !docked }]}>
-					<div class="month-column">
-						<div class="month-grid" {@attach pagesMonths}>
-							<MonthGrid
-								month={monthOf(date)}
-								byDay={data.byDay}
-								selected={date}
-								today={ctl.today}
-								variant="wide"
-								heads={monthHeads}
-								loading={ctl.loading}
-								onselect={(day) => ctl.goTo(day)}
-								onopen={ctl.openOnDay}
-							/>
-						</div>
-						<div class="legends">
-							<SourceLegend
-								events={ctl.periodEvents}
-								libraryLinked={data.libraryLinked}
-								variant="inline"
-							/>
-						</div>
+			<!-- Always there: in month its column folds away and it fades, rather than vanishing. -->
+			<div class="side-clip" inert={view === 'month'}>
+				<aside class="side">
+					<MiniMonth
+						selected={date}
+						today={ctl.today}
+						range={ctl.period}
+						byDay={data.byDay}
+						onpick={(day) => ctl.goTo(day)}
+					/>
+					<SourceLegend events={ctl.periodEvents} libraryLinked={data.libraryLinked} />
+					<div class="zoom" role="group" aria-label={m.calendar_density()}>
+						<IconButton
+							icon={IconMagnifyingGlassMinus}
+							label={m.calendar_zoom_out()}
+							shortcut={['-']}
+							disabled={ctl.zoom <= ZOOM_MIN}
+							onclick={() => ctl.zoomBy(1 / 1.2)}
+						/>
+						<IconButton
+							icon={IconMagnifyingGlassPlus}
+							label={m.calendar_zoom_in()}
+							shortcut={['+']}
+							disabled={ctl.zoom >= ZOOM_MAX}
+							onclick={() => ctl.zoomBy(1.2)}
+						/>
 					</div>
-					{#if !docked}
-						<div class="month-agenda">
+				</aside>
+			</div>
+			<section
+				class="main wk-scope"
+				aria-label={ctl.title}
+				style:--wk-sat={weekend[0]}
+				style:--wk-sun={weekend[1]}
+				style:--wk-figure={view === 'month' ? 0 : 1}
+				style:--wk-gap={view === 'month' ? '4px' : '0px'}
+			>
+				{#if view === 'month'}
+					<div class={['month', { split: !docked }]}>
+						<div class="month-column">
+							<div class="month-grid" {@attach pagesMonths}>
+								<MonthGrid
+									month={monthOf(date)}
+									byDay={data.byDay}
+									selected={date}
+									today={ctl.today}
+									variant="wide"
+									heads={monthHeads}
+									loading={ctl.loading}
+									onselect={(day) => ctl.goTo(day)}
+									onopen={ctl.openOnDay}
+								/>
+							</div>
+							<div class="legends">
+								<SourceLegend
+									events={ctl.periodEvents}
+									libraryLinked={data.libraryLinked}
+									variant="inline"
+								/>
+							</div>
+						</div>
+						{#if !docked}
+							<div class="month-agenda">
+								<AgendaList
+									{date}
+									today={ctl.today}
+									minute={ctl.now.minutes}
+									events={ctl.dayEvents}
+									loading={ctl.loading}
+									courses={data.courses}
+									selectedId={ctl.nav.eventId}
+									heading="medium"
+									onopen={ctl.open}
+								/>
+							</div>
+						{/if}
+					</div>
+				{:else}
+					<CalendarTimeline {ctl} />
+					{#if ctl.prompt}
+						{@const course = ctl.prompt}
+						<div
+							class="prompt"
+							transition:fly={{ y: 16, duration: reducedMotion.current ? 0 : 200 }}
+						>
+							<TurnoPrompt
+								{course}
+								onchoose={(choice) => ctl.chooseTurno(course.activityCode, choice)}
+							/>
+						</div>
+					{/if}
+				{/if}
+			</section>
+			{#if docked}
+				<!-- The gap between the calendar and the panel is the handle: any height of it can be grabbed. -->
+				<!-- A focusable separator is a window splitter, which takes keys and pointer. -->
+				<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+				<div
+					class="resizer"
+					role="separator"
+					aria-orientation="vertical"
+					aria-label={m.calendar_pane_resize()}
+					aria-valuenow={paneWidth ?? undefined}
+					tabindex="0"
+					onpointerdown={startResize}
+					onpointermove={resize}
+					onpointerup={endResize}
+					onpointercancel={endResize}
+					onkeydown={resizeKey}
+					ondblclick={resetPane}
+				>
+					<span class="grip" aria-hidden="true"><IconDotsSixVertical /></span>
+				</div>
+				<aside
+					class="pane"
+					aria-label={ctl.selected ? displayTitle(ctl.selected) : fullDate(date)}
+					bind:this={ctl.pane}
+				>
+					{#if ctl.nav.eventId}
+						<DetailPanel
+							event={ctl.selected}
+							courses={data.courses}
+							onclose={() => ctl.close(true)}
+							onback={() => ctl.close(true)}
+						/>
+					{:else}
+						<div class="pane-agenda">
 							<AgendaList
 								{date}
 								today={ctl.today}
@@ -264,76 +335,16 @@
 								events={ctl.dayEvents}
 								loading={ctl.loading}
 								courses={data.courses}
-								selectedId={ctl.nav.eventId}
 								heading="medium"
+								upcoming={ctl.comingUp}
 								onopen={ctl.open}
 							/>
 						</div>
 					{/if}
-				</div>
-			{:else}
-				<CalendarTimeline {ctl} />
-				{#if ctl.prompt}
-					{@const course = ctl.prompt}
-					<div class="prompt" transition:fly={{ y: 16, duration: reducedMotion.current ? 0 : 200 }}>
-						<TurnoPrompt
-							{course}
-							onchoose={(choice) => ctl.chooseTurno(course.activityCode, choice)}
-						/>
-					</div>
-				{/if}
+				</aside>
 			{/if}
-		</section>
-		{#if docked}
-			<!-- The gap between the calendar and the panel is the handle: any height of it can be grabbed. -->
-			<!-- A focusable separator is a window splitter, which takes keys and pointer. -->
-			<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-			<div
-				class="resizer"
-				role="separator"
-				aria-orientation="vertical"
-				aria-label={m.calendar_pane_resize()}
-				aria-valuenow={paneWidth ?? undefined}
-				tabindex="0"
-				onpointerdown={startResize}
-				onpointermove={resize}
-				onpointerup={endResize}
-				onpointercancel={endResize}
-				onkeydown={resizeKey}
-				ondblclick={resetPane}
-			>
-				<span class="grip" aria-hidden="true"><IconDotsSixVertical /></span>
-			</div>
-			<aside
-				class="pane"
-				aria-label={ctl.selected ? displayTitle(ctl.selected) : fullDate(date)}
-				bind:this={ctl.pane}
-			>
-				{#if ctl.nav.eventId}
-					<DetailPanel
-						event={ctl.selected}
-						courses={data.courses}
-						onclose={() => ctl.close(true)}
-						onback={() => ctl.close(true)}
-					/>
-				{:else}
-					<div class="pane-agenda">
-						<AgendaList
-							{date}
-							today={ctl.today}
-							minute={ctl.now.minutes}
-							events={ctl.dayEvents}
-							loading={ctl.loading}
-							courses={data.courses}
-							heading="medium"
-							upcoming={ctl.comingUp}
-							onopen={ctl.open}
-						/>
-					</div>
-				{/if}
-			</aside>
-		{/if}
-	</div>
+		</div>
+	</PullToRefresh>
 {/if}
 
 {#if ctl.anchored}
@@ -346,29 +357,28 @@
 {/if}
 
 <style>
-	/* The toolbar spans the calendar, so it is the same in every view; under it the side column
+	/* The header spans the calendar, so it is the same in every view; under it the side column
 	   (day and week, when there is room), the view, and the docked pane. */
 	.bar {
 		flex: none;
-		padding: var(--sp-4) var(--gutter) var(--sp-3) var(--sp-5);
+		padding: var(--page-padding-top) var(--gutter) var(--page-gap);
 	}
 
 	/*
 	 * Beside a docked panel the views are as wide as the panel's least: from the handle's line (7px
-	 * into the 14px gap) to the panel's right edge, which is the page's own margin short of the
+	 * into the 14px gap) to the panel's right edge, which is the page's gutter short of the
 	 * window's. They keep that width, and stay put, while the panel is dragged wider.
 	 */
 	.bar.docked {
-		--views-w: calc(var(--pane-min) - 14px - var(--sp-3) + 7px - 2px);
-		padding-inline-end: var(--sp-3);
+		--views-w: calc(var(--pane-min) - 14px - var(--gutter) + 7px - 2px);
 	}
 
 	/* The panel's size, which the bar above it needs too: its least, what was dragged, a third of the window. */
 	.panes {
 		/*
-		 * The panel's least width, with the handle's 14px gap beside it. At 369px the handle's line falls
-		 * where the toolbar's controls used to be separated, in every view; each pixel off this number
-		 * moves the panel's edge by a pixel.
+		 * The panel's least width, with the handle's 14px gap beside it. The toolbar's view switcher
+		 * (--views-w) is sized from it, so each pixel off this number moves the panel's edge and the
+		 * switcher together.
 		 */
 		--pane-min: 369px;
 		--pane-w: clamp(
@@ -381,7 +391,7 @@
 	/* It floats over the grid's foot: arriving with the lessons, it moves nothing. */
 	.prompt {
 		position: absolute;
-		inset-inline: var(--sp-5) var(--gutter);
+		inset-inline: var(--gutter);
 		inset-block-end: var(--sp-4);
 		z-index: 6;
 		max-inline-size: 720px;
@@ -434,7 +444,7 @@
 		block-size: 100%;
 		min-block-size: 0;
 		overflow-y: auto;
-		padding: var(--sp-1) var(--sp-3) var(--sp-3) var(--sp-5);
+		padding: var(--sp-1) var(--sp-3) var(--sp-3) var(--gutter);
 		scrollbar-width: thin;
 	}
 
@@ -458,6 +468,10 @@
 		.frame:not(.docked) .side-clip {
 			display: block;
 		}
+
+		.frame.sided:not(.docked) .main {
+			--timeline-label-w: 56px;
+		}
 	}
 
 	/* Beside a docked pane, the side column only once the week keeps columns wide enough to read. */
@@ -469,9 +483,15 @@
 		.frame.docked .side-clip {
 			display: block;
 		}
+
+		.frame.sided.docked .main {
+			--timeline-label-w: 56px;
+		}
 	}
 
+	/* With no side column the hour labels start at the page's gutter, under the title. */
 	.main {
+		--timeline-label-w: calc(var(--gutter) + 36px);
 		position: relative;
 		display: flex;
 		flex-direction: column;
@@ -483,7 +503,7 @@
 		flex: 1;
 		display: grid;
 		min-block-size: 0;
-		padding: 0 var(--sp-5) var(--sp-4);
+		padding: 0 var(--gutter) var(--sp-4);
 	}
 
 	.month.split {
@@ -604,7 +624,7 @@
 		display: flex;
 		flex-direction: column;
 		min-block-size: 0;
-		margin: 0 var(--sp-3) var(--sp-3) 14px;
+		margin: 0 var(--gutter) var(--sp-3) 14px;
 		/* Rounder than the tiles inside it, which take their radius from here. */
 		--tile-radius: var(--r-md);
 		border-radius: var(--r-lg);

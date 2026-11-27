@@ -104,15 +104,13 @@
 			loading={headerLoading}
 		/>
 		{#if staleError}
-			<div class="stale">
-				<ErrorState
-					variant="stale"
-					message={errorMessage(staleError)}
-					{updatedAt}
-					onretry={query.refresh}
-					retrying={query.refreshing}
-				/>
-			</div>
+			<ErrorState
+				variant="stale"
+				message={errorMessage(staleError)}
+				{updatedAt}
+				onretry={query.refresh}
+				retrying={query.refreshing}
+			/>
 		{/if}
 	{/if}
 
@@ -171,7 +169,11 @@
 				{/if}
 
 				{#if data.units.length === 0}
-					<EmptyState icon={IconChalkboardTeacher} title={m.questionnaires_units_none()} />
+					<EmptyState
+						size="page"
+						icon={IconChalkboardTeacher}
+						title={m.questionnaires_units_none()}
+					/>
 				{:else}
 					<ListGroup title={m.questionnaires_units_heading()} level={view.wide ? 3 : 2}>
 						{#each data.units as unit (unit.index)}
@@ -206,10 +208,6 @@
 	.frame {
 		display: grid;
 		gap: var(--page-gap);
-	}
-
-	.stale {
-		margin-block-start: calc(var(--page-gap) * -0.5);
 	}
 
 	.activity {

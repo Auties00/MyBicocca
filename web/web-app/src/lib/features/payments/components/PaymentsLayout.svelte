@@ -111,14 +111,12 @@
 </svelte:head>
 
 <Page width="dashboard">
-	<div class={['head', { beside }]}>
-		<PageHeader
-			title={header.title}
-			subtitle={header.subtitle}
-			back={header.back}
-			loading={header.loading}
-		/>
-	</div>
+	<PageHeader
+		title={header.title}
+		subtitle={header.subtitle}
+		back={header.back}
+		loading={header.loading}
+	/>
 	{#if data.error && data.loaded}
 		<ErrorState
 			variant="stale"
@@ -179,14 +177,6 @@
 {/snippet}
 
 <style>
-	/*
-	 * Beside the list an item opens without moving the header: it gets its own view-transition
-	 * name, so only the detail pane takes part in the page transition.
-	 */
-	.head.beside {
-		view-transition-name: payments-head;
-	}
-
 	.pane {
 		container: payments / inline-size;
 	}

@@ -22,6 +22,8 @@
 	import ErrorState from '#lib/ui/ErrorState.svelte';
 	import ListDetail from '#lib/ui/ListDetail.svelte';
 	import { LoadingGate } from '#lib/ui/loadingGate.svelte.ts';
+	import Fab from '#lib/ui/Fab.svelte';
+	import { expanded } from '#lib/ui/media.ts';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
 	import { isTypingTarget } from '#lib/ui/platform.ts';
@@ -33,6 +35,7 @@
 	import DiscussionsSkeleton from './DiscussionsSkeleton.svelte';
 	import ForumOverview from './ForumOverview.svelte';
 	import { kindLabel } from './kinds.ts';
+	import PullToRefresh from '#lib/ui/PullToRefresh.svelte';
 
 	interface Props {
 		courseId: number;
@@ -138,7 +141,7 @@
 		{back}
 	>
 		{#snippet actions()}
-			{#if record?.canCreateDiscussions && !composing}
+			{#if record?.canCreateDiscussions && !composing && expanded.current}
 				<Button
 					variant="solid"
 					icon={IconPencilSimpleLine}
@@ -192,57 +195,69 @@
 	{/if}
 {/snippet}
 
-<Page width="dashboard">
-	<div class="forum" data-course={course.slot}>
-		{#if missing}
-			{@render header()}
-			<EmptyState
-				size="page"
-				icon={IconChatsDuotone}
-				title={m.forum_missing_title()}
-				body={m.forum_missing_body()}
-			>
-				{#snippet action()}
-					<Button href={back.href}>{m.forum_back_to_forums()}</Button>
-				{/snippet}
-			</EmptyState>
-		{:else if forum.forums.status === 'error' && forum.forums.error && record === undefined && forum.pages.data === undefined}
-			{@render header()}
-			<ErrorState
-				title={m.forum_load_failed()}
-				message={errorMessage(forum.forums.error)}
-				onretry={forum.refresh}
-				retrying={forum.forums.refreshing}
-			/>
-		{:else if settling}
-			<div class="settling" aria-busy="true" aria-label={m.forum_loading()}>
-				{#if gate.visible}
-					<Skeleton variant="text" width="45%" height="0.75em" />
-					<Skeleton width="75%" height="2.25rem" radius="var(--r-sm)" />
-					<Skeleton variant="text" width="35%" />
-				{/if}
-			</div>
-			<DiscussionsSkeleton />
-		{:else}
-			{#if forum.wide || !open}
+<!-- Below 1024 px a pull refreshes the forum; an open thread's own pull refreshes it. -->
+<PullToRefresh onrefresh={forum.refresh}>
+	<Page width="dashboard">
+		<div class="forum" data-course={course.slot}>
+			{#if missing}
 				{@render header()}
+				<EmptyState
+					size="page"
+					icon={IconChatsDuotone}
+					title={m.forum_missing_title()}
+					body={m.forum_missing_body()}
+				>
+					{#snippet action()}
+						<Button href={back.href}>{m.forum_back_to_forums()}</Button>
+					{/snippet}
+				</EmptyState>
+			{:else if forum.forums.status === 'error' && forum.forums.error && record === undefined && forum.pages.data === undefined}
+				{@render header()}
+				<ErrorState
+					title={m.forum_load_failed()}
+					size="page"
+					message={errorMessage(forum.forums.error)}
+					onretry={forum.refresh}
+					retrying={forum.forums.refreshing}
+				/>
+			{:else if settling}
+				<div class="settling" aria-busy="true" aria-label={m.forum_loading()}>
+					{#if gate.visible}
+						<Skeleton variant="text" width="45%" height="0.75em" />
+						<Skeleton width="75%" height="2.25rem" radius="var(--r-sm)" />
+						<Skeleton variant="text" width="35%" />
+					{/if}
+				</div>
+				<DiscussionsSkeleton />
+			{:else}
+				{#if forum.wide || !open}
+					{@render header()}
+				{/if}
+				<ListDetail
+					bind:twoPanes={forum.twoPanes}
+					{list}
+					detail={open ? detail : undefined}
+					placeholder={overview}
+					listWidth={360}
+					listLabel={m.forum_discussions_label()}
+					detailLabel={open ? m.forum_detail_label() : undefined}
+					current={open && selected !== undefined
+						? coursePath(courseId, 'forum', forumId, selected)
+						: undefined}
+					closeHref={coursePath(courseId, 'forum', forumId)}
+				/>
 			{/if}
-			<ListDetail
-				bind:twoPanes={forum.twoPanes}
-				{list}
-				detail={open ? detail : undefined}
-				placeholder={overview}
-				listWidth={360}
-				listLabel={m.forum_discussions_label()}
-				detailLabel={open ? m.forum_detail_label() : undefined}
-				current={open && selected !== undefined
-					? coursePath(courseId, 'forum', forumId, selected)
-					: undefined}
-				closeHref={coursePath(courseId, 'forum', forumId)}
+		</div>
+		{#if record?.canCreateDiscussions && !composing}
+			<Fab
+				icon={IconPencilSimpleLine}
+				label={m.forum_new_discussion()}
+				href={coursePath(courseId, 'forum', forumId, 'new')}
+				shortcut="N"
 			/>
 		{/if}
-	</div>
-</Page>
+	</Page>
+</PullToRefresh>
 
 <FileDialogs />
 

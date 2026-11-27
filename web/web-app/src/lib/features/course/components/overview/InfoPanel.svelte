@@ -299,6 +299,5 @@
 
 	.range {
 		color: var(--text-muted);
-		font-style: italic;
 	}
 </style>

@@ -3,6 +3,8 @@ import type { Attachment } from 'svelte/attachments';
 interface ModalOptions {
 	open: () => boolean;
 	dismissible: () => boolean;
+	/** Lets the caller play an exit animation before closing in response to the user. */
+	requestClose?: () => void;
 	/** Called when the dialog closes on its own (Escape, outside click, a form with method=dialog). */
 	close: () => void;
 	/** Called once the dialog has closed, whatever closed it. */
@@ -39,11 +41,18 @@ export function modal(options: ModalOptions): Attachment<HTMLDialogElement> {
 			pressedOutside = outside(e);
 		};
 		const click = (e: MouseEvent) => {
-			if (pressedOutside && outside(e) && options.dismissible()) dialog.close();
+			if (pressedOutside && outside(e) && dialog.open && options.dismissible()) {
+				if (options.requestClose) options.requestClose();
+				else dialog.close();
+			}
 			pressedOutside = false;
 		};
 		const cancel = (e: Event) => {
 			if (!options.dismissible()) e.preventDefault();
+			else if (options.requestClose) {
+				e.preventDefault();
+				options.requestClose();
+			}
 		};
 		const close = () => {
 			if (options.open()) options.close();

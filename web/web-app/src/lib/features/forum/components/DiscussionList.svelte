@@ -13,6 +13,7 @@
 	import { getForum } from '../forumState.svelte.ts';
 	import DiscussionRow from './DiscussionRow.svelte';
 	import DiscussionsSkeleton from './DiscussionsSkeleton.svelte';
+	import { expanded } from '#lib/ui/media.ts';
 
 	interface Props {
 		/** The open discussion, highlighted in the list. */
@@ -59,13 +60,16 @@
 				{/if}
 			{/if}
 		</p>
-		<IconButton
-			icon={IconArrowClockwise}
-			label={m.forum_refresh()}
-			size="sm"
-			loading={pages.refreshing}
-			onclick={forum.refresh}
-		/>
+		<!-- Below 1024 px a pull refreshes instead. -->
+		{#if expanded.current}
+			<IconButton
+				icon={IconArrowClockwise}
+				label={m.forum_refresh()}
+				size="sm"
+				loading={pages.refreshing}
+				onclick={forum.refresh}
+			/>
+		{/if}
 	</div>
 
 	{#if pages.error && pages.data && !deferred}
@@ -89,6 +93,7 @@
 		<DiscussionsSkeleton />
 	{:else if forum.discussions.length === 0}
 		<EmptyState
+			size={forum.wide ? 'section' : 'page'}
 			icon={IconChatsDuotone}
 			title={m.forum_discussions_empty_title()}
 			body={canCreate

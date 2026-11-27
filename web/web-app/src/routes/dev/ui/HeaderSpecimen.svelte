@@ -15,8 +15,8 @@
 <div class="specimen">
 	{@render children()}
 	<p class="chrome">
-		Barra in alto: <code>{chrome.title ?? '—'}</code> · indietro:
-		<code>{chrome.back?.label ?? '—'}</code>
+		Barra in alto: <code>{chrome.header.title ?? '—'}</code> · indietro:
+		<code>{chrome.header.back?.label ?? '—'}</code>
 	</p>
 </div>
 

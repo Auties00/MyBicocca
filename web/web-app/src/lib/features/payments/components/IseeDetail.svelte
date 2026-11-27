@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { careerTitle } from '#lib/format/names.ts';
 	import { formatCurrency, formatNumber } from '#lib/format/numbers.ts';
 	import { m } from '#lib/paraglide/messages.js';
 	import { shellHref } from '#lib/shell/nav.ts';
@@ -32,7 +33,9 @@
 			year.exemption === null
 				? null
 				: { label: m.payments_isee_exemption(), value: year.exemption },
-			year.course === null ? null : { label: m.payments_isee_course(), value: year.course },
+			year.course === null
+				? null
+				: { label: m.payments_isee_course(), value: careerTitle({ description: year.course }) },
 			year.enrollmentType === null
 				? null
 				: { label: m.payments_isee_enrollment(), value: year.enrollmentType },

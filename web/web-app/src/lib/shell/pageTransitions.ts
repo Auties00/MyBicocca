@@ -1,24 +1,14 @@
-import { afterNavigate, onNavigate } from '$app/navigation';
-import { startTypedTransition } from '#lib/ui/viewTransition.ts';
+import { onDestroy } from 'svelte';
+import { afterNavigate, beforeNavigate, type AfterNavigate } from '$app/navigation';
+import { compact, reducedMotion } from '#lib/ui/media.ts';
+import { activeDestination } from './nav.ts';
 
-function firstSegment(pathname: string): string {
-	return pathname.split('/').filter(Boolean)[0] ?? '';
-}
-
-/**
- * The kind of page change, for the CSS in base.css: deeper is `forward` (slide in from the end),
- * shallower or history-back is `back`, another destination is `swap` (rise and fade).
- */
-function direction(
-	from: string,
-	to: string,
-	delta: number | undefined
-): 'forward' | 'back' | 'swap' {
-	if (firstSegment(from) !== firstSegment(to)) return 'swap';
-	if (delta !== undefined && delta < 0) return 'back';
-	if (to.startsWith(`${from.replace(/\/$/, '')}/`)) return 'forward';
-	if (from.startsWith(`${to.replace(/\/$/, '')}/`)) return 'back';
-	return delta !== undefined && delta > 0 ? 'forward' : 'swap';
+function contentPane(main: HTMLElement): HTMLElement {
+	return (
+		Array.from(main.querySelectorAll<HTMLElement>('[data-vt-page]'))
+			.reverse()
+			.find((region) => region.getClientRects().length > 0) ?? main
+	);
 }
 
 /**
@@ -26,9 +16,9 @@ function direction(
  * `[data-vt-page]` region, such as the open detail of a list-detail layout), else the page's h1.
  */
 function landingHeading(main: HTMLElement): HTMLElement | null {
-	const regions = main.querySelectorAll<HTMLElement>('[data-vt-page]');
-	const region = regions[regions.length - 1];
-	return region?.querySelector<HTMLElement>('h1, h2[tabindex]') ?? main.querySelector('h1');
+	return (
+		contentPane(main).querySelector<HTMLElement>('h1, h2[tabindex]') ?? main.querySelector('h1')
+	);
 }
 
 /** A link click that asked SvelteKit to keep focus and scroll (`data-sveltekit-reset="false"`). */
@@ -41,9 +31,8 @@ function keptByLink(event: Event | undefined): boolean {
 }
 
 /**
- * Page changes run in a view transition (only the content pane is named, see AppShell). Query-only
- * changes (a calendar date, a filter) and shallow navigations don't animate. Call during component
- * init.
+ * Fade the incoming content pane in place. Anchors, restored scroll and query-only changes settle
+ * immediately. Call during component init.
  *
  * Focus follows one rule, so screen readers start on the new page: once a navigation has settled
  * and every `afterNavigate` callback has run, if focus rests on `<body>` (nothing kept or claimed
@@ -56,34 +45,103 @@ function keptByLink(event: Event | undefined): boolean {
  *   opened with `?open=…`), or only the hash changed;
  * - it is the first load, or a shallow navigation.
  */
-export function setupPageTransitions() {
-	onNavigate((navigation) => {
-		if (!document.startViewTransition || navigation.willUnload || navigation.shallow) return;
-		const from = navigation.from?.url.pathname;
-		const to = navigation.to?.url.pathname;
-		if (!from || !to || from === to) return;
-		const type = direction(from, to, navigation.type === 'popstate' ? navigation.delta : undefined);
-
-		return new Promise<void>((resolve) => {
-			const update = async () => {
-				resolve();
-				await navigation.complete;
-			};
-			startTypedTransition(update, type);
-		});
+export function setupPageTransitions(
+	savedScroll: (navigation: AfterNavigate) => number,
+	syncHeader: () => void
+) {
+	let stopWaitingForAnchor: (() => void) | undefined;
+	let entrance: Animation | undefined;
+	beforeNavigate(() => stopWaitingForAnchor?.());
+	onDestroy(() => {
+		stopWaitingForAnchor?.();
+		entrance?.cancel();
 	});
 
 	afterNavigate((navigation) => {
+		entrance?.cancel();
+		const hash = navigation.to?.url.hash;
+		if (hash && !navigation.shallow && navigation.type !== 'popstate') {
+			let id: string;
+			try {
+				id = decodeURIComponent(hash.slice(1));
+			} catch {
+				return;
+			}
+			const anchor = document.getElementById(id);
+			if (anchor) {
+				if (navigation.type === 'enter') anchor.scrollIntoView({ behavior: 'instant' });
+			} else {
+				// On a cold visit the fragment can be rendered by data that arrives after Kit's
+				// initial scroll. Stop waiting if the user takes over or leaves the page.
+				const main = document.getElementById('main');
+				if (!main) return;
+				const input = new AbortController();
+				const observer = new MutationObserver(() => {
+					const target = document.getElementById(id);
+					if (!target) return;
+					stop();
+					target.scrollIntoView({ behavior: 'instant' });
+					syncHeader();
+				});
+				const stop = () => {
+					clearTimeout(timeout);
+					input.abort();
+					observer.disconnect();
+					stopWaitingForAnchor = undefined;
+				};
+				const timeout = setTimeout(stop, 8000);
+				stopWaitingForAnchor = stop;
+				observer.observe(main, { childList: true, subtree: true });
+				for (const event of ['pointerdown', 'wheel', 'keydown'])
+					window.addEventListener(event, stop, {
+						capture: true,
+						passive: true,
+						signal: input.signal
+					});
+			}
+			return;
+		}
 		if (navigation.type === 'enter' || navigation.shallow) return;
-		if (navigation.type === 'link' && keptByLink(navigation.event)) return;
 		const from = navigation.from?.url;
 		const to = navigation.to?.url;
 		const queryOnly = from?.pathname === to?.pathname;
 		if (queryOnly && from?.search === to?.search) return;
+		const fromTab = from && activeDestination(from.pathname);
+		const toTab = to && activeDestination(to.pathname);
+		// Keep full-height mobile surfaces steady as their scroll position and chrome settle.
+		const fixedViewportSwitch =
+			compact.current &&
+			fromTab !== toTab &&
+			(fromTab === 'map' || toTab === 'map' || toTab === 'calendar');
 		// After the callbacks registered later (child pages) have had their turn.
 		queueMicrotask(() => {
-			if (document.activeElement !== document.body) return;
 			const main = document.getElementById('main');
+			if (
+				main &&
+				!queryOnly &&
+				!fixedViewportSwitch &&
+				!hash &&
+				!reducedMotion.current &&
+				!window.scrollY &&
+				!navigation.to?.scroll?.y &&
+				!savedScroll(navigation)
+			) {
+				const pane = contentPane(main);
+				const style = getComputedStyle(pane);
+				const duration = style.getPropertyValue('--view-enter-duration').trim();
+				entrance = pane.animate(
+					{ opacity: [style.getPropertyValue('--view-enter-opacity'), '1'] },
+					{
+						duration: parseFloat(duration) * (duration.endsWith('ms') ? 1 : 1000),
+						easing: style.getPropertyValue('--ease-out').trim()
+					}
+				);
+			}
+			if (
+				document.activeElement !== document.body ||
+				(navigation.type === 'link' && keptByLink(navigation.event))
+			)
+				return;
 			if (!main || (queryOnly && !main.querySelector('[data-focus-on-query]'))) return;
 			(landingHeading(main) ?? main).focus({ preventScroll: true });
 		});

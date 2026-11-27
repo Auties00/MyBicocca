@@ -3,16 +3,16 @@
 	import IconArrowLeft from '~icons/ph/arrow-left';
 	import IconStar from '~icons/ph/star';
 	import IconStarFill from '~icons/ph/star-fill';
-	import { untrack } from 'svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { shellHref } from '#lib/shell/nav.ts';
 	import IconButton from '#lib/ui/IconButton.svelte';
-	import { getPageChrome, hasPageChrome, topbarHeight } from '#lib/ui/pageChrome.svelte.ts';
+	import { getPageChrome, hasPageChrome } from '#lib/ui/pageChrome.svelte.ts';
 	import Skeleton from '#lib/ui/Skeleton.svelte';
 	import type { CourseState } from '../course.svelte.ts';
 	import { coverTitle } from '../title.ts';
 	import ContinueWatching from './ContinueWatching.svelte';
 	import CourseShapes from './CourseShapes.svelte';
+	import { expanded, compact } from '#lib/ui/media.ts';
 
 	interface Props {
 		course: CourseState;
@@ -26,8 +26,7 @@
 	/* The last word stands apart, as on the course's Android cover: "Algoritmi e Strutture / Dati". */
 	const split = $derived(coverTitle(course.title ?? ''));
 
-	/* Until the contents arrive, the cover may still gain the recording's card: from the size where
-	   it sits beside the title, its skeleton holds the place. */
+	/* Until the contents arrive, the recording's skeleton holds its place. */
 	const pending = $derived(
 		course.contents.data === undefined && course.contents.status === 'pending'
 	);
@@ -37,9 +36,6 @@
 				(course.record.data === undefined && course.record.status === 'pending'))
 	);
 	const watching = $derived(course.playlist.length > 0);
-	/* A phone's cover keeps one height: when it opens before the contents say whether a recording
-	   comes, the resume row's band is kept, for this visit, whatever they say. */
-	const band = untrack(() => pending);
 
 	let refreshing = $state(false);
 
@@ -49,29 +45,12 @@
 		refreshing = false;
 	}
 
-	$effect(() => {
-		if (!chrome) return;
-		chrome.title = course.title;
-		chrome.back = back;
-		return () => {
-			chrome.title = undefined;
-			chrome.back = undefined;
-			chrome.collapsed = false;
-		};
-	});
-
-	/* The top bar takes the title once the cover's title passes under it. */
-	function watch(heading: HTMLElement) {
-		if (!chrome) return;
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				chrome.collapsed = !entry.isIntersecting && entry.boundingClientRect.top < topbarHeight;
-			},
-			{ rootMargin: `-${topbarHeight}px 0px 0px 0px` }
-		);
-		observer.observe(heading);
-		return () => observer.disconnect();
-	}
+	/* On phones a course is a nested page: the bar names it from the start, as any other. */
+	const heading = chrome?.watchHeading(() => ({
+		title: course.title,
+		back,
+		inBar: compact.current
+	}));
 </script>
 
 <div class="hero">
@@ -91,12 +70,15 @@
 				{#if course.code.code}<span translate="no">{course.code.code}</span>{/if}
 			</p>
 			<span class="tools">
-				<IconButton
-					icon={IconArrowClockwise}
-					label={m.course_refresh()}
-					loading={refreshing}
-					onclick={refresh}
-				/>
+				<!-- Below 1024 px a pull refreshes instead. -->
+				{#if expanded.current}
+					<IconButton
+						icon={IconArrowClockwise}
+						label={m.course_refresh()}
+						loading={refreshing}
+						onclick={refresh}
+					/>
+				{/if}
 				{#if course.membership}
 					<span class={['star', { on: course.favourite }]}>
 						<IconButton
@@ -112,7 +94,7 @@
 			</span>
 		</div>
 		<div class="text">
-			<h1 class="title" tabindex="-1" {@attach watch}>
+			<h1 class="title" tabindex="-1" {@attach heading}>
 				{#if course.title !== undefined}
 					{#if split.head}<span class="head">{split.head}</span>{/if}
 					<span class="tail"
@@ -131,10 +113,7 @@
 			{/if}
 		</div>
 		{#if watching || pending}
-			<div class="side"><ContinueWatching {course} /></div>
-		{/if}
-		{#if watching || band}
-			<div class="band"><ContinueWatching {course} row /></div>
+			<div class="recording"><ContinueWatching {course} /></div>
 		{/if}
 	</header>
 </div>
@@ -151,6 +130,7 @@
 		align-items: center;
 		gap: 6px;
 		justify-self: start;
+		margin-block-start: -6px;
 		margin-inline-start: -8px;
 		padding: 6px 10px 6px 8px;
 		border-radius: var(--r-pill);
@@ -195,13 +175,18 @@
 		position: relative;
 		isolation: isolate;
 		display: grid;
-		grid-template-areas: 'top' 'text' 'band';
+		grid-template-areas: 'top' 'text';
 		gap: 14px;
 		overflow: clip;
 		padding: 22px 20px 20px;
 		border-radius: var(--r-xl);
 		background: var(--course-container);
 		container-type: inline-size;
+	}
+
+	.cover.watching,
+	.cover.pending {
+		grid-template-areas: 'top' 'text' 'recording';
 	}
 
 	.topline {
@@ -260,7 +245,6 @@
 	}
 
 	.head {
-		font-style: italic;
 		font-weight: 350;
 	}
 
@@ -295,19 +279,11 @@
 		font-size: 1rem;
 	}
 
-	.side {
-		display: none;
-		grid-area: side;
+	.recording {
+		grid-area: recording;
 		align-self: end;
 		min-inline-size: 0;
 		container-type: inline-size;
-	}
-
-	.band {
-		grid-area: band;
-		block-size: 60px;
-		min-inline-size: 0;
-		margin-block-start: 4px;
 	}
 
 	/* Beside the title the cover is a band of one height, card or not: it fits the recording's card
@@ -326,16 +302,8 @@
 		.cover.watching,
 		.cover.pending {
 			grid-template-columns: minmax(0, 1fr) var(--side-w);
-			grid-template-areas: 'top top' 'text side';
+			grid-template-areas: 'top top' 'text recording';
 			column-gap: var(--gap-x);
-		}
-
-		.side {
-			display: block;
-		}
-
-		.band {
-			display: none;
 		}
 
 		/* The title scales with the column it has beside a card, card or not: it keeps its size when

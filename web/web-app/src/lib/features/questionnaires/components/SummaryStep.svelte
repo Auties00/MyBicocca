@@ -99,7 +99,6 @@
 		block-size: 112px;
 		margin-block-end: var(--sp-3);
 		color: var(--on-warning-container);
-		animation: arrive var(--dur-sheet) var(--spring-pop) both;
 	}
 
 	.shape {
@@ -235,19 +234,6 @@
 		.pair {
 			grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
 			gap: var(--sp-5);
-		}
-	}
-
-	@keyframes arrive {
-		from {
-			opacity: 0;
-			transform: scale(0.7) rotate(-20deg);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.badge {
-			animation: none;
 		}
 	}
 </style>

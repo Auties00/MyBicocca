@@ -14,9 +14,6 @@
 	import IconArrowsLeftRight from '~icons/ph/arrows-left-right';
 	import IconUserPlus from '~icons/ph/user-plus';
 	import IconSignOut from '~icons/ph/sign-out';
-	import IconMonitor from '~icons/ph/monitor';
-	import IconSun from '~icons/ph/sun';
-	import IconMoon from '~icons/ph/moon';
 	import { m } from '#lib/paraglide/messages.js';
 	import Avatar from '#lib/ui/Avatar.svelte';
 	import Banner from '#lib/ui/Banner.svelte';
@@ -30,7 +27,6 @@
 	import { secondaryDestinations } from '#lib/ui/destinations.ts';
 	import { shellHref } from './nav.ts';
 	import { shell } from './shell.svelte.ts';
-	import { theme, type ThemeMode } from '#lib/ui/theme.svelte.ts';
 	import { compact } from '#lib/ui/media.ts';
 
 	interface Props {
@@ -39,9 +35,11 @@
 		trigger: Snippet<[AccountTriggerProps]>;
 		/** Anchor side on wider screens (a sheet on phones). */
 		placement?: PopoverPlacement;
+		/** Lists Profile and Settings, where no navigation beside the page does (phones, the rail). */
+		destinations?: boolean;
 	}
 
-	let { model, trigger, placement = 'bottom-end' }: Props = $props();
+	let { model, trigger, placement = 'bottom-end', destinations = false }: Props = $props();
 
 	let pending = $state<string>();
 	let error = $state<string>();
@@ -49,12 +47,6 @@
 
 	const active = $derived(model.accounts.find((a) => a.id === model.activeId));
 	const addHref = $derived(internalHref(model.addAccountHref));
-
-	const themeOptions: { value: ThemeMode; label: () => string; icon: typeof IconSun }[] = [
-		{ value: 'system', label: m.shell_theme_system, icon: IconMonitor },
-		{ value: 'light', label: m.shell_theme_light, icon: IconSun },
-		{ value: 'dark', label: m.shell_theme_dark, icon: IconMoon }
-	];
 
 	async function run(key: string, action: () => Promise<void>) {
 		pending = key;
@@ -147,34 +139,17 @@
 			{/each}
 		</div>
 
-		<div class="theme" role="radiogroup" aria-label={m.shell_theme_label()}>
-			<span class="theme-label" aria-hidden="true">{m.shell_theme_label()}</span>
-			<span class="theme-options">
-				{#each themeOptions as option (option.value)}
-					<button
-						type="button"
-						role="radio"
-						class={['theme-option', { selected: theme.mode === option.value }]}
-						aria-checked={theme.mode === option.value}
-						aria-label={option.label()}
-						title={option.label()}
-						onclick={(e) => theme.set({ mode: option.value }, e)}
-					>
-						<option.icon aria-hidden="true" />
-					</button>
-				{/each}
-			</span>
-		</div>
-
 		<ul class="links" role="list">
-			{#each secondaryDestinations as destination (destination.id)}
-				<li>
-					<a class="link" href={shellHref(destination.path)} onclick={close}>
-						<destination.icon aria-hidden="true" />
-						{destination.label()}
-					</a>
-				</li>
-			{/each}
+			{#if destinations}
+				{#each secondaryDestinations as destination (destination.id)}
+					<li>
+						<a class="link" href={shellHref(destination.path)} onclick={close}>
+							<destination.icon aria-hidden="true" />
+							{destination.label()}
+						</a>
+					</li>
+				{/each}
+			{/if}
 			{#if addHref}
 				<li>
 					<a class="link" href={addHref} onclick={close}>
@@ -387,54 +362,6 @@
 		.other:hover {
 			background: var(--state-hover);
 			transition-duration: 0s;
-		}
-	}
-
-	.theme {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 12px;
-		padding: 4px 4px 4px 12px;
-	}
-
-	.theme-label {
-		color: var(--text-muted);
-		font: var(--type-ui);
-	}
-
-	.theme-options {
-		display: flex;
-		gap: 2px;
-		padding: 3px;
-		border-radius: var(--r-pill);
-		background: var(--surface-sunken);
-		box-shadow: inset 0 0 0 1px var(--hairline);
-	}
-
-	.theme-option {
-		display: grid;
-		place-items: center;
-		inline-size: 36px;
-		block-size: 30px;
-		border-radius: var(--r-pill);
-		color: var(--text-muted);
-		transition: background-color var(--dur-fast) var(--ease-out);
-	}
-
-	.theme-option :global(svg) {
-		inline-size: 17px;
-		block-size: 17px;
-	}
-
-	.theme-option.selected {
-		background: var(--container);
-		color: var(--on-container);
-	}
-
-	@media (hover: hover) {
-		.theme-option:not(.selected):hover {
-			color: var(--text);
 		}
 	}
 

@@ -342,9 +342,12 @@ export function blockModules(blocks: readonly ContentBlock[]): MoodleCourseModul
 /** The three most frequent activity types of a section: "26 video · 8 PDF · 1 quiz". */
 export function typeCounts(blocks: readonly ContentBlock[]): TypeCount[] {
 	const counts = new Map<CountKind, number>();
-	for (const module of blockModules(blocks)) {
-		const kind = countKind(module);
-		counts.set(kind, (counts.get(kind) ?? 0) + 1);
+	for (const block of blocks) {
+		if (block.kind !== 'group') continue;
+		for (const module of block.modules) {
+			const kind = countKind(module);
+			counts.set(kind, (counts.get(kind) ?? 0) + 1);
+		}
 	}
 	return [...counts.entries()]
 		.map(([kind, count]) => ({ kind, count }))

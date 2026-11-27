@@ -13,11 +13,9 @@
 
 	interface Props {
 		course: CourseState;
-		/** One line, for a phone's cover: a link that plays, with the place reached. */
-		row?: boolean;
 	}
 
-	let { course, row = false }: Props = $props();
+	let { course }: Props = $props();
 
 	const item = $derived(pickRecording(course.playlist, course.progress.data ?? {}));
 	const progress = $derived(item && course.progress.data?.[item.cmId]);
@@ -25,35 +23,7 @@
 	const id = $props.id();
 </script>
 
-{#if row}
-	{#if item}
-		<a
-			class="row"
-			href={coursePath(course.id, 'video', item.cmId)}
-			aria-label={started && progress
-				? m.course_resume_at({ title: item.title, time: formatClockLong(progress.position) })
-				: m.course_watch_title({ title: item.title })}
-		>
-			<span class="play" aria-hidden="true"><IconPlay /></span>
-			<span class="text" aria-hidden="true">
-				<span class="kicker">{started ? m.course_continue_kicker() : m.course_next_kicker()}</span>
-				<span class="line">{item.title}</span>
-			</span>
-			{#if started && progress}
-				<span class="at" aria-hidden="true">{formatClock(progress.position)}</span>
-				<span class="bar" style:--progress={progressRatio(progress)} aria-hidden="true"></span>
-			{/if}
-		</a>
-	{:else}
-		<div class="row" aria-hidden="true">
-			<span class="play"></span>
-			<span class="text">
-				<Skeleton variant="text" width="40%" />
-				<Skeleton variant="text" width="75%" />
-			</span>
-		</div>
-	{/if}
-{:else if item}
+{#if item}
 	{@const href = coursePath(course.id, 'video', item.cmId)}
 	<article class="watch" aria-labelledby="{id}-title">
 		<a class="thumb" {href} tabindex="-1" aria-hidden="true">
@@ -197,7 +167,6 @@
 		overflow: hidden;
 		color: var(--text-muted);
 		font: var(--type-meta);
-		font-style: italic;
 		white-space: nowrap;
 		text-overflow: ellipsis;
 	}
@@ -212,74 +181,6 @@
 
 	.actions > :global(:first-child) {
 		flex: 1;
-	}
-
-	.row {
-		position: relative;
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		block-size: 60px;
-		padding: 8px 14px 8px 8px;
-		overflow: hidden;
-		border-radius: var(--r-lg);
-		background: var(--surface);
-		box-shadow: var(--elev-2), var(--inner-light);
-		color: var(--text);
-		text-decoration: none;
-	}
-
-	.row .play {
-		display: grid;
-		flex: none;
-		place-items: center;
-		inline-size: 44px;
-		block-size: 44px;
-		border-radius: var(--r-pill);
-		background: var(--course-bar);
-		color: light-dark(oklch(100% 0 0), oklch(20% 0.02 var(--course-h)));
-	}
-
-	div.row .play {
-		background: var(--surface-sunken);
-	}
-
-	.row .play :global(svg) {
-		inline-size: 20px;
-		block-size: 20px;
-	}
-
-	.row .text {
-		flex: 1;
-		display: grid;
-		gap: 2px;
-		min-inline-size: 0;
-		padding: 0;
-	}
-
-	.row .line {
-		overflow: hidden;
-		font: var(--type-ui-strong);
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.row .at {
-		color: var(--text-muted);
-		font: var(--type-meta);
-		font-variant-numeric: tabular-nums;
-	}
-
-	.row .bar {
-		inset-inline: 0;
-		block-size: 3px;
-		background: color-mix(in oklch, var(--course-bar) 20%, transparent);
-	}
-
-	@media (hover: hover) {
-		a.row:hover {
-			background: color-mix(in oklch, var(--surface) 92%, var(--course-bar));
-		}
 	}
 
 	/* A wide card puts the frame on the left, the text and actions beside it. */

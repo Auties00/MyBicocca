@@ -2,7 +2,6 @@
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"map_title": "Map",
 	"map_canvas_label": "Campus map. Use the arrow keys to pan, + and − to zoom.",
-	"map_attribution": "© OpenStreetMap contributors",
 	"map_zoom_in": "Zoom in",
 	"map_zoom_out": "Zoom out",
 	"map_recenter": "Recentre the map",

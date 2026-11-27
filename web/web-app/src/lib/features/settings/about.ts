@@ -1,8 +1,9 @@
 import { version as buildId } from '$app/env';
 import { version } from '../../../../package.json';
+import releaseProperties from '../../../../../../android/app/version.properties?raw';
 
-/** The web app's own version. */
-export const appVersion = version;
+/** The release version shared with the Android app. */
+export const appVersion = /^baseVersion\s*=\s*([^\s#]+)/m.exec(releaseProperties)?.[1] ?? version;
 
 /** When this build was made: SvelteKit's build id is its timestamp unless configured otherwise. */
 export const buildDate = /^\d{12,}$/.test(buildId) ? new Date(Number(buildId)) : undefined;

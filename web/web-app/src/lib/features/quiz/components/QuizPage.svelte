@@ -298,6 +298,7 @@
 			<PageHeader title={m.quiz_title()} {back} sans />
 			<ErrorState
 				title={m.quiz_load_quiz_failed()}
+				size="page"
 				message={errorMessage(quizzes.error)}
 				onretry={quizzes.refresh}
 				retrying={quizzes.refreshing}

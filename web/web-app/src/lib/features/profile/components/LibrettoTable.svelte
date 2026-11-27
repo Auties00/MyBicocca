@@ -42,7 +42,7 @@
 		{@const title = yearTitle(group.year)}
 		{@const summary = yearSummary(group)}
 		<section class="year" id={yearAnchor(group.year)} aria-labelledby="{ids}-{group.year}">
-			<div class="sticky">
+			<div class="sticky" data-sticky-join>
 				<header class="head">
 					<div class="heading">
 						<h2 class="title" id="{ids}-{group.year}">{title}</h2>

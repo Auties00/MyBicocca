@@ -158,6 +158,13 @@
 	});
 
 	const title = $derived(current?.name ?? m.elearning_catalog_title());
+	const levelCourses = $derived.by(() => {
+		if (!current) return undefined;
+		const count =
+			current.siblings.find((sibling) => sibling.key === current.key)?.courses ??
+			current.categories.reduce((sum, category) => sum + category.courses, current.courses.length);
+		return m.elearning_category_courses({ count, shown: formatNumber(count) });
+	});
 	const back = $derived.by(() => {
 		if (node === null) return { href: resolve('/(app)/elearning'), label: m.elearning_title() };
 		const parent = current?.ancestors.at(-1);
@@ -234,7 +241,7 @@
 {/snippet}
 
 {#snippet searchBand()}
-	<div class="search" bind:offsetHeight={bandHeight}>
+	<div class="search" bind:offsetHeight={bandHeight} data-sticky-join>
 		<SearchField label={m.elearning_catalog_search()} {placeholder} size="lg" bind:value={text} />
 	</div>
 {/snippet}
@@ -293,8 +300,23 @@
 	</section>
 {/snippet}
 
+{#snippet crumbs()}
+	{#if current}
+		<nav class="crumbs" aria-label={m.elearning_catalog_path()} {@attach showEnd}>
+			<ol>
+				<li><a href={catalogHref()}>{m.elearning_catalog_root()}</a></li>
+				{#each current.ancestors as ancestor (ancestor.key)}
+					<li><a href={catalogHref(ancestor.key)}>{ancestor.name}</a></li>
+				{/each}
+				<li aria-current="page">{current.name}</li>
+			</ol>
+		</nav>
+	{/if}
+{/snippet}
+
 <div
 	class="catalog"
+	data-solid-topbar
 	style:--area-h={tint?.hue ?? 15}
 	style:--area-c={tint?.chroma ?? 0.12}
 	style:--search-h="{bandHeight}px"
@@ -304,27 +326,18 @@
 		<PageHeader
 			{title}
 			eyebrow={current && current.ancestors.length > 0 ? current.area.name : undefined}
-			subtitle={node === null ? m.elearning_select_area() : undefined}
+			subtitle={node === null ? m.elearning_select_area() : levelCourses}
+			loading={node !== null && current === undefined && level.status === 'pending'
+				? { eyebrow: false }
+				: false}
 			{back}
-		>
-			{#snippet meta()}
-				{#if current && current.ancestors.length > 0}
-					<nav class="crumbs" aria-label={m.elearning_catalog_path()} {@attach showEnd}>
-						<ol>
-							<li><a href={catalogHref()}>{m.elearning_catalog_root()}</a></li>
-							{#each current.ancestors as ancestor (ancestor.key)}
-								<li><a href={catalogHref(ancestor.key)}>{ancestor.name}</a></li>
-							{/each}
-							<li aria-current="page">{current.name}</li>
-						</ol>
-					</nav>
-				{/if}
-			{/snippet}
-		</PageHeader>
+			meta={current && current.ancestors.length > 0 ? crumbs : undefined}
+		/>
 
 		{#if root.status === 'error' || (node !== null && level.status === 'error')}
 			<ErrorState
 				title={m.elearning_catalog_load_failed()}
+				size="page"
 				message={m.elearning_catalog_load_error()}
 				onretry={() => {
 					void root.refresh();
@@ -482,6 +495,7 @@
 							{/if}
 							{#if current.categories.length === 0 && current.courses.length === 0}
 								<EmptyState
+									size="page"
 									icon={IconFolderDashed}
 									title={m.elearning_category_empty()}
 									body={m.elearning_category_empty_hint()}
@@ -606,8 +620,14 @@
 		inset-block-start: var(--shell-inset-top);
 		z-index: var(--z-sticky);
 		margin-block: calc(-1 * var(--sp-2));
-		padding-block: var(--sp-2);
+		margin-inline: calc(-1 * var(--gutter));
+		padding: var(--sp-2) var(--gutter);
 		background: var(--bg);
+	}
+
+	.split > .main > .search {
+		margin-inline-start: -2px;
+		padding-inline-start: 2px;
 	}
 
 	/* Focus moved under the sticky field (Shift+Tab, the link after enrolling) stops below it. */
@@ -701,7 +721,19 @@
 	}
 
 	.panes.split {
+		position: relative;
 		grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+	}
+
+	.panes.split:has(> .side)::after {
+		content: '';
+		position: absolute;
+		grid-area: 1 / 1 / 2 / 2;
+		inset-block: 0;
+		inset-inline-end: 0;
+		inline-size: 1px;
+		background: var(--navigation-pane-divider);
+		pointer-events: none;
 	}
 
 	/* One column: a level's list reads at a list's width, its search field over it. */
@@ -723,8 +755,8 @@
 		max-block-size: calc(100dvh - var(--side-top) - var(--sp-4));
 		overflow-y: auto;
 		overscroll-behavior: contain;
-		scrollbar-width: thin;
-		border-radius: var(--r-lg);
+		scrollbar-width: none;
+		padding-inline: var(--navigation-pane-padding);
 	}
 
 	/* Each area's accent, as its results wear it. */

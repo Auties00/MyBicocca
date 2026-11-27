@@ -243,7 +243,6 @@
 	.tbc {
 		padding-block: 8px;
 		font: var(--type-title-s);
-		font-style: italic;
 		color: var(--text-muted);
 	}
 

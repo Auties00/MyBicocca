@@ -49,15 +49,13 @@
 		sans
 	/>
 	{#if query.error && loaded}
-		<div class="stale">
-			<ErrorState
-				variant="stale"
-				message={errorMessage(query.error)}
-				{updatedAt}
-				onretry={query.refresh}
-				retrying={query.refreshing}
-			/>
-		</div>
+		<ErrorState
+			variant="stale"
+			message={errorMessage(query.error)}
+			{updatedAt}
+			onretry={query.refresh}
+			retrying={query.refreshing}
+		/>
 	{/if}
 {/if}
 
@@ -87,10 +85,6 @@
 {/if}
 
 <style>
-	.stale {
-		margin-block-start: calc(var(--page-gap) * -0.5);
-	}
-
 	.detail {
 		display: grid;
 		gap: var(--sp-5);

@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-	import { onDestroy, type Snippet } from 'svelte';
+	import { onDestroy, onMount, type Snippet } from 'svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { setSheetHead } from './sheetHead.ts';
 
@@ -24,6 +24,7 @@
 	let { children, label, detent, heights, visible, ondrag, ondetent, onhead }: Props = $props();
 
 	setSheetHead((node) => {
+		onhead(node.offsetHeight);
 		const observer = new ResizeObserver(() => onhead(node.offsetHeight));
 		observer.observe(node);
 		return () => observer.disconnect();
@@ -32,6 +33,7 @@
 	const order: readonly Detent[] = ['peek', 'half', 'full'];
 
 	let dragging = $state(false);
+	let measured = $state(false);
 	let start = 0;
 	let origin = 0;
 	let lastY = 0;
@@ -39,6 +41,14 @@
 	let velocity = 0;
 	let pointer: number | undefined;
 	let moved = false;
+
+	onMount(() => {
+		// The first layout measures both the viewport and the peek header.
+		let frame = requestAnimationFrame(() => {
+			frame = requestAnimationFrame(() => (measured = true));
+		});
+		return () => cancelAnimationFrame(frame);
+	});
 
 	/** Where a drag may start: anywhere while lowered, only the grip and header when raised. */
 	function grabs(event: PointerEvent): boolean {
@@ -151,7 +161,7 @@
 </script>
 
 <section
-	class={['sheet', detent, { dragging }]}
+	class={['sheet', detent, { dragging, measured }]}
 	aria-label={label}
 	style:--full={`${heights.full}px`}
 	style:--shown={`${visible}px`}
@@ -192,13 +202,12 @@
 			0 -8px 32px -12px color-mix(in oklch, var(--shadow-color) 28%, transparent),
 			var(--inner-light);
 		transform: translateY(calc(var(--full) - var(--shown)));
-		transition: transform var(--dur-sheet) var(--ease-sheet);
 		touch-action: none;
 		--level-end: calc(var(--shell-inset-bottom) + 24px);
 	}
 
-	.dragging {
-		transition: none;
+	.measured:not(.dragging) {
+		transition: transform var(--dur-sheet) var(--ease-sheet);
 	}
 
 	/* Lowered, only the header shows: the body would peek around the floating tab bar. */

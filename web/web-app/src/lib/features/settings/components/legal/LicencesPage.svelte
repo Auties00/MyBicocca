@@ -6,6 +6,7 @@
 	import Badge from '#lib/ui/Badge.svelte';
 	import EmptyState from '#lib/ui/EmptyState.svelte';
 	import SearchField from '#lib/ui/SearchField.svelte';
+	import { appVersion } from '../../about.ts';
 	import data from '../../legal/licences.json';
 	import SectionPage from '../SectionPage.svelte';
 
@@ -17,7 +18,7 @@
 		text?: string;
 	}
 
-	const app: Licence = data.app;
+	const app: Licence = { ...data.app, version: appVersion };
 	const packages: readonly Licence[] = data.packages;
 
 	let search = $state('');

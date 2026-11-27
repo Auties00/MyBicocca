@@ -450,7 +450,8 @@
 	{/if}
 {/snippet}
 
-<Page width="dashboard">
+<!-- A focused flow: on phones the step bar takes the tab bar's place while a slot is picked. -->
+<Page width="dashboard" tabBar={!(ready && offering && !flow.noAvailability)}>
 	<PageHeader {eyebrow} {title} {subtitle} {back} loading={!settled} />
 
 	<div class="body" {@attach measure}>

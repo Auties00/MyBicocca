@@ -1,6 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"profile_title": "Profilo",
+	"profile_subtitle_bachelor": "Laurea triennale in {programme}",
+	"profile_subtitle_master": "Laurea magistrale in {programme}",
 	"profile_refresh_error": "Impossibile aggiornare i dati del libretto.",
 	"profile_load_error": "Impossibile caricare il libretto",
 	"profile_stats_error": "Non è stato possibile caricare medie e totali.",
@@ -97,6 +99,7 @@
 	],
 	"profile_course_no_appelli": "Nessun appello disponibile",
 	"profile_course_simulate": "Simula la media con questo esame",
+	"profile_course_simulate_short": "Simula la media",
 	"profile_course_load_failed": "Impossibile caricare le prove.",
 	"profile_course_not_found_title": "Insegnamento non trovato.",
 	"profile_course_not_found_body": "Questo insegnamento non compare nel libretto della carriera attiva.",

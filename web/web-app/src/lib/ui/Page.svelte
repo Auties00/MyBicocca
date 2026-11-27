@@ -58,19 +58,20 @@
 		inline-size: 100%;
 		max-inline-size: calc(var(--max) + 2 * var(--gutter));
 		margin-inline: auto;
-		padding: var(--sp-4) var(--gutter) var(--sp-9);
+		padding: var(--page-padding-top) var(--gutter) var(--sp-9);
 		container: page / inline-size;
 	}
 
 	@media (width >= 1024px) {
 		.page {
 			--page-gap: var(--sp-7);
-			padding-block-start: var(--sp-6);
 		}
 	}
 
+	/* Starts where a dashboard page's content starts, so titles keep one left edge across pages. */
 	.reading {
 		--max: var(--w-reading);
+		margin-inline: max(0px, (100% - var(--w-dashboard)) / 2 - var(--gutter)) auto;
 	}
 
 	.dashboard {

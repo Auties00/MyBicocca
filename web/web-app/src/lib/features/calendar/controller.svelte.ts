@@ -16,6 +16,8 @@ import { setTurnoPicker, type TurnoChoice } from './turni.svelte.ts';
 import { counterpart, splitCourses } from './turni.ts';
 
 const ZOOM_KEY = 'mybicocca:calendar-zoom';
+/** The calendar's least width for the month grid to keep a docked pane beside it. */
+const MONTH_DOCK_WIDTH = 1040;
 
 /** The density is kept for the visit, as Android keeps it until the app restarts. */
 function readZoom(): number {
@@ -50,12 +52,23 @@ export class CalendarController {
 	readonly loading = $derived(!this.data.settled && !this.data.failed);
 	readonly todayOnScreen = $derived(showsToday(this.view, this.date, this.today));
 
-	/* Where an open event shows: a sheet or dialog, a popover on the card, or the docked pane. */
+	/** The calendar's own width, which the sidebar (open or folded) takes from the window. */
+	width = $state(0);
+	/*
+	 * Where an open event shows: a sheet or dialog, a popover on the card, or the docked pane. A
+	 * laptop docks the pane in month only once the grid beside it keeps its seven columns readable;
+	 * narrower, the day's agenda sits by the grid and an event opens in a dialog, as on tablets.
+	 */
+	readonly #monthDocks = $derived(this.width >= MONTH_DOCK_WIDTH);
 	readonly docked = $derived(
-		this.size === 'large' || (this.size === 'expanded' && this.view === 'month')
+		this.size === 'large' || (this.size === 'expanded' && this.view === 'month' && this.#monthDocks)
 	);
 	readonly anchored = $derived(this.size === 'expanded' && this.view !== 'month');
-	readonly modal = $derived(this.size === 'compact' || this.size === 'medium');
+	readonly modal = $derived(
+		this.size === 'compact' ||
+			this.size === 'medium' ||
+			(this.size === 'expanded' && this.view === 'month' && !this.#monthDocks)
+	);
 
 	readonly selected = $derived(this.nav.eventId ? this.data.find(this.nav.eventId) : undefined);
 	/** An event the URL names but the calendar doesn't hold (any more): say so, don't vanish. */

@@ -450,8 +450,8 @@
 		transition:
 			opacity 120ms var(--ease-out),
 			transform 120ms var(--ease-out),
-			overlay 120ms allow-discrete,
-			display 120ms allow-discrete;
+			overlay 160ms allow-discrete,
+			display 160ms allow-discrete;
 	}
 
 	.palette[open] {
@@ -993,7 +993,7 @@
 	}
 
 	.empty-title {
-		font: italic 400 1.25rem / 1.3 var(--font-display);
+		font: 400 1.25rem / 1.3 var(--font-display);
 	}
 
 	.empty-hint {

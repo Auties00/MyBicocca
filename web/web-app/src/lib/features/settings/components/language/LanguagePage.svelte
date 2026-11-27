@@ -63,36 +63,38 @@
 </script>
 
 <SectionPage title={m.settings_language_title()} subtitle={m.settings_language_page_subtitle()}>
-	<fieldset class="list">
-		<legend class="sr-only">{m.settings_language_legend()}</legend>
-		{#each options as option (option.value)}
-			{@const checked = current === option.value}
-			<label class={['row', { checked }]}>
-				<input
-					class="sr-only"
-					type="radio"
-					name="language"
-					value={option.value}
-					{checked}
-					onchange={() => select(option.value)}
-				/>
-				<Flag kind={option.value} waving={pending === option.value} />
-				<span class="text">
-					<span class="label" lang={option.lang} translate={option.lang ? 'no' : undefined}>
-						{option.label}
+	<div class="choices">
+		<fieldset class="list">
+			<legend class="sr-only">{m.settings_language_legend()}</legend>
+			{#each options as option (option.value)}
+				{@const checked = current === option.value}
+				<label class={['row', { checked }]}>
+					<input
+						class="sr-only"
+						type="radio"
+						name="language"
+						value={option.value}
+						{checked}
+						onchange={() => select(option.value)}
+					/>
+					<Flag kind={option.value} waving={pending === option.value} />
+					<span class="text">
+						<span class="label" lang={option.lang} translate={option.lang ? 'no' : undefined}>
+							{option.label}
+						</span>
+						<span class="description" lang={option.lang}>{option.description}</span>
 					</span>
-					<span class="description" lang={option.lang}>{option.description}</span>
-				</span>
-				<Knob {checked} />
-			</label>
-		{/each}
-	</fieldset>
+					<Knob {checked} />
+				</label>
+			{/each}
+		</fieldset>
 
-	<p class="note" role="status">
-		{pending === undefined || pending === language.choice
-			? m.settings_language_note()
-			: m.settings_language_switching()}
-	</p>
+		<p class="note" role="status">
+			{pending === undefined || pending === language.choice
+				? m.settings_language_note()
+				: m.settings_language_switching()}
+		</p>
+	</div>
 
 	{#if untranslated}
 		<Banner
@@ -109,6 +111,11 @@
 </SectionPage>
 
 <style>
+	.choices {
+		display: grid;
+		gap: var(--sp-3);
+	}
+
 	.list {
 		display: grid;
 		gap: 2px;
@@ -176,7 +183,5 @@
 		color: var(--text-muted);
 		font: var(--type-meta);
 		letter-spacing: var(--track-meta);
-		padding-inline: 4px;
-		margin-block-start: calc(-1 * var(--sp-3));
 	}
 </style>

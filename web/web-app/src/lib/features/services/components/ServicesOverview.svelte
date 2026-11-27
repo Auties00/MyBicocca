@@ -12,6 +12,8 @@
 	import { LoadingGate } from '#lib/ui/loadingGate.svelte.ts';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
+	import PullToRefresh from '#lib/ui/PullToRefresh.svelte';
+	import { expanded } from '#lib/ui/media.ts';
 	import SectionHeader from '#lib/ui/SectionHeader.svelte';
 	import Skeleton from '#lib/ui/Skeleton.svelte';
 	import type { DeadlinesQuery } from '../deadlines.svelte.ts';
@@ -44,7 +46,6 @@
 	);
 	/** The month holds its column while loading and whenever there is a deadline to put on it. */
 	const month = $derived(loading || (!unchecked && all.length > 0));
-	/** Always one line, so the header keeps its height. */
 	const subtitle = $derived(
 		!loading && deadlines.stale && deadlines.updatedAt !== undefined
 			? staleLine(deadlines.updatedAt, now.current)
@@ -64,68 +65,75 @@
 {/snippet}
 
 <!--
-	Beside the services column, which already lists every service with its badge: what stands at
-	each group, then what is coming, with the month beside it on wide screens. Nothing sits below
+	Beside the services column: what stands at each group, then what is coming, with the month
+	beside it on wide screens. Nothing sits below
 	the timeline but its own notices, so whatever replaces a skeleton moves nothing.
 -->
-<Page width="dashboard">
-	<PageHeader title={m.shell_services()} {subtitle} actions={refresh} />
-
-	<section aria-labelledby="services-glance">
-		<SectionHeader id="services-glance" title={m.services_glance_title()} />
-		<StatusTiles {deadlines} {loading} />
-	</section>
-
-	<section aria-labelledby="services-upcoming">
-		<SectionHeader
-			id="services-upcoming"
-			title={m.services_upcoming_title()}
-			link={{ href: shellHref('services/deadlines'), label: m.services_upcoming_all() }}
+<!-- Below 1024 px a pull refreshes, in place of the button. -->
+<PullToRefresh onrefresh={() => deadlines.refresh()} refreshing={deadlines.refreshing}>
+	<Page width="dashboard">
+		<PageHeader
+			title={m.shell_services()}
+			{subtitle}
+			actions={expanded.current ? refresh : undefined}
 		/>
-		<div class={['board', { month }]}>
-			<div class="list">
-				{#if loading}
-					<DeadlinesSkeleton rows={PREVIEW} dense />
-				{:else if unchecked}
-					<div class="card"><DeadlinesError {deadlines} /></div>
-				{:else}
-					{#if upcoming.length > 0}
-						<PartialNotice {deadlines} />
-						<DeadlineTimeline deadlines={upcoming} today={deadlines.today} dense anchors />
+
+		<section aria-labelledby="services-glance">
+			<SectionHeader id="services-glance" title={m.services_glance_title()} />
+			<StatusTiles {deadlines} {loading} />
+		</section>
+
+		<section aria-labelledby="services-upcoming">
+			<SectionHeader
+				id="services-upcoming"
+				title={m.services_upcoming_title()}
+				link={{ href: shellHref('services/deadlines'), label: m.services_upcoming_all() }}
+			/>
+			<div class={['board', { month }]}>
+				<div class="list">
+					{#if loading}
+						<DeadlinesSkeleton rows={PREVIEW} dense />
+					{:else if unchecked}
+						<div class="card"><DeadlinesError {deadlines} /></div>
 					{:else}
-						<div class="card">
-							<EmptyState
-								icon={IconCalendarCheck}
-								title={m.services_deadlines_none_title()}
-								body={m.services_deadlines_none_body()}
-							>
-								{#snippet action()}
-									<Button
-										variant="tonal"
-										icon={IconMagnifyingGlass}
-										href={resolve('services/exams/book')}
-									>
-										{m.services_deadlines_none_action()}
-									</Button>
-								{/snippet}
-							</EmptyState>
-						</div>
+						{#if upcoming.length > 0}
+							<PartialNotice {deadlines} />
+							<DeadlineTimeline deadlines={upcoming} today={deadlines.today} dense anchors />
+						{:else}
+							<div class="card">
+								<EmptyState
+									icon={IconCalendarCheck}
+									title={m.services_deadlines_none_title()}
+									body={m.services_deadlines_none_body()}
+								>
+									{#snippet action()}
+										<Button
+											variant="tonal"
+											icon={IconMagnifyingGlass}
+											href={resolve('services/exams/book')}
+										>
+											{m.services_deadlines_none_action()}
+										</Button>
+									{/snippet}
+								</EmptyState>
+							</div>
+						{/if}
+						<StaleNotice {deadlines} />
 					{/if}
-					<StaleNotice {deadlines} />
+				</div>
+				{#if month}
+					<aside class="aside" aria-label={m.services_calendar_label()}>
+						{#if loading}
+							<Skeleton height="372px" radius="var(--r-lg)" />
+						{:else}
+							<DeadlineCalendar deadlines={all} today={deadlines.today} />
+						{/if}
+					</aside>
 				{/if}
 			</div>
-			{#if month}
-				<aside class="aside" aria-label={m.services_calendar_label()}>
-					{#if loading}
-						<Skeleton height="372px" radius="var(--r-lg)" />
-					{:else}
-						<DeadlineCalendar deadlines={all} today={deadlines.today} />
-					{/if}
-				</aside>
-			{/if}
-		</div>
-	</section>
-</Page>
+		</section>
+	</Page>
+</PullToRefresh>
 
 <style>
 	section {

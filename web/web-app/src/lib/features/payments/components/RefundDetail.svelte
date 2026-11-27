@@ -230,7 +230,7 @@
 	}
 
 	.step:not(.done) .step-date {
-		font-style: italic;
+		font-weight: 600;
 	}
 
 	@container payments (width >= 560px) {

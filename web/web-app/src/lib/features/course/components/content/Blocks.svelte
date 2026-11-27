@@ -1,6 +1,7 @@
 <script lang="ts">
 	import IconCaretDown from '~icons/ph/caret-down';
 	import IconNote from '~icons/ph/note';
+	import { formatNumber } from '#lib/format/numbers.ts';
 	import { m } from '#lib/paraglide/messages.js';
 	import type { ContentBlock } from '../../content.ts';
 	import type { ProgressMap } from '../../video/progress.ts';
@@ -28,9 +29,9 @@
 			<section class="group" aria-label={block.title ?? undefined}>
 				{#if block.title}
 					<h4 class="group-title">
-						<span class="leaf" aria-hidden="true"></span>
+						<span class="marker" aria-hidden="true"></span>
 						<span class="label">{block.title}</span>
-						<span class="count">{block.modules.length}</span>
+						<span class="count" aria-hidden="true">{formatNumber(block.modules.length)}</span>
 					</h4>
 				{/if}
 				<ul class="modules" role="list">
@@ -95,27 +96,33 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		padding-inline: 6px;
-		font: var(--type-overline);
-		letter-spacing: var(--track-overline);
-		text-transform: uppercase;
-		color: var(--text-muted);
+		padding: 2px 6px 0;
+		font: var(--type-ui-strong);
+		color: var(--text);
 	}
 
-	.leaf {
-		inline-size: 8px;
-		block-size: 8px;
-		border-radius: 0 50%;
-		background: var(--gold);
+	.marker {
+		flex: none;
+		inline-size: 6px;
+		block-size: 6px;
+		border-radius: 50%;
+		background: var(--course-bar);
 	}
 
 	.label {
+		display: -webkit-box;
 		min-inline-size: 0;
+		overflow: hidden;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
 		overflow-wrap: anywhere;
 	}
 
 	.count {
-		color: var(--text-subtle);
+		flex: none;
+		color: var(--text-muted);
+		font: var(--type-meta);
 		font-variant-numeric: tabular-nums;
 	}
 

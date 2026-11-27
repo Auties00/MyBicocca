@@ -204,6 +204,7 @@
 		{#if model.list.data === undefined && model.list.error}
 			<ErrorState
 				title={m.assignment_load_failed()}
+				size="page"
 				message={errorMessage(model.list.error)}
 				onretry={model.refresh}
 				retrying={model.list.refreshing}
@@ -409,7 +410,7 @@
 	.assignment {
 		container: assignment / inline-size;
 		display: grid;
-		gap: var(--sp-6);
+		gap: var(--page-gap);
 	}
 
 	.notice {
@@ -474,7 +475,6 @@
 	.quiet {
 		color: var(--text-muted);
 		font: var(--type-body);
-		font-style: italic;
 	}
 
 	.text-card,

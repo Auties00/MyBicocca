@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import IconCaretRight from '~icons/ph/caret-right';
 	import { italianTitleCase } from '#lib/format/names.ts';
 	import { gradeText, rowGrade } from '#lib/features/profile/format.ts';
@@ -13,6 +12,7 @@
 	import { yearSummary, yearTitle } from '../labels.ts';
 	import type { PlanYear } from '../plan.ts';
 	import CreditChip from './CreditChip.svelte';
+	import { studyPlanExamHref } from '../links.ts';
 
 	interface Props {
 		group: PlanYear;
@@ -60,7 +60,7 @@
 		<ListRow
 			title={italianTitleCase(course.name)}
 			description={course.code ?? undefined}
-			href={record ? resolve(`profile/exams/${record.id}`) : undefined}
+			href={record ? studyPlanExamHref(record.id) : undefined}
 			trailing={record?.state === 'passed' || record?.state === 'attended' ? status : undefined}
 		>
 			{#snippet leading()}<CreditChip credits={course.credits} />{/snippet}

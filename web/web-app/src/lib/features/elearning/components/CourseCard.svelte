@@ -48,22 +48,10 @@
 	const tabbed = $derived(group.editions.length > 1);
 
 	/*
-	 * Under its year's heading a lone edition's tab says what the heading doesn't: its year of
-	 * study. Editions' tabs tell them apart by period, and two of one year (another programme's) by
-	 * their code too.
+	 * Every tab names its academic year, as on Android; two editions of one year (another
+	 * programme's) are told apart by their code too.
 	 */
 	const tabLabels = $derived.by(() => {
-		if (!tabbed) {
-			const [edition] = group.editions;
-			const { courseYear, stream } = edition.code;
-			const label =
-				courseYear === null
-					? (periodLabel(edition.code) ?? m.elearning_period_none())
-					: stream === null
-						? m.elearning_filter_year({ year: courseYear })
-						: m.elearning_tab_year_stream({ year: courseYear, stream });
-			return new Map([[edition.id, label]]);
-		}
 		const periods = group.editions.map(
 			(edition) => periodLabel(edition.code) ?? m.elearning_period_none()
 		);
@@ -165,9 +153,6 @@
 				</span>
 			{/if}
 		</p>
-		{#if active.progress !== null}
-			<span class="progress" style:--progress={active.progress / 100} aria-hidden="true"></span>
-		{/if}
 		<button
 			type="button"
 			class={['star', { starred, toggled }]}
@@ -434,32 +419,6 @@
 		color: var(--course-ink);
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
-	}
-
-	.progress {
-		position: absolute;
-		inset: auto 18px 10px;
-		block-size: 3px;
-		border-radius: var(--r-pill);
-		background: light-dark(oklch(85% 0.05 var(--course-h)), oklch(38% 0.06 var(--course-h)));
-		overflow: hidden;
-	}
-
-	.progress::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		border-radius: inherit;
-		background: var(--course-bar);
-		transform: scaleX(var(--progress));
-		transform-origin: left;
-		transition: transform var(--dur-slow) var(--ease-out);
-	}
-
-	@starting-style {
-		.progress::after {
-			transform: scaleX(0);
-		}
 	}
 
 	.star {

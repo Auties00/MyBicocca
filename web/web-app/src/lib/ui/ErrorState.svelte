@@ -24,9 +24,19 @@
 		variant?: 'page' | 'stale';
 		/** When the visible (stale) data was last loaded: "updated 3 h ago". */
 		updatedAt?: Date;
+		/** page: the error is the whole page, centred in it, as `EmptyState size="page"`. */
+		size?: 'page' | 'section';
 	}
 
-	let { message, title, onretry, retrying = false, variant = 'page', updatedAt }: Props = $props();
+	let {
+		message,
+		title,
+		onretry,
+		retrying = false,
+		variant = 'page',
+		updatedAt,
+		size = 'section'
+	}: Props = $props();
 
 	const updated = $derived(
 		updatedAt ? m.ui_updated_ago({ time: formatRelative(updatedAt) }) : undefined
@@ -62,7 +72,7 @@
 		</div>
 	{/if}
 {:else}
-	<div class="error" role="alert">
+	<div class={['error', { whole: size === 'page' }]} role="alert">
 		<span class="glyph"><IconCloudWarning aria-hidden="true" /></span>
 		<p class="title">{title ?? m.ui_error_title()}</p>
 		<p class="message">{message}</p>
@@ -161,5 +171,11 @@
 		flex: none;
 		inline-size: 16px;
 		block-size: 16px;
+	}
+
+	.whole {
+		min-block-size: min(60dvh, 480px);
+		align-content: center;
+		padding-block: var(--sp-9);
 	}
 </style>

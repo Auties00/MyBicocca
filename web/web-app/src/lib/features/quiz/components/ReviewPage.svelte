@@ -124,8 +124,10 @@
 <Page width="dashboard">
 	<div class="review" data-course={course.slot}>
 		<PageHeader
-			eyebrow={course.title ?? name ?? m.quiz_title()}
+			eyebrow={course.title}
 			title={number ? m.quiz_review_of({ number }) : m.quiz_review()}
+			subtitle={name}
+			loading={name === undefined && !quizSettled ? { eyebrow: false } : false}
 			{back}
 			sans
 		/>
@@ -226,6 +228,7 @@
 		{:else if review.error}
 			<ErrorState
 				title={m.quiz_review_failed()}
+				size="page"
 				message={quizErrorMessage(review.error)}
 				onretry={review.refresh}
 				retrying={review.refreshing}
@@ -318,7 +321,6 @@
 
 	.pending-title {
 		font: var(--type-title-l);
-		font-style: italic;
 		letter-spacing: var(--track-title-l);
 	}
 

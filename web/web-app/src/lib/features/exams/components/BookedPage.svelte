@@ -13,6 +13,8 @@
 	import EmptyState from '#lib/ui/EmptyState.svelte';
 	import ErrorState from '#lib/ui/ErrorState.svelte';
 	import { LoadingGate } from '#lib/ui/loadingGate.svelte.ts';
+	import Fab from '#lib/ui/Fab.svelte';
+	import { expanded } from '#lib/ui/media.ts';
 	import Page from '#lib/ui/Page.svelte';
 	import PageHeader from '#lib/ui/PageHeader.svelte';
 	import SectionHeader from '#lib/ui/SectionHeader.svelte';
@@ -70,7 +72,7 @@
 			bookings.status === 'pending' && { eyebrow: false, title: 1 }}
 	>
 		{#snippet actions()}
-			{#if !empty && bookings.status !== 'error'}
+			{#if !empty && bookings.status !== 'error' && expanded.current}
 				<Button variant="solid" icon={IconCalendarPlus} href={bookHref()}>
 					{m.exams_book_action()}
 				</Button>
@@ -155,6 +157,9 @@
 				<PastBookings bookings={split.past} />
 			{/if}
 		</div>
+	{/if}
+	{#if !empty && bookings.status !== 'error'}
+		<Fab icon={IconCalendarPlus} label={m.exams_book_action()} href={bookHref()} />
 	{/if}
 </Page>
 

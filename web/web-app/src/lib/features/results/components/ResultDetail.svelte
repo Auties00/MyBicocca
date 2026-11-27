@@ -17,6 +17,7 @@
 	import { detailSubtitle, gradeInWords, resultTitle } from '../format.ts';
 	import { attempts, visibleChoice, type Choice, type ExamResult } from '../model.ts';
 	import { useResultsView } from '../results.svelte.ts';
+	import { studyPlanExamHref } from '../studyPlan.svelte.ts';
 	import ArchiveRow from './ArchiveRow.svelte';
 	import DecisionCard from './DecisionCard.svelte';
 	import DetailSkeleton from './DetailSkeleton.svelte';
@@ -30,6 +31,7 @@
 	let { id }: Props = $props();
 
 	const view = useResultsView();
+	const recordHref = studyPlanExamHref();
 	const query = view.results.query;
 	const result = $derived(view.results.find(id));
 	const loaded = $derived(query.data !== undefined);
@@ -129,6 +131,7 @@
 			<OutcomePanel
 				choice={decided}
 				code={result.code}
+				recordHref={recordHref(result.code)}
 				level={headingLevel}
 				bind:heading={outcomeHeading}
 			/>
@@ -193,9 +196,9 @@
 					variant="ghost"
 					size="sm"
 					trailingIcon={IconArrowRight}
-					href={shellHref('profile/exams')}
+					href={recordHref(result.code)}
 				>
-					{m.results_go_transcript()}
+					{m.results_open_study_plan()}
 				</Button>
 			{/if}
 		</div>

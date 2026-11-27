@@ -8,7 +8,6 @@
 	import PageHeader from '#lib/ui/PageHeader.svelte';
 	import Skeleton from '#lib/ui/Skeleton.svelte';
 	import { toast } from '#lib/ui/toast.svelte.ts';
-	import { PENDING_LINE } from '../forum.ts';
 	import { getForum } from '../forumState.svelte.ts';
 	import Composer, { type ComposerResult } from './Composer.svelte';
 
@@ -45,8 +44,9 @@
 
 {#if !wide}
 	<PageHeader
-		eyebrow={forum.name ?? PENDING_LINE}
 		title={m.forum_new_discussion()}
+		subtitle={forum.name ? m.forum_new_in({ forum: forum.name }) : undefined}
+		loading={forum.name === undefined ? { eyebrow: false } : false}
 		back={{ href: forumHref, label: forum.name ?? m.forum_back() }}
 	/>
 {/if}
@@ -69,6 +69,7 @@
 		</div>
 	{:else if !forum.forum.canCreateDiscussions}
 		<EmptyState
+			size={wide ? 'section' : 'page'}
 			icon={IconLockSimple}
 			title={m.forum_cannot_create_title()}
 			body={m.forum_cannot_create_body()}
@@ -92,7 +93,7 @@
 	}
 
 	.stacked {
-		margin-block-start: var(--sp-5);
+		margin-block-start: var(--page-gap);
 	}
 
 	.head {
