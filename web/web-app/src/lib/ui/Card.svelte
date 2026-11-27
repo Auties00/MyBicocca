@@ -167,27 +167,15 @@
 		font: var(--type-ui);
 	}
 
-	/* Link cards lift on hover by fading in a stronger shadow (opacity only, no box-shadow animation). */
-	.link::before {
-		content: '';
-		position: absolute;
-		inset: 0;
-		z-index: -1;
-		border-radius: inherit;
-		box-shadow: var(--elev-3);
-		opacity: 0;
-		transition: opacity var(--dur-base) var(--ease-out);
-	}
-
 	.link {
 		transition: transform var(--dur-spring) var(--spring-pop);
 		touch-action: manipulation;
 	}
 
+	/* A tint on the card's own background, so it keeps the card's shape and works on every tone. */
 	@media (hover: hover) {
-		.link:hover::before {
-			opacity: 1;
-			transition-duration: var(--dur-fast);
+		.link:hover {
+			background-image: linear-gradient(var(--state-hover), var(--state-hover));
 		}
 	}
 
