@@ -1,0 +1,17 @@
+[
+  {
+    "relation": ["delegate_permission/common.get_login_creds"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "it.attendance100.mybicocca",
+      "sha256_cert_fingerprints": [
+        "30:57:E5:55:79:6D:4E:ED:2B:BB:99:9E:AD:09:D2:CA:C1:A1:CD:C0:8F:F5:41:24:A1:61:4C:2D:11:AF:8A:E4",
+        "2D:C0:14:D0:DC:D9:6D:F2:F1:25:FC:01:B0:F8:87:56:BC:7C:29:B1:70:1B:4D:AA:55:0F:34:50:59:FF:63:54"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.get_login_creds"],
+    "target": { "namespace": "web", "site": "https://mybicocca.it" }
+  }
+]
