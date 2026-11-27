@@ -324,6 +324,24 @@ jobs:
           name: web-screenshots
           path: web/web-app/tools/screenshots
 
+      - name: Set up Node
+        if: needs.plan.outputs.android == 'true' || needs.plan.outputs.web == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/landing-page/package-lock.json
+
+      - name: Install landing page dependencies
+        if: needs.plan.outputs.android == 'true' || needs.plan.outputs.web == 'true'
+        working-directory: web/landing-page
+        run: npm ci
+
+      - name: Import landing page screenshots
+        if: needs.plan.outputs.android == 'true' || needs.plan.outputs.web == 'true'
+        working-directory: web/landing-page
+        run: npm run screens
+
       # The same branch every time: the action force-updates it and keeps one open PR, so reruns
       # refresh that PR instead of piling up new ones. No diff, no PR. Only the screenshot folders
       # are added, so nothing else the build touched can end up in the commit.
@@ -336,6 +354,7 @@ jobs:
           add-paths: |
             android/tools/screenshots/
             web/web-app/tools/screenshots/
+            web/landing-page/src/assets/screens/
           commit-message: 'chore(screenshots): retake demo screenshots'
           title: 'chore(screenshots): retake demo screenshots'
           body: |
@@ -345,12 +364,6 @@ jobs:
             Check the changed images before merging. Where nothing on screen should have changed, a
             diff is a regression or rendering noise.
           delete-branch: true
-
-      - name: Set up Node
-        if: github.event_name == 'pull_request' && (needs.plan.outputs.android == 'true' || needs.plan.outputs.web == 'true')
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
 
       # A labelled pull request gets the images on its own branch. The push is made with the default
       # token, which does not start other workflows, so this cannot loop back into this one.
@@ -362,7 +375,7 @@ jobs:
           BRANCH: ${{ github.event.pull_request.head.ref }}
           PR: ${{ github.event.pull_request.number }}
         run: |
-          git add android/tools/screenshots/ web/web-app/tools/screenshots/
+          git add android/tools/screenshots/ web/web-app/tools/screenshots/ web/landing-page/src/assets/screens/
           if git diff --cached --quiet; then
             gh pr comment "$PR" --body "Retook the screenshots: nothing changed."
           else
