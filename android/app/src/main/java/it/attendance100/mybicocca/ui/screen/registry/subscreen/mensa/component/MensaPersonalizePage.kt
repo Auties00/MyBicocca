@@ -230,10 +230,11 @@ internal fun MensaFavouritesPage(
         // The reminder lives with the favourites it is about.
         Surface(shape = RoundedCornerShape(20.dp), color = scheme.surfaceContainerHigh, modifier = Modifier.padding(top = 6.dp)) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                // Half the side padding here; the rest goes inside the time row, so its press fills the card.
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(modifier = Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.mensa_favourites_notify_title),
@@ -259,7 +260,7 @@ internal fun MensaFavouritesPage(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
                                 .clickable { haptic.tap(); pickingTime = true }
-                                .padding(vertical = 8.dp),
+                                .padding(horizontal = 8.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
@@ -282,6 +283,7 @@ internal fun MensaFavouritesPage(
                             text = stringResource(R.string.mensa_favourites_lookahead),
                             style = MaterialTheme.typography.labelLarge,
                             color = scheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 8.dp),
                         )
                         SegmentedSwitch(
                             options = LookaheadChoices,
@@ -296,7 +298,7 @@ internal fun MensaFavouritesPage(
                                     },
                                 )
                             },
-                            modifier = Modifier.heightIn(min = 40.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp).heightIn(min = 40.dp),
                         )
                     }
                 }
