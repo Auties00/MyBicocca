@@ -58,6 +58,7 @@ jobs:
         with:
           name: landing-page-dist
           path: web/landing-page/dist
+          include-hidden-files: true
           retention-days: 1
 
   deploy:
