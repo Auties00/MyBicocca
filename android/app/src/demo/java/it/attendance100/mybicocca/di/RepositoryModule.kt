@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import it.attendance100.mybicocca.demo.repository.DemoAccountRepository
+import it.attendance100.mybicocca.data.local.mensa.BundledMensaEligibilityProvider
 import it.attendance100.mybicocca.data.repository.AppLockRepositoryImpl
 import it.attendance100.mybicocca.data.repository.AppearanceSettingsRepositoryImpl
 import it.attendance100.mybicocca.demo.repository.DemoAppointmentRepository
@@ -27,6 +28,8 @@ import it.attendance100.mybicocca.demo.repository.DemoExamRepository
 import it.attendance100.mybicocca.data.repository.FileOpenPreferenceRepositoryImpl
 import it.attendance100.mybicocca.data.repository.HapticSettingsRepositoryImpl
 import it.attendance100.mybicocca.demo.repository.DemoLibraryRepository
+import it.attendance100.mybicocca.demo.repository.DemoMensaAllergenPreferencesRepository
+import it.attendance100.mybicocca.demo.repository.DemoMensaRepository
 import it.attendance100.mybicocca.data.repository.MapRepositoryImpl
 import it.attendance100.mybicocca.data.repository.PdfViewerSettingsRepositoryImpl
 import it.attendance100.mybicocca.data.repository.PrivacySettingsRepositoryImpl
@@ -62,6 +65,9 @@ import it.attendance100.mybicocca.domain.repository.FileOpenPreferenceRepository
 import it.attendance100.mybicocca.domain.repository.HapticSettingsRepository
 import it.attendance100.mybicocca.domain.repository.LibraryRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
+import it.attendance100.mybicocca.domain.repository.MensaAllergenPreferencesRepository
+import it.attendance100.mybicocca.domain.repository.MensaEligibilityProvider
+import it.attendance100.mybicocca.domain.repository.MensaRepository
 import it.attendance100.mybicocca.domain.repository.PdfViewerSettingsRepository
 import it.attendance100.mybicocca.domain.repository.PrivacySettingsRepository
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
@@ -182,6 +188,18 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLibraryRepository(impl: DemoLibraryRepository): LibraryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMensaAllergenPreferencesRepository(impl: DemoMensaAllergenPreferencesRepository): MensaAllergenPreferencesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMensaEligibilityProvider(impl: BundledMensaEligibilityProvider): MensaEligibilityProvider
+
+    @Binds
+    @Singleton
+    abstract fun bindMensaRepository(impl: DemoMensaRepository): MensaRepository
 
     @Binds
     @Singleton

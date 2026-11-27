@@ -7,6 +7,7 @@ import dagger.hilt.components.SingletonComponent
 import io.ktor.client.plugins.HttpTimeout
 import it.attendance100.mybicocca.data.observability.HttpMetrics
 import it.attendance100.mybicocca.data.remote.affluences.api.AffluencesApi
+import it.attendance100.mybicocca.data.remote.compass.api.CompassApi
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningApi
 import it.attendance100.mybicocca.data.easystaff.EasyStaffPlanningPortal
@@ -59,6 +60,13 @@ object RemoteClientModule {
     @Provides
     @Singleton
     fun provideAffluencesApi(): AffluencesApi = AffluencesApi {
+        install(HttpMetrics)
+    }
+
+    /** Fresh & Natural / RistoCloud API client for Bicocca canteens. */
+    @Provides
+    @Singleton
+    fun provideCompassApi(): CompassApi = CompassApi {
         install(HttpMetrics)
     }
 

@@ -1,0 +1,31 @@
+{
+  "reader": {
+    "type": "openapi",
+    "options": {
+      "spec": "compass.yaml"
+    }
+  },
+  "targets": {
+    "kotlin": {
+      "outputDir": "../../../android/data-api/src/main/kotlin",
+      "testOutputDir": "../../../android/data-api/src/test/kotlin",
+      "options": {
+        "packageName": "it.attendance100.mybicocca.data.remote.compass"
+      }
+    },
+    "swift": {
+      "outputDir": "../../../ios/DataApi/Sources",
+      "testOutputDir": "../../../ios/DataApi/Tests/LiveTests",
+      "options": {
+        "module": "Compass"
+      }
+    },
+    "web": {
+      "outputDir": "../../../web/web-app/data-api/src",
+      "testOutputDir": "../../../web/web-app/data-api/test",
+      "options": {
+        "packageName": "compass"
+      }
+    }
+  }
+}

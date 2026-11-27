@@ -9,7 +9,7 @@ let package = Package(
     name: "DataApi",
     platforms: [.iOS(.v15), .macOS(.v12)],
     products: [
-        .library(name: "DataApi", targets: ["Affluences", "EasyStaff", "Elearning", "Esse3", "DataApiRuntime"]),
+        .library(name: "DataApi", targets: ["Affluences", "Compass", "EasyStaff", "Elearning", "Esse3", "DataApiRuntime"]),
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.0"),
@@ -17,12 +17,13 @@ let package = Package(
     targets: [
         .target(name: "DataApiRuntime", dependencies: ["SwiftSoup"]),
         .target(name: "Affluences", dependencies: ["DataApiRuntime"]),
+        .target(name: "Compass", dependencies: ["DataApiRuntime"]),
         .target(name: "EasyStaff", dependencies: ["DataApiRuntime"]),
         // Their Resources folders hold the data codegen generates from the APIs' resources.
         .target(name: "Elearning", dependencies: ["DataApiRuntime"], resources: [.copy("Resources")]),
         .target(name: "Esse3", dependencies: ["DataApiRuntime"], resources: [.copy("Resources")]),
         .testTarget(name: "DataApiRuntimeTests", dependencies: ["DataApiRuntime"]),
         // Generated from each API's tests.yaml: they call the real services, and skip unless LIVE_TESTS=1.
-        .testTarget(name: "LiveTests", dependencies: ["Affluences", "EasyStaff", "Elearning", "Esse3", "DataApiRuntime"]),
+        .testTarget(name: "LiveTests", dependencies: ["Affluences", "Compass", "EasyStaff", "Elearning", "Esse3", "DataApiRuntime"]),
     ]
 )

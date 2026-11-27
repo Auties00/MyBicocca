@@ -17,6 +17,7 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.LocalLibrary
 import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SupportAgent
@@ -176,6 +177,13 @@ fun RegistryScreen(
                     stringResource(R.string.registry_library_desc),
                     Icons.Outlined.LocalLibrary,
                     onClick = open(SheetRoute.Library),
+                ),
+                RegistryService(
+                    "mensa",
+                    stringResource(R.string.registry_mensa),
+                    stringResource(R.string.registry_mensa_desc),
+                    Icons.Outlined.Restaurant,
+                    onClick = open(SheetRoute.Mensa),
                 ),
             ),
         ),

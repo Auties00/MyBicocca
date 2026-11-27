@@ -1,0 +1,1677 @@
+# Draft OpenAPI 3.0.3 specification for Fresh & Natural / RistoCloud (unibicocca.compasscloud.it)
+# Ready for drop-in integration into common/specs/compass in MyBicocca.
+openapi: 3.0.3
+info:
+  title: Compass Fresh & Natural (UniBicocca)
+  version: "2026.3.10"
+x-mb-id: compass
+x-mb-prefix: Compass
+x-mb-client:
+  baseUrl: https://unibicocca.compasscloud.it
+  timeoutSeconds: 30
+  keepsCookies: true
+  headers:
+    Accept: application/json
+    Accept-Language: it
+  error:
+    code: [/status]
+    message: [/messaggio, /message]
+
+servers:
+  - url: https://unibicocca.compasscloud.it
+    x-mb-name: Compass
+
+tags:
+  - name: Contract
+    description: Contract metadata, active services, and EU allergens.
+  - name: Menu
+    description: Canteen menus, daily/weekly dish grids, dish recipes, nutrition, and dietary labels.
+  - name: Account
+    description: RistoCloud authentication, token exchange, and user profile.
+  - name: Takeaway
+    description: Meal takeaway configuration, temporary cart pricing, orders, and history.
+  - name: Wallet
+    description: Electronic wallet balance and cashier transaction history.
+
+components:
+  x-mb-auth-schemes:
+    BearerAuth:
+      description: Persistent RistoCloudToken issued by POST /api/auth/v1/basic/verify.
+      parameters:
+        - name: token
+      headers:
+        Authorization: "Bearer {token}"
+
+  schemas:
+    CompassFavoriteAction:
+      type: string
+      enum: [add, remove]
+
+    CompassImage:
+      type: object
+      properties:
+        URL: { type: string, x-mb-name: url }
+        URL-SVG: { type: string, x-mb-name: urlSvg }
+        Thumb: { type: string, x-mb-name: thumb }
+        BlurHash: { type: string, x-mb-name: blurHash }
+
+    CompassLowercaseImage:
+      type: object
+      properties:
+        url: { type: string }
+        url-svg: { type: string, x-mb-name: urlSvg }
+
+    CompassThemedImage:
+      type: object
+      properties:
+        dark: { type: string }
+        light: { type: string }
+
+    CompassCustomLetter:
+      type: object
+      required: [label, key]
+      properties:
+        label: { type: string }
+        key: { type: string }
+        image: { $ref: "#/components/schemas/CompassThemedImage" }
+
+    CompassCustomLettersData:
+      type: object
+      properties:
+        customLetters: { type: array, items: { $ref: "#/components/schemas/CompassCustomLetter" } }
+
+    CompassIdRef:
+      type: object
+      required: [ID]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+
+    CompassIdName:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+
+    CompassEnabledFlag:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        Enabled: { type: boolean, x-mb-name: enabledPascal }
+
+    CompassContractType:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Description: { type: string, x-mb-name: description }
+
+    CompassNamedLogo:
+      type: object
+      properties:
+        Name: { type: string, x-mb-name: name }
+        Logo: { type: string, x-mb-name: logo }
+
+    CompassContractPricing:
+      type: object
+      properties:
+        mealCost: { type: number }
+        effectiveDate: { type: string }
+
+    CompassTotemConfig:
+      type: object
+      properties:
+        likingService: { $ref: "#/components/schemas/CompassEnabledFlag" }
+
+    CompassLanguage:
+      type: object
+      required: [Name, IsoCode]
+      properties:
+        Name: { type: string, x-mb-name: name }
+        IsoCode: { type: string, x-mb-name: isoCode }
+
+    CompassLanguagesConfig:
+      type: object
+      properties:
+        DefaultLanguage: { type: string, x-mb-name: defaultLanguage }
+        AvaliableLanguages:
+          type: array
+          x-mb-name: availableLanguages
+          items: { $ref: "#/components/schemas/CompassLanguage" }
+
+    CompassCanteenWalletFlags:
+      type: object
+      properties:
+        ViewBalance: { type: boolean, x-mb-name: viewBalance }
+        CanRecharge: { type: boolean, x-mb-name: canRecharge }
+
+    CompassFeatureCard:
+      type: object
+      properties:
+        Enabled: { type: boolean, x-mb-name: enabled }
+        protected: { type: boolean }
+        SeeCategoryAll: { type: boolean, x-mb-name: seeCategoryAll }
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+
+    CompassTurnoutSensorsConfig:
+      type: object
+      properties:
+        Enabled: { type: boolean, x-mb-name: enabled }
+        Sensors: { type: array, x-mb-name: sensors, items: { type: object } }
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+
+    CompassDaysRange:
+      type: object
+      properties:
+        Forward: { type: integer, x-mb-name: forward }
+        Backward: { type: integer, x-mb-name: backward }
+
+    CompassMenuServiceConfig:
+      type: object
+      properties:
+        Enabled: { type: boolean, x-mb-name: enabled }
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+        CaloricIcons: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: caloricIcons }
+        Days: { $ref: "#/components/schemas/CompassDaysRange", x-mb-name: days }
+
+    CompassWalletConfig:
+      type: object
+      properties:
+        RechargeEndpoint: { type: string, x-mb-name: rechargeEndpoint }
+        MealVouchers: { type: array, x-mb-name: mealVouchers, items: { type: object } }
+
+    CompassPrivacyConfig:
+      type: object
+      properties:
+        Blocking: { type: boolean, x-mb-name: blocking }
+        Text: { type: string, x-mb-name: text }
+        contact: { type: string }
+
+    CompassImageContainer:
+      type: object
+      properties:
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+
+    CompassWebviewRef:
+      type: object
+      properties:
+        URL: { type: string, nullable: true, x-mb-name: url }
+
+    CompassSupportRequestsConfig:
+      type: object
+      properties:
+        Enabled: { type: boolean, x-mb-name: enabled }
+        OpenInNewBrowserWindow: { type: boolean, x-mb-name: openInNewBrowserWindow }
+        Webview: { $ref: "#/components/schemas/CompassWebviewRef", x-mb-name: webview }
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+
+    CompassAccountConfig:
+      type: object
+      properties:
+        deletable: { type: boolean }
+
+    CompassExtraButton:
+      type: object
+      properties:
+        Text: { type: string, nullable: true, x-mb-name: text }
+        Enabled: { type: boolean, x-mb-name: enabled }
+        OpenInNewBrowserWindow: { type: boolean, x-mb-name: openInNewBrowserWindow }
+        Webview: { $ref: "#/components/schemas/CompassWebviewRef", x-mb-name: webview }
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+
+    CompassCustomModulesConfig:
+      type: object
+      properties:
+        DSU: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: dsu }
+
+    CompassMyLunchConfig:
+      type: object
+      properties:
+        LikingService: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: likingService }
+        CustomerService: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: customerService }
+        ReservationService: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: reservationService }
+        SeatReservationService: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: seatReservationService }
+        SmartFridge: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: smartFridge }
+        TurnoutSensors: { $ref: "#/components/schemas/CompassTurnoutSensorsConfig", x-mb-name: turnoutSensors }
+        SecreterialServices: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: secretarialServices }
+        MenuService: { $ref: "#/components/schemas/CompassMenuServiceConfig", x-mb-name: menuService }
+        Wallet: { $ref: "#/components/schemas/CompassWalletConfig", x-mb-name: wallet }
+        Privacy: { $ref: "#/components/schemas/CompassPrivacyConfig", x-mb-name: privacy }
+        Settings: { $ref: "#/components/schemas/CompassImageContainer", x-mb-name: settings }
+        FaultReporting: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: faultReporting }
+        SupportRequests: { $ref: "#/components/schemas/CompassSupportRequestsConfig", x-mb-name: supportRequests }
+        FoodDiary: { $ref: "#/components/schemas/CompassFeatureCard", x-mb-name: foodDiary }
+        account: { $ref: "#/components/schemas/CompassAccountConfig" }
+        cfp: { $ref: "#/components/schemas/CompassEnabledFlag" }
+        ExtraButtons: { type: array, x-mb-name: extraButtons, items: { $ref: "#/components/schemas/CompassExtraButton" } }
+        CustomModules: { $ref: "#/components/schemas/CompassCustomModulesConfig", x-mb-name: customModules }
+
+    CompassCanteen:
+      type: object
+      properties:
+        Wallet: { $ref: "#/components/schemas/CompassCanteenWalletFlags", x-mb-name: wallet }
+        CanHandleMealVouchers: { type: boolean, x-mb-name: canHandleMealVouchers }
+        MyLunch: { $ref: "#/components/schemas/CompassMyLunchConfig", x-mb-name: myLunch }
+
+    CompassContract:
+      type: object
+      required: [ID, Name, Code]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Code: { type: string, x-mb-name: code }
+        FullName: { type: string, x-mb-name: fullName }
+        Type: { $ref: "#/components/schemas/CompassContractType", x-mb-name: type }
+        Supplier: { $ref: "#/components/schemas/CompassNamedLogo", x-mb-name: supplier }
+        Client: { type: object, x-mb-name: client }
+        Customer: { $ref: "#/components/schemas/CompassNamedLogo", x-mb-name: customer }
+        pricing: { $ref: "#/components/schemas/CompassContractPricing" }
+        cfp: { $ref: "#/components/schemas/CompassEnabledFlag" }
+        totem: { $ref: "#/components/schemas/CompassTotemConfig" }
+        languages: { $ref: "#/components/schemas/CompassLanguagesConfig" }
+        Absence: { $ref: "#/components/schemas/CompassEnabledFlag", x-mb-name: absence }
+        Canteen: { $ref: "#/components/schemas/CompassCanteen", x-mb-name: canteen }
+
+    CompassContractFrontendData:
+      type: object
+      required: [Contract]
+      properties:
+        Contract: { $ref: "#/components/schemas/CompassContract", x-mb-name: contract }
+
+    CompassAllergenGroup:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        image: { $ref: "#/components/schemas/CompassLowercaseImage" }
+
+    CompassAllergen:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        ShortName: { type: string, x-mb-name: shortName }
+        Required: { type: boolean, x-mb-name: required }
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+        Type: { type: string, x-mb-name: type }
+        group: { $ref: "#/components/schemas/CompassAllergenGroup" }
+
+    CompassAllergensData:
+      type: object
+      properties:
+        RequiredAllergens:
+          type: array
+          x-mb-name: requiredAllergens
+          items: { $ref: "#/components/schemas/CompassAllergen" }
+
+    CompassMealTypeSummary:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Order: { type: integer, x-mb-name: order }
+        ShortName: { type: string, x-mb-name: shortName }
+
+    CompassMenuSummary:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        ShortName: { type: string, x-mb-name: shortName }
+        Description: { type: string, x-mb-name: description }
+        Visible: { type: boolean, x-mb-name: visible }
+        Active: { type: boolean, x-mb-name: active }
+        MealTypes: { type: array, x-mb-name: mealTypes, items: { type: integer } }
+        Order: { type: integer, x-mb-name: order }
+        Text1: { type: string, x-mb-name: text1 }
+        Text2: { type: string, x-mb-name: text2 }
+        Weeks: { type: integer, x-mb-name: weeks }
+        CateringType: { type: string, x-mb-name: cateringType }
+        CateringTypeDescription: { type: string, x-mb-name: cateringTypeDescription }
+        Color: { type: string, x-mb-name: color }
+        extendedMealTypes: { type: array, items: { $ref: "#/components/schemas/CompassMealTypeSummary" } }
+        activeDays: { type: array, items: { type: string } }
+        choices: { type: array, items: { type: object } }
+
+    CompassMenusFrontendData:
+      type: object
+      properties:
+        Menus:
+          type: array
+          x-mb-name: menus
+          items: { $ref: "#/components/schemas/CompassMenuSummary" }
+
+    CompassCaloricLabel:
+      type: object
+      required: [Description, Color]
+      properties:
+        Description: { type: string, x-mb-name: description }
+        Color: { type: string, x-mb-name: color }
+
+    CompassCaloricLabelsData:
+      type: object
+      properties:
+        caloricLabels: { type: array, items: { $ref: "#/components/schemas/CompassCaloricLabel" } }
+
+    CompassMenuDish:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Menu: { $ref: "#/components/schemas/CompassIdRef", x-mb-name: menu }
+        MealType: { $ref: "#/components/schemas/CompassIdName", x-mb-name: mealType }
+        DishType: { $ref: "#/components/schemas/CompassIdName", x-mb-name: dishType }
+        Name: { type: string, x-mb-name: name }
+        ShortName: { type: string, x-mb-name: shortName }
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+        UserAllergens: { type: boolean, x-mb-name: userAllergens }
+        MajorAllergens: { type: array, x-mb-name: majorAllergens, items: { $ref: "#/components/schemas/CompassAllergen" } }
+        TraceAllergens: { type: array, x-mb-name: traceAllergens, items: { $ref: "#/components/schemas/CompassAllergen" } }
+        FixedAlternative: { type: boolean, x-mb-name: fixedAlternative }
+        Color: { type: string, x-mb-name: color }
+        qty: { type: integer }
+        CaloricIcon: { $ref: "#/components/schemas/CompassCaloricLabel", x-mb-name: caloricIcon }
+        customLetters: { type: array, items: { $ref: "#/components/schemas/CompassCustomLetter" } }
+
+    CompassDayDishType:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        MealType: { $ref: "#/components/schemas/CompassIdName", x-mb-name: mealType }
+        Name: { type: string, x-mb-name: name }
+        Code: { type: string, x-mb-name: code }
+        Order: { type: integer, x-mb-name: order }
+        Dishes: { type: array, x-mb-name: dishes, items: { $ref: "#/components/schemas/CompassMenuDish" } }
+
+    CompassDayMealType:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Order: { type: integer, x-mb-name: order }
+        DishTypes: { type: array, x-mb-name: dishTypes, items: { $ref: "#/components/schemas/CompassDayDishType" } }
+
+    CompassDayMenu:
+      type: object
+      required: [Date, ID, MenuId, Name]
+      properties:
+        Date: { type: string, x-mb-name: date }
+        ID: { type: integer, x-mb-name: id }
+        MenuId: { type: integer, x-mb-name: menuId }
+        Name: { type: string, x-mb-name: name }
+        Active: { type: boolean, x-mb-name: active }
+        WeekNumber: { type: integer, x-mb-name: weekNumber }
+        MealTypes: { type: array, x-mb-name: mealTypes, items: { $ref: "#/components/schemas/CompassDayMealType" } }
+
+    CompassMenuDishesData:
+      type: object
+      properties:
+        LatestTimestamp: { type: string, x-mb-name: latestTimestamp }
+        Dates:
+          type: object
+          x-mb-name: dates
+          x-mb-key: string
+          additionalProperties: { $ref: "#/components/schemas/CompassDayMenu" }
+
+    CompassIngredient:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        CleanName: { type: string, x-mb-name: cleanName }
+        ShortName: { type: string, x-mb-name: shortName }
+        Quantity: { type: string, x-mb-name: quantity }
+        CleanQuantity: { type: string, x-mb-name: cleanQuantity }
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+        allergensIds: { type: array, items: { type: integer } }
+
+    CompassNutritionalValueRow:
+      type: object
+      required: [Name]
+      properties:
+        Name: { type: string, x-mb-name: name }
+        RawPortionValue: { type: number, x-mb-name: rawPortionValue }
+        RawPortionKjValue: { type: number, x-mb-name: rawPortionKjValue }
+        Raw100gValue: { type: number, x-mb-name: raw100gValue }
+        Raw100gKjValue: { type: number, x-mb-name: raw100gKjValue }
+        Um: { type: string, x-mb-name: unit }
+        Field: { type: string, x-mb-name: field }
+
+    CompassNutritionalValues:
+      type: object
+      properties:
+        Source: { type: string, x-mb-name: source }
+        Data: { type: array, x-mb-name: data, items: { $ref: "#/components/schemas/CompassNutritionalValueRow" } }
+
+    CompassNutritionalDeclarationItem:
+      type: object
+      required: [Name]
+      properties:
+        Name: { type: string, x-mb-name: name }
+        Value: { type: string, x-mb-name: value }
+        Percentage: { type: number, x-mb-name: percentage }
+        Field: { type: string, x-mb-name: field }
+
+    CompassNutritionalDeclaration:
+      type: object
+      properties:
+        Source: { type: string, x-mb-name: source }
+        Data: { type: array, x-mb-name: data, items: { $ref: "#/components/schemas/CompassNutritionalDeclarationItem" } }
+
+    CompassDishDetail:
+      type: object
+      required: [Name]
+      properties:
+        Name: { type: string, x-mb-name: name }
+        Difficulty: { type: integer, x-mb-name: difficulty }
+        RestaurateurId: { type: integer, x-mb-name: restaurateurId }
+        Description: { type: string, x-mb-name: description }
+        Image: { $ref: "#/components/schemas/CompassImage", x-mb-name: image }
+        Ingredients: { type: array, x-mb-name: ingredients, items: { $ref: "#/components/schemas/CompassIngredient" } }
+        NetQuantityRaw: { type: number, x-mb-name: netQuantityRaw }
+        MajorAllergens: { type: array, x-mb-name: majorAllergens, items: { $ref: "#/components/schemas/CompassAllergen" } }
+        TraceAllergens: { type: array, x-mb-name: traceAllergens, items: { $ref: "#/components/schemas/CompassAllergen" } }
+        DisplayNutritionalValues: { type: boolean, x-mb-name: displayNutritionalValues }
+        NutritionalValues: { $ref: "#/components/schemas/CompassNutritionalValues", x-mb-name: nutritionalValues }
+        NutritionalDeclaration: { $ref: "#/components/schemas/CompassNutritionalDeclaration", x-mb-name: nutritionalDeclaration }
+        customLetters: { type: array, items: { $ref: "#/components/schemas/CompassCustomLetter" } }
+
+    CompassDishType:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Code: { type: string, x-mb-name: code }
+        Order: { type: integer, x-mb-name: order }
+
+    CompassDishTypesData:
+      type: object
+      properties:
+        DishTypes: { type: array, x-mb-name: dishTypes, items: { $ref: "#/components/schemas/CompassDishType" } }
+
+    CompassDishColor:
+      type: object
+      required: [id, name, color]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        color: { type: string }
+
+    CompassDishColorsData:
+      type: object
+      properties:
+        colors: { type: array, items: { $ref: "#/components/schemas/CompassDishColor" } }
+
+    CompassAuthStatusData:
+      type: object
+      properties:
+        Authenticated: { type: object, nullable: true, x-mb-name: authenticated }
+        RedirectTo: { type: string, nullable: true, x-mb-name: redirectTo }
+
+    CompassBasicLoginData:
+      type: object
+      properties:
+        NeedsOTP: { type: boolean, x-mb-name: needsOtp }
+        Token: { type: string, nullable: true, x-mb-name: token }
+        RedirectTo: { type: string, nullable: true, x-mb-name: redirectTo }
+
+    CompassValidateTokenResponse:
+      type: object
+      properties:
+        status: { type: string }
+        token_expiration: { type: string, nullable: true, x-mb-name: tokenExpiration }
+        messaggio: { type: string, nullable: true }
+        X-Server-Execution-Time: { type: number, nullable: true, x-mb-name: executionTime }
+
+    CompassResidenceAddress:
+      type: object
+      properties:
+        City: { type: string, x-mb-name: city }
+        Address: { type: string, x-mb-name: address }
+        Cap: { type: string, x-mb-name: cap }
+        Province: { type: string, x-mb-name: province }
+        ProvinceId: { type: string, x-mb-name: provinceId }
+
+    CompassIdentifierConfig:
+      type: object
+      properties:
+        Type: { type: integer, x-mb-name: type }
+        Encrypted: { type: boolean, x-mb-name: encrypted }
+
+    CompassUserMyLunchInfo:
+      type: object
+      properties:
+        Identifier: { $ref: "#/components/schemas/CompassIdentifierConfig", x-mb-name: identifier }
+
+    CompassUserWalletBalance:
+      type: object
+      properties:
+        Balance: { type: number, x-mb-name: balance }
+
+    CompassUserCanteenInfo:
+      type: object
+      properties:
+        Wallet: { $ref: "#/components/schemas/CompassUserWalletBalance", x-mb-name: wallet }
+        MyLunch: { $ref: "#/components/schemas/CompassUserMyLunchInfo", x-mb-name: myLunch }
+
+    CompassUserProfile:
+      type: object
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Username: { type: string, x-mb-name: username }
+        Email: { type: string, x-mb-name: email }
+        PhoneNumber: { type: string, x-mb-name: phoneNumber }
+        ExternalIdentifier: { type: string, x-mb-name: externalIdentifier }
+        Image: { type: string, x-mb-name: image }
+        BirthDate: { type: string, nullable: true, x-mb-name: birthDate }
+        BirthPlace: { type: string, x-mb-name: birthPlace }
+        BirthProvince: { type: string, x-mb-name: birthProvince }
+        BirthProvinceId: { type: string, x-mb-name: birthProvinceId }
+        ResidenceAddress: { $ref: "#/components/schemas/CompassResidenceAddress", x-mb-name: residenceAddress }
+        FiscalCode: { type: string, x-mb-name: fiscalCode }
+        Barcode: { type: string, x-mb-name: barcode }
+        BadgeCode: { type: string, x-mb-name: badgeCode }
+        MatrixCode: { type: string, x-mb-name: matrixCode }
+        accessLevel: { type: integer }
+        permissions: { type: array, items: { type: object } }
+        Canteen: { $ref: "#/components/schemas/CompassUserCanteenInfo", x-mb-name: canteen }
+
+    CompassHomeWallet:
+      type: object
+      properties:
+        balance: { type: number }
+
+    CompassHomeReservations:
+      type: object
+      properties:
+        meal: { type: array, items: { type: object } }
+        seat: { type: array, items: { type: object } }
+
+    CompassHomeIdentifier:
+      type: object
+      properties:
+        type: { type: integer }
+        encrypted: { type: boolean }
+
+    CompassMyLunchHomeData:
+      type: object
+      required: [user]
+      properties:
+        user: { $ref: "#/components/schemas/CompassUserProfile" }
+        wallet: { $ref: "#/components/schemas/CompassHomeWallet" }
+        reservations: { $ref: "#/components/schemas/CompassHomeReservations" }
+        identifier: { $ref: "#/components/schemas/CompassHomeIdentifier" }
+
+    CompassLowercaseIdName:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+
+    CompassTakeawayPayments:
+      type: object
+      properties:
+        ViewPrices: { type: boolean, x-mb-name: viewPrices }
+        OneShotPayment: { type: boolean, x-mb-name: oneShotPayment }
+        WalletPayment: { type: boolean, x-mb-name: walletPayment }
+
+    CompassTakeawayTexts:
+      type: object
+      properties:
+        Start: { type: string, x-mb-name: start }
+        InfoBox: { type: string, x-mb-name: infoBox }
+        Completition: { type: string, x-mb-name: completition }
+        Description: { type: string, x-mb-name: description }
+
+    CompassLocationGroup:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Locations: { type: array, x-mb-name: locations, items: { $ref: "#/components/schemas/CompassIdName" } }
+
+    CompassLocationDelivery:
+      type: object
+      properties:
+        Enabled: { type: boolean, x-mb-name: enabled }
+        Groups: { type: array, x-mb-name: groups, items: { $ref: "#/components/schemas/CompassLocationGroup" } }
+
+    CompassAddressDelivery:
+      type: object
+      properties:
+        Enabled: { type: boolean, x-mb-name: enabled }
+        UserAddresses: { type: array, x-mb-name: userAddresses, items: { type: object } }
+
+    CompassTakeawayTurnStats:
+      type: object
+      properties:
+        Reservations: { type: integer, x-mb-name: reservations }
+        Affluency: { type: integer, x-mb-name: affluency }
+        Percentage: { type: number, x-mb-name: percentage }
+
+    CompassTakeawayTimeSlot:
+      type: object
+      required: [ID]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Bookable: { type: boolean, x-mb-name: bookable }
+        Color: { type: string, x-mb-name: color }
+        Stats: { $ref: "#/components/schemas/CompassTakeawayTurnStats", x-mb-name: stats }
+
+    CompassTakeawayTurnGroup:
+      type: object
+      required: [ID]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Data: { type: array, x-mb-name: data, items: { $ref: "#/components/schemas/CompassTakeawayTimeSlot" } }
+
+    CompassTakeawayMealType:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Turns: { type: array, x-mb-name: turns, items: { $ref: "#/components/schemas/CompassTakeawayTurnGroup" } }
+
+    CompassTakeawayService:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        Mode: { type: string, x-mb-name: mode }
+        Menu: { $ref: "#/components/schemas/CompassIdName", x-mb-name: menu }
+        ageRange: { $ref: "#/components/schemas/CompassLowercaseIdName" }
+        UserRequests: { $ref: "#/components/schemas/CompassEnabledFlag", x-mb-name: userRequests }
+        Payments: { $ref: "#/components/schemas/CompassTakeawayPayments", x-mb-name: payments }
+        Texts: { $ref: "#/components/schemas/CompassTakeawayTexts", x-mb-name: texts }
+        MaximumDaysAfter: { type: integer, x-mb-name: maximumDaysAfter }
+        LocationDelivery: { $ref: "#/components/schemas/CompassLocationDelivery", x-mb-name: locationDelivery }
+        AddressDelivery: { $ref: "#/components/schemas/CompassAddressDelivery", x-mb-name: addressDelivery }
+        MealTypes:
+          type: object
+          x-mb-name: mealTypes
+          x-mb-key: string
+          additionalProperties:
+            type: array
+            items: { $ref: "#/components/schemas/CompassTakeawayMealType" }
+        isFavorite: { type: boolean }
+        combinations: { type: array, items: { type: object } }
+
+    CompassTakeawayServicesData:
+      type: object
+      properties:
+        Services: { type: array, x-mb-name: services, items: { $ref: "#/components/schemas/CompassTakeawayService" } }
+
+    CompassAccountDeletable:
+      type: object
+      required: [deletable]
+      properties:
+        deletable: { type: boolean }
+
+    CompassActionResult:
+      type: object
+      properties:
+        status: { type: string }
+        message: { type: string }
+
+    CompassCurrencySymbol:
+      type: object
+      properties:
+        symbol: { type: string }
+
+    CompassMoneyValue:
+      type: object
+      properties:
+        value: { type: number }
+
+    CompassTakeawayPriceData:
+      type: object
+      properties:
+        currency: { $ref: "#/components/schemas/CompassCurrencySymbol" }
+        combinationCost: { $ref: "#/components/schemas/CompassMoneyValue" }
+        extraCost: { $ref: "#/components/schemas/CompassMoneyValue" }
+        fixedCost: { $ref: "#/components/schemas/CompassMoneyValue" }
+        reservationCost: { $ref: "#/components/schemas/CompassMoneyValue" }
+        total: { $ref: "#/components/schemas/CompassMoneyValue" }
+
+    CompassTakeawaySendData:
+      type: object
+      properties:
+        status: { type: string }
+        codice_prenotazione: { type: string, nullable: true, x-mb-name: reservationCode }
+        reservationId: { type: integer, nullable: true }
+        messaggio: { type: string, nullable: true }
+        X-Server-Execution-Time: { type: number, nullable: true, x-mb-name: executionTime }
+
+    CompassCfpCalculatedData:
+      type: object
+      properties:
+        sum: { type: string }
+        um: { type: string }
+        equivalentPhrase: { type: string }
+        compensatedPhrase: { type: string }
+        cfpLogo: { type: string }
+        equivalentLogo: { type: string }
+        compensatedLogo: { type: string }
+
+    CompassMeasuredValue:
+      type: object
+      properties:
+        value: { type: number }
+        um: { type: string }
+
+    CompassMeasuredRangeValue:
+      type: object
+      properties:
+        value: { type: number }
+        min: { type: number }
+        max: { type: number }
+        um: { type: string }
+
+    CompassFoodDiaryMealTypeBalance:
+      type: object
+      required: [type, value]
+      properties:
+        type: { $ref: "#/components/schemas/CompassMealTypeSummary" }
+        value: { $ref: "#/components/schemas/CompassMeasuredRangeValue" }
+
+    CompassFoodDiaryMealTypesBalanceData:
+      type: object
+      properties:
+        caloricNeed: { $ref: "#/components/schemas/CompassMeasuredValue" }
+        mealTypes: { type: array, items: { $ref: "#/components/schemas/CompassFoodDiaryMealTypeBalance" } }
+
+    CompassReservationServiceInfo:
+      type: object
+      properties:
+        Canteen: { type: string, x-mb-name: canteen }
+        Shift: { type: string, x-mb-name: shift }
+        shiftId: { type: integer }
+        shiftStart: { type: string }
+        shiftStartHour: { type: integer }
+        shiftStartMinute: { type: integer }
+        shiftEnd: { type: string }
+        shiftEndHour: { type: integer }
+        shiftEndMinute: { type: integer }
+
+    CompassTableLinkStatus:
+      type: object
+      properties:
+        linkable: { type: boolean }
+        linked: { type: boolean }
+
+    CompassReservationStatus:
+      type: object
+      properties:
+        Confirmed: { type: boolean, x-mb-name: confirmed }
+        Deletable: { type: boolean, x-mb-name: deletable }
+        Active: { type: boolean, x-mb-name: active }
+        StatusDescription: { type: string, x-mb-name: statusDescription }
+        StatusColor: { type: string, x-mb-name: statusColor }
+        Provided: { type: boolean, x-mb-name: provided }
+        tableLink: { $ref: "#/components/schemas/CompassTableLinkStatus" }
+
+    CompassReservationAttachment:
+      type: object
+      properties:
+        name: { type: string }
+        type: { type: string }
+        needsAuthentication: { type: boolean }
+        download: { type: string }
+        needsMaxBrightness: { type: boolean }
+
+    CompassCfpValues:
+      type: object
+      properties:
+        final: { type: string, x-mb-name: finalValue }
+        um: { type: string }
+
+    CompassCfpComparison:
+      type: object
+      properties:
+        compensatedPhrase: { type: string }
+        equivalentPhrase: { type: string }
+        cfpLogo: { type: string }
+        equivalentLogo: { type: string }
+        compensatedLogo: { type: string }
+
+    CompassCfpSummary:
+      type: object
+      properties:
+        values: { $ref: "#/components/schemas/CompassCfpValues" }
+        comparison: { $ref: "#/components/schemas/CompassCfpComparison" }
+
+    CompassTakeawayReservation:
+      type: object
+      required: [ID]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Code: { type: string, x-mb-name: code }
+        Date: { type: string, x-mb-name: date }
+        CreatedAt: { type: string, x-mb-name: createdAt }
+        DeliveryAddress: { type: string, x-mb-name: deliveryAddress }
+        Menu: { $ref: "#/components/schemas/CompassIdName", x-mb-name: menu }
+        MealType: { $ref: "#/components/schemas/CompassIdName", x-mb-name: mealType }
+        Service: { $ref: "#/components/schemas/CompassReservationServiceInfo", x-mb-name: service }
+        Status: { $ref: "#/components/schemas/CompassReservationStatus", x-mb-name: status }
+        Dishes: { type: array, x-mb-name: dishes, items: { $ref: "#/components/schemas/CompassMenuDish" } }
+        Attachments: { type: array, x-mb-name: attachments, items: { $ref: "#/components/schemas/CompassReservationAttachment" } }
+        cfp: { $ref: "#/components/schemas/CompassCfpSummary" }
+
+    CompassTakeawayHistoryData:
+      type: object
+      properties:
+        Reservations: { type: array, x-mb-name: reservations, items: { $ref: "#/components/schemas/CompassTakeawayReservation" } }
+
+    CompassWalletBalanceData:
+      type: object
+      properties:
+        status: { type: string }
+        saldo: { type: number }
+        messaggio: { type: string, nullable: true }
+        X-Server-Execution-Time: { type: number, nullable: true, x-mb-name: executionTime }
+
+    CompassWalletMovement:
+      type: object
+      properties:
+        id: { type: integer, nullable: true }
+        data_operazione: { type: string, x-mb-name: operationDate }
+        amount: { type: number }
+        description: { type: string }
+
+    CompassWalletTransactionsData:
+      type: object
+      properties:
+        isDsu: { type: boolean }
+        movements: { type: array, items: { $ref: "#/components/schemas/CompassWalletMovement" } }
+        Payments: { type: array, x-mb-name: payments, items: { type: object } }
+
+    CompassCashierTransaction:
+      type: object
+      properties:
+        id: { type: integer, nullable: true }
+        data_operazione: { type: string, x-mb-name: operationDate }
+        totale_consumatore: { type: number, x-mb-name: consumerTotal }
+        totale_ente: { type: number, x-mb-name: entityTotal }
+        status: { type: string }
+
+    CompassCashierHistoryData:
+      type: object
+      properties:
+        operations: { type: array, items: { $ref: "#/components/schemas/CompassCashierTransaction" } }
+
+    CompassFormattedAddress:
+      type: object
+      properties:
+        Short: { type: string, x-mb-name: shortAddress }
+        Place: { type: string, x-mb-name: place }
+        CAP: { type: string, x-mb-name: cap }
+        Full: { type: string, x-mb-name: fullAddress }
+
+    CompassProvince:
+      type: object
+      required: [ID, Name]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Name: { type: string, x-mb-name: name }
+        ShortName: { type: string, x-mb-name: shortName }
+
+    CompassProvincesData:
+      type: object
+      properties:
+        Provinces: { type: array, x-mb-name: provinces, items: { $ref: "#/components/schemas/CompassProvince" } }
+
+    CompassDeliveryAddress:
+      type: object
+      required: [ID]
+      properties:
+        ID: { type: integer, x-mb-name: id, description: "Returned as integer on list/update/setDefault and as string on create." }
+        Name: { type: string, x-mb-name: name }
+        Address: { $ref: "#/components/schemas/CompassFormattedAddress", x-mb-name: address }
+        Province: { $ref: "#/components/schemas/CompassProvince", x-mb-name: province }
+        User: { $ref: "#/components/schemas/CompassIdName", x-mb-name: user }
+        Phone: { type: string, x-mb-name: phone }
+        Default: { type: boolean, x-mb-name: isDefault }
+
+    CompassDeliveryAddressesData:
+      type: object
+      properties:
+        DeliveryAddresses:
+          type: array
+          x-mb-name: deliveryAddresses
+          items: { $ref: "#/components/schemas/CompassDeliveryAddress" }
+
+    CompassDeliveryAddressSingleData:
+      type: object
+      required: [DeliveryAddress]
+      properties:
+        DeliveryAddress: { $ref: "#/components/schemas/CompassDeliveryAddress", x-mb-name: deliveryAddress }
+
+    CompassDeliveryAddressDeleteData:
+      type: object
+      properties:
+        Deleted: { type: boolean, x-mb-name: deleted }
+
+    CompassFoodDiaryPagesData:
+      type: object
+      properties:
+        pages: { type: array, items: { type: object } }
+
+paths:
+  # --- Contract & Metadata ---
+  /api/public/v1/contracts/get/frontend:
+    get:
+      tags: [Contract]
+      operationId: getContractFrontend
+      summary: Gets the contract configuration and enabled canteen services.
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassContractFrontendData" }
+
+  /api/public/v1/allergens/get/required:
+    get:
+      tags: [Contract]
+      operationId: getRequiredAllergens
+      summary: Lists the EU/Compass allergens and dietary content flags.
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassAllergensData" }
+
+  # --- Menu & Dishes ---
+  /api/public/v1/menu/get/frontend:
+    get:
+      tags: [Menu]
+      operationId: getMenusFrontend
+      summary: Lists the active menus, meal types, and active dates for Bicocca.
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassMenusFrontendData" }
+
+  /api/public/v1/menu/get/dishes:
+    get:
+      tags: [Menu]
+      operationId: getMenuDishes
+      summary: Lists all scheduled dishes by date, meal type, and dish course for a menu.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          x-mb-name: menuId
+          schema: { type: integer }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassMenuDishesData" }
+
+  /api/public/v1/dishes/get:
+    get:
+      tags: [Menu]
+      operationId: getDishDetails
+      summary: Gets full ingredients, allergens, nutritional values, and GDA percentages for a dish.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          x-mb-name: dishId
+          schema: { type: integer }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassDishDetail" }
+
+  /api/public/v1/dishtypes/get:
+    get:
+      tags: [Menu]
+      operationId: getDishTypes
+      summary: Lists the dish course categories.
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassDishTypesData" }
+
+  /api/public/v1/dishes/colors:
+    get:
+      tags: [Menu]
+      operationId: getDishColors
+      summary: Lists the wellness color badges.
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassDishColorsData" }
+
+  /api/public/v1/dishes/labels:
+    get:
+      tags: [Menu]
+      operationId: getCaloricLabels
+      summary: Lists the caloric range labels.
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassCaloricLabelsData" }
+
+  /api/public/v1/menu/customLetters:
+    get:
+      tags: [Menu]
+      operationId: getCustomLetters
+      summary: Lists dietary and certification badges (Biologico, Vegano, DOP, etc.).
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassCustomLettersData" }
+
+  /api/public/v1/provinces/get:
+    get:
+      tags: [Contract]
+      operationId: getProvinces
+      summary: Lists Italian provinces used for user profile and delivery address forms.
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassProvincesData" }
+
+  # --- Auth ---
+  /api/auth/v1/common/isAuthenticated:
+    get:
+      tags: [Account]
+      operationId: isAuthenticated
+      summary: Checks whether the current cookie session is authenticated.
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassAuthStatusData" }
+
+  /api/auth/v1/basic/verify:
+    post:
+      tags: [Account]
+      operationId: loginBasic
+      x-mb-effect: benign
+      summary: Authenticates a RistoCloud user via form credentials, returns a Bearer Token, and sets session cookies.
+      x-mb-form:
+        AuthenticateUser: "1"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassBasicLoginData" }
+
+  /api/myrcazienda_v3/validate_token:
+    post:
+      tags: [Account]
+      operationId: validateToken
+      x-mb-effect: benign
+      summary: Validates a persistent RistoCloudToken and returns its expiration timestamp.
+      x-mb-query:
+        appVersion: "2026.3.10"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassValidateTokenResponse" }
+
+  /api/auth/v1/common/user:
+    get:
+      tags: [Account]
+      operationId: getUserProfile
+      summary: Gets the authenticated RistoCloud user profile.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassUserProfile" }
+
+  /api/apps/v1/mylunch/home:
+    get:
+      tags: [Account]
+      operationId: getHomeInfo
+      summary: Gets the MyLunch home dashboard (user profile, wallet balance, active reservations, and identifier config).
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassMyLunchHomeData" }
+
+  /api/auth/v1/common/updateUserDetails:
+    post:
+      tags: [Account]
+      operationId: updateUserDetails
+      x-mb-effect: reversible
+      summary: Updates user profile fields and returns plain text "OK".
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                birthPlace: { type: string }
+                phoneNumber: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema: { type: string }
+
+  /api/auth/v1/common/updateEmail:
+    post:
+      tags: [Account]
+      operationId: updateEmail
+      x-mb-effect: irreversible
+      summary: Changes the account email address and returns plain text "OK".
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema: { type: string }
+
+  /api/auth/v1/common/updatePassword:
+    post:
+      tags: [Account]
+      operationId: updatePassword
+      x-mb-effect: irreversible
+      summary: Changes the account password and returns plain text "OK".
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [oldPassword, newPassword, repeatPassword]
+              properties:
+                oldPassword: { type: string }
+                newPassword: { type: string }
+                repeatPassword: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema: { type: string }
+
+  /api/auth/v1/account/canDelete:
+    post:
+      tags: [Account]
+      operationId: canDeleteAccount
+      x-mb-effect: read
+      summary: Tells whether the signed-in account can be deleted right now.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassAccountDeletable" }
+
+  /api/auth/v1/account/delete:
+    post:
+      tags: [Account]
+      operationId: requestAccountDeletion
+      x-mb-effect: irreversible
+      summary: Files a request to delete the account; an operator completes it by hand and sends a confirmation mail.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassActionResult" }
+
+  # --- Take-Away Ordering ---
+  /api/public/v1/reservations/takeaway:
+    get:
+      tags: [Takeaway]
+      operationId: getTakeawayServices
+      summary: Lists available takeaway services, pickup locations, and bookable time slots per date.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassTakeawayServicesData" }
+
+  /api/public/v1/reservations/takeaway/temporaryCost:
+    post:
+      tags: [Takeaway]
+      operationId: calculateTemporaryCost
+      x-mb-effect: read
+      summary: Calculates the cart cost breakdown for selected takeaway dishes.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [serviceId, dishesQty]
+              properties:
+                serviceId: { type: integer }
+                dishesQty: { type: string, description: "JSON object mapping dish ID to quantity, e.g. {\"101015\":1}" }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassTakeawayPriceData" }
+
+  /api/public/v1/cfp/total/sumCalculated:
+    post:
+      tags: [Takeaway]
+      operationId: calculateCfpTotal
+      x-mb-effect: read
+      summary: Calculates total carbon footprint (KgCO2e) and equivalences for selected dishes.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [ageRangeId, dishesIds]
+              properties:
+                ageRangeId: { type: integer }
+                dishesIds: { type: string, description: "JSON object mapping dish ID to quantity, e.g. {\"101015\":1}" }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassCfpCalculatedData" }
+
+  /api/myrcazienda_v3/invio_prenotazione_self_take_away:
+    post:
+      tags: [Takeaway]
+      operationId: submitTakeawayOrder
+      x-mb-effect: irreversible
+      summary: Submits a takeaway meal reservation (returns top-level JSON without `data` wrapper).
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-query:
+        appVersion: "2026.3.10"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [id_turno, data_servizio, id_menu, elenco_piatti]
+              properties:
+                id_turno: { type: integer, x-mb-name: turnId }
+                data_servizio: { type: string, x-mb-name: reservationDate, description: "Date in yyyy-MM-dd format" }
+                id_menu: { type: integer, x-mb-name: menuId }
+                elenco_piatti: { type: string, x-mb-name: dishesQtyJson, description: "JSON object mapping dish ID to quantity" }
+                id_tipo_pasto: { type: integer, x-mb-name: mealTypeId }
+                id_servizio: { type: integer, x-mb-name: serviceId }
+                luogoConsegnaId: { type: integer, x-mb-name: placeId }
+                deliveryAddressId: { type: integer }
+                userNote: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassTakeawaySendData" }
+
+  /api/public/v1/reservations/takeaway/history:
+    get:
+      tags: [Takeaway]
+      operationId: getTakeawayHistory
+      summary: Lists the user's active and past takeaway reservations with barcode attachments and CFP metrics.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassTakeawayHistoryData" }
+
+  /api/public/v1/reservations/takeaway/cancel:
+    post:
+      tags: [Takeaway]
+      operationId: cancelTakeawayOrder
+      x-mb-effect: irreversible
+      summary: Cancels an active takeaway reservation.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id: { type: integer, x-mb-name: reservationId }
+                cancellationMotivation: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassActionResult" }
+
+  /api/public/v1/refectories/favorites/edit:
+    post:
+      tags: [Takeaway]
+      operationId: editFavoriteService
+      x-mb-effect: reversible
+      summary: Adds or removes a takeaway service from the user's favorites.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [serviceId, action]
+              properties:
+                serviceId: { type: integer }
+                action: { $ref: "#/components/schemas/CompassFavoriteAction" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassActionResult" }
+
+  # --- Wallet & User History ---
+  /api/myrcazienda_v3/get_saldo_utente:
+    get:
+      tags: [Wallet]
+      operationId: getWalletBalance
+      summary: Gets the user's electronic wallet balance (top-level `saldo` field).
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-query:
+        appVersion: "2026.3.10"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassWalletBalanceData" }
+
+  /api/public/v1/wallet/ristocloud/transactions:
+    get:
+      tags: [Wallet]
+      operationId: getWalletTransactions
+      summary: Lists the user's wallet movement history.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassWalletTransactionsData" }
+
+  /api/public/v1/user/cashier/history:
+    get:
+      tags: [Wallet]
+      operationId: getCashierHistory
+      summary: Lists the user's POS/cashier transactions.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          schema: { type: integer, default: 10 }
+        - name: offset
+          in: query
+          required: true
+          schema: { type: integer, default: 0 }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassCashierHistoryData" }
+
+  /api/public/v1/user/deliveryAddress:
+    get:
+      tags: [Account]
+      operationId: getDeliveryAddresses
+      summary: Lists the user's saved delivery addresses.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassDeliveryAddressesData" }
+
+  /api/public/v1/user/deliveryAddress/create:
+    post:
+      tags: [Account]
+      operationId: createDeliveryAddress
+      x-mb-effect: reversible
+      summary: Creates a saved delivery address for the authenticated user.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [name, provinceId, address, phone, place, cap, default]
+              properties:
+                name: { type: string }
+                provinceId: { type: integer }
+                address: { type: string }
+                phone: { type: string }
+                place: { type: string }
+                cap: { type: string }
+                default: { type: string, x-mb-name: isDefaultFlag }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassDeliveryAddressSingleData" }
+
+  /api/public/v1/user/deliveryAddress/update:
+    post:
+      tags: [Account]
+      operationId: updateDeliveryAddress
+      x-mb-effect: reversible
+      summary: Updates a saved delivery address.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [id, name, provinceId, address, phone, place, cap, default]
+              properties:
+                id: { type: integer }
+                name: { type: string }
+                provinceId: { type: integer }
+                address: { type: string }
+                phone: { type: string }
+                place: { type: string }
+                cap: { type: string }
+                default: { type: string, x-mb-name: isDefaultFlag }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassDeliveryAddressSingleData" }
+
+  /api/public/v1/user/deliveryAddress/setDefault:
+    post:
+      tags: [Account]
+      operationId: setDefaultDeliveryAddress
+      x-mb-effect: reversible
+      summary: Marks a saved delivery address as default.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [id, default]
+              properties:
+                id: { type: integer }
+                default: { type: string, x-mb-name: isDefaultFlag }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassDeliveryAddressSingleData" }
+
+  /api/public/v1/user/deliveryAddress/delete:
+    post:
+      tags: [Account]
+      operationId: deleteDeliveryAddress
+      x-mb-effect: reversible
+      summary: Deletes a saved delivery address.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id: { type: integer }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassDeliveryAddressDeleteData" }
+
+  /api/public/v1/user/foodDiary/userDiary:
+    get:
+      tags: [Account]
+      operationId: getFoodDiaryPages
+      summary: Lists the user's food diary pages.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassFoodDiaryPagesData" }
+
+  /api/public/v1/user/foodDiary/calculateMealTypesBalance:
+    post:
+      tags: [Account]
+      operationId: calculateMealTypesBalance
+      x-mb-effect: read
+      summary: Calculates daily caloric balance thresholds per meal type.
+      x-mb-auth: { schemes: [BearerAuth], required: true }
+      x-mb-envelope: [data]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompassFoodDiaryMealTypesBalanceData" }
