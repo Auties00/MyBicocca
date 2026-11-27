@@ -693,10 +693,14 @@ components:
 
 paths:
   # --- Sites ---
+  # The v4 app API rejects requests naming no service (`error_invalid_device`), so these anonymous
+  # reads go as the website; it takes the mobile app's name only with an API key. Set per operation:
+  # a client-wide default would be sent beside the account operations' own value on Android.
   /sites/{siteIdentifier}:
     get:
       tags: [Sites]
       operationId: getSite
+      x-mb-headers: { x-service-name: website }
       summary: Gets a site page.
       parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
       x-mb-envelope: [data]
@@ -706,6 +710,7 @@ paths:
     get:
       tags: [Sites]
       operationId: getLiveData
+      x-mb-headers: { x-service-name: website }
       summary: Gets a site's live occupancy and forecasts.
       parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
       x-mb-envelope: [data]
@@ -715,6 +720,7 @@ paths:
     get:
       tags: [Sites]
       operationId: getWeekTimetable
+      x-mb-headers: { x-service-name: website }
       summary: Gets a site's opening hours for a week.
       parameters:
         - $ref: "#/components/parameters/siteIdentifier"
@@ -729,6 +735,7 @@ paths:
     get:
       tags: [Sites]
       operationId: getDetails
+      x-mb-headers: { x-service-name: website }
       summary: Gets a site's services and practical information.
       parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
       x-mb-envelope: [data]
@@ -738,6 +745,7 @@ paths:
     get:
       tags: [Sites]
       operationId: getChildren
+      x-mb-headers: { x-service-name: website }
       summary: Lists the sites inside a site.
       parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
       x-mb-envelope: [data]
@@ -747,6 +755,7 @@ paths:
     get:
       tags: [Sites]
       operationId: getSimilarSites
+      x-mb-headers: { x-service-name: website }
       summary: Lists sites similar to a site.
       parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
       x-mb-envelope: [data]
@@ -756,6 +765,7 @@ paths:
     get:
       tags: [Sites]
       operationId: getEvents
+      x-mb-headers: { x-service-name: website }
       summary: Lists a site's events.
       parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
       x-mb-envelope: [data]
@@ -765,6 +775,7 @@ paths:
     get:
       tags: [Sites]
       operationId: getMessages
+      x-mb-headers: { x-service-name: website }
       summary: Lists a site's pop-in messages.
       parameters:
         - $ref: "#/components/parameters/siteIdentifier"

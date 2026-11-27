@@ -2,6 +2,7 @@
 package it.attendance100.mybicocca.data.remote.affluences.api
 
 import io.ktor.client.HttpClient
+import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesEvent
@@ -28,7 +29,9 @@ class AffluencesSitesApi(
     suspend fun getSite(
         siteIdentifier: String
     ): AffluencesSite {
-        return json(HttpMethod.Get, "/sites/${siteIdentifier}", deserializer = serializer<AffluencesSite>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
+        return json(HttpMethod.Get, "/sites/${siteIdentifier}", deserializer = serializer<AffluencesSite>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
+            header("x-service-name", "website")
+        }
     }
 
     /**
@@ -39,7 +42,9 @@ class AffluencesSitesApi(
     suspend fun getLiveData(
         siteIdentifier: String
     ): AffluencesLiveData {
-        return json(HttpMethod.Get, "/sites/${siteIdentifier}/live-data", deserializer = serializer<AffluencesLiveData>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
+        return json(HttpMethod.Get, "/sites/${siteIdentifier}/live-data", deserializer = serializer<AffluencesLiveData>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
+            header("x-service-name", "website")
+        }
     }
 
     /**
@@ -54,6 +59,7 @@ class AffluencesSitesApi(
     ): AffluencesWeekTimetable {
         return json(HttpMethod.Get, "/sites/${siteIdentifier}/timetables", deserializer = serializer<AffluencesWeekTimetable>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
             parameter("weekOffset", weekOffset)
+            header("x-service-name", "website")
         }
     }
 
@@ -65,7 +71,9 @@ class AffluencesSitesApi(
     suspend fun getDetails(
         siteIdentifier: String
     ): AffluencesSiteDetails {
-        return json(HttpMethod.Get, "/sites/${siteIdentifier}/details", deserializer = serializer<AffluencesSiteDetails>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
+        return json(HttpMethod.Get, "/sites/${siteIdentifier}/details", deserializer = serializer<AffluencesSiteDetails>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
+            header("x-service-name", "website")
+        }
     }
 
     /**
@@ -76,7 +84,9 @@ class AffluencesSitesApi(
     suspend fun getChildren(
         siteIdentifier: String
     ): List<AffluencesSiteCard> {
-        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/children", deserializer = serializer<List<AffluencesSiteCard>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
+        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/children", deserializer = serializer<List<AffluencesSiteCard>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
+            header("x-service-name", "website")
+        }
     }
 
     /**
@@ -87,7 +97,9 @@ class AffluencesSitesApi(
     suspend fun getSimilarSites(
         siteIdentifier: String
     ): List<AffluencesSiteCard> {
-        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/similar", deserializer = serializer<List<AffluencesSiteCard>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
+        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/similar", deserializer = serializer<List<AffluencesSiteCard>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
+            header("x-service-name", "website")
+        }
     }
 
     /**
@@ -98,7 +110,9 @@ class AffluencesSitesApi(
     suspend fun getEvents(
         siteIdentifier: String
     ): List<AffluencesEvent> {
-        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/events", deserializer = serializer<List<AffluencesEvent>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
+        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/events", deserializer = serializer<List<AffluencesEvent>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
+            header("x-service-name", "website")
+        }
     }
 
     /**
@@ -113,6 +127,7 @@ class AffluencesSitesApi(
     ): List<AffluencesPopInMessage> {
         return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/messages", deserializer = serializer<List<AffluencesPopInMessage>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
             lastCheckin?.let { parameter("lastCheckin", it) }
+            header("x-service-name", "website")
         }
     }
 }

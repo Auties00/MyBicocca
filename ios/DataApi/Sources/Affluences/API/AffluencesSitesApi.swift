@@ -19,6 +19,7 @@ public struct AffluencesSitesApi: Sendable {
             RestRequest(
                 method: .get,
                 path: "/sites/\(RestRequest.pathSegment(siteIdentifier))",
+                headers: [("x-service-name", "website")],
                 server: AffluencesServer.appV4.rawValue,
                 envelope: ["data"]
             )
@@ -34,6 +35,7 @@ public struct AffluencesSitesApi: Sendable {
             RestRequest(
                 method: .get,
                 path: "/sites/\(RestRequest.pathSegment(siteIdentifier))/live-data",
+                headers: [("x-service-name", "website")],
                 server: AffluencesServer.appV4.rawValue,
                 envelope: ["data"]
             )
@@ -54,6 +56,7 @@ public struct AffluencesSitesApi: Sendable {
                 method: .get,
                 path: "/sites/\(RestRequest.pathSegment(siteIdentifier))/timetables",
                 query: [("weekOffset", weekOffset)],
+                headers: [("x-service-name", "website")],
                 server: AffluencesServer.appV4.rawValue,
                 envelope: ["data"]
             )
@@ -69,6 +72,7 @@ public struct AffluencesSitesApi: Sendable {
             RestRequest(
                 method: .get,
                 path: "/sites/\(RestRequest.pathSegment(siteIdentifier))/details",
+                headers: [("x-service-name", "website")],
                 server: AffluencesServer.appV4.rawValue,
                 envelope: ["data"]
             )
@@ -84,6 +88,7 @@ public struct AffluencesSitesApi: Sendable {
             RestRequest(
                 method: .get,
                 path: "/sites/\(RestRequest.pathSegment(siteIdentifier))/children",
+                headers: [("x-service-name", "website")],
                 server: AffluencesServer.appV4.rawValue,
                 envelope: ["data"]
             )
@@ -99,6 +104,7 @@ public struct AffluencesSitesApi: Sendable {
             RestRequest(
                 method: .get,
                 path: "/sites/\(RestRequest.pathSegment(siteIdentifier))/similar",
+                headers: [("x-service-name", "website")],
                 server: AffluencesServer.appV4.rawValue,
                 envelope: ["data"]
             )
@@ -114,6 +120,7 @@ public struct AffluencesSitesApi: Sendable {
             RestRequest(
                 method: .get,
                 path: "/sites/\(RestRequest.pathSegment(siteIdentifier))/events",
+                headers: [("x-service-name", "website")],
                 server: AffluencesServer.appV4.rawValue,
                 envelope: ["data"]
             )
@@ -134,6 +141,7 @@ public struct AffluencesSitesApi: Sendable {
                 method: .get,
                 path: "/sites/\(RestRequest.pathSegment(siteIdentifier))/messages",
                 query: [("lastCheckin", lastCheckin)],
+                headers: [("x-service-name", "website")],
                 server: AffluencesServer.appV4.rawValue,
                 envelope: ["data"]
             )

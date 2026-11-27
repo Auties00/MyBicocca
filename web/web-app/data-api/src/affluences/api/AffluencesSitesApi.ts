@@ -18,6 +18,7 @@ export class AffluencesSitesApi {
       {
         method: "GET",
         path: `/sites/${pathSegment(siteIdentifier)}`,
+        headers: [["x-service-name", "website"]],
         server: AffluencesServer.AppV4,
         envelope: ["data"],
       },
@@ -35,6 +36,7 @@ export class AffluencesSitesApi {
       {
         method: "GET",
         path: `/sites/${pathSegment(siteIdentifier)}/live-data`,
+        headers: [["x-service-name", "website"]],
         server: AffluencesServer.AppV4,
         envelope: ["data"],
       },
@@ -59,6 +61,7 @@ export class AffluencesSitesApi {
         method: "GET",
         path: `/sites/${pathSegment(siteIdentifier)}/timetables`,
         query: [["weekOffset", options.weekOffset ?? 0]],
+        headers: [["x-service-name", "website"]],
         server: AffluencesServer.AppV4,
         envelope: ["data"],
       },
@@ -76,6 +79,7 @@ export class AffluencesSitesApi {
       {
         method: "GET",
         path: `/sites/${pathSegment(siteIdentifier)}/details`,
+        headers: [["x-service-name", "website"]],
         server: AffluencesServer.AppV4,
         envelope: ["data"],
       },
@@ -93,6 +97,7 @@ export class AffluencesSitesApi {
       {
         method: "GET",
         path: `/sites/${pathSegment(siteIdentifier)}/children`,
+        headers: [["x-service-name", "website"]],
         server: AffluencesServer.AppV4,
         envelope: ["data"],
       },
@@ -110,6 +115,7 @@ export class AffluencesSitesApi {
       {
         method: "GET",
         path: `/sites/${pathSegment(siteIdentifier)}/similar`,
+        headers: [["x-service-name", "website"]],
         server: AffluencesServer.AppV4,
         envelope: ["data"],
       },
@@ -127,6 +133,7 @@ export class AffluencesSitesApi {
       {
         method: "GET",
         path: `/sites/${pathSegment(siteIdentifier)}/events`,
+        headers: [["x-service-name", "website"]],
         server: AffluencesServer.AppV4,
         envelope: ["data"],
       },
@@ -151,6 +158,7 @@ export class AffluencesSitesApi {
         method: "GET",
         path: `/sites/${pathSegment(siteIdentifier)}/messages`,
         query: [["lastCheckin", options.lastCheckin]],
+        headers: [["x-service-name", "website"]],
         server: AffluencesServer.AppV4,
         envelope: ["data"],
       },
