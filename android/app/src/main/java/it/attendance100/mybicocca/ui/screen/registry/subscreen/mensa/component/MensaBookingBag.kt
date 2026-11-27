@@ -92,7 +92,7 @@ private const val HERO_MS = RISE_START_MS + RISE_MS + BAG_OPEN_MS
  * Going back, the booking page holds still this long while the bag opens and takes the dishes
  * back; it closes again on its way home, as the page changes.
  */
-internal const val MENSA_BAG_RETURN_MS = 240
+internal const val MENSA_BAG_RETURN_MS = 120
 
 /** Leaving with no gesture to follow, the dishes fade out this fast instead of going back in. */
 private const val QUICK_DISHES_OUT_MS = 150

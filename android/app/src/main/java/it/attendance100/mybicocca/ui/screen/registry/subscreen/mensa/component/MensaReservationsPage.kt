@@ -1,11 +1,17 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
 import it.attendance100.mybicocca.ui.component.modal.SheetMotion
 import it.attendance100.mybicocca.ui.component.modal.LocalSheetBackScrub
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.ui.layout.layout
+import kotlin.math.roundToInt
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.offset
@@ -561,13 +567,13 @@ internal fun MensaReservationDetailPage(
                 secondaryColors = ConnectedButtonPairDefaults.destructiveColors(),
                 primary = onShowOnMap?.let { map },
                 onPrimary = { onShowOnMap?.invoke() },
-                modifier = Modifier.padding(top = 10.dp).leavingBelowBag(),
+                modifier = Modifier.leavingBelowBag(releasesSpace = true).padding(top = 10.dp),
             )
             onShowOnMap != null -> ConnectedButtonPair(
                 secondary = map,
                 onSecondary = onShowOnMap,
                 secondaryColors = ConnectedButtonPairDefaults.primaryColors(),
-                modifier = Modifier.padding(top = 10.dp).leavingBelowBag(),
+                modifier = Modifier.leavingBelowBag(releasesSpace = true).padding(top = 10.dp),
             )
         }
     }
@@ -620,21 +626,40 @@ private fun ReservationDetailPreview(@PreviewParameter(MensaPreviewThemeProvider
 }
 
 /**
- * Leaving a booking, what is under its bag slides down out of the sheet and fades: with a back
- * gesture while the bag takes the dishes back, following the finger; otherwise with the page change.
+ * Leaving a booking, what is under its bag slides down out of the sheet and fades, all of it by the
+ * same distance so the buttons stay below the rest. With a back gesture it starts while the bag
+ * takes the dishes back and goes on through the page change, following the finger; otherwise it
+ * leaves with the page change.
+ *
+ * The buttons pass [releasesSpace]: the room they take shrinks as they go down, so the scroll area
+ * above grows with them and its bottom edge, which cuts off the sliding content, stays on their top.
  */
 @Composable
-private fun Modifier.leavingBelowBag(): Modifier {
+private fun Modifier.leavingBelowBag(releasesSpace: Boolean = false): Modifier {
     val visibility = LocalMensaShared.current?.visibility ?: return this
-    // Scrubbed, it is gone by the time the bag sets off; otherwise it leaves with the page change,
-    // so the page coming in fades up behind it rather than after it.
     val scrubbed = LocalSheetBackScrub.current()
-    val slideMs = if (scrubbed) MENSA_BAG_RETURN_MS else SheetMotion.PAGE_MS
-    val fadeMs = if (scrubbed) MENSA_BAG_RETURN_MS else SheetMotion.PAGE_MS * 2 / 3
+    val slideMs = if (scrubbed) MENSA_BAG_RETURN_MS + SheetMotion.PAGE_MS else SheetMotion.PAGE_MS
+    val fadeMs = if (scrubbed) slideMs else SheetMotion.PAGE_MS * 2 / 3
+    val distance = with(LocalDensity.current) { LocalConfiguration.current.screenHeightDp.dp.roundToPx() }
+    if (!releasesSpace) {
+        return with(visibility) {
+            this@leavingBelowBag.animateEnterExit(
+                enter = EnterTransition.None,
+                exit = slideOutVertically(tween(slideMs, easing = FastOutSlowInEasing)) { distance } + fadeOut(tween(fadeMs)),
+            )
+        }
+    }
+    // The same curve the content above slides on, so the two stay together.
+    val gone = visibility.transition.animateFloat(
+        transitionSpec = { tween(slideMs, easing = FastOutSlowInEasing) },
+        label = "mensa_detail_buttons_gone",
+    ) { if (it == EnterExitState.PostExit) 1f else 0f }
     return with(visibility) {
-        this@leavingBelowBag.animateEnterExit(
-            enter = EnterTransition.None,
-            exit = slideOutVertically(tween(slideMs, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(fadeMs)),
-        )
+        this@leavingBelowBag.animateEnterExit(enter = EnterTransition.None, exit = fadeOut(tween(fadeMs)))
+    }.layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val offset = (distance * gone.value).roundToInt()
+        val kept = (placeable.height - offset).coerceAtLeast(0)
+        layout(placeable.width, kept) { placeable.place(0, offset - (placeable.height - kept)) }
     }
 }
