@@ -173,13 +173,21 @@ internal fun <P : Any> SheetPagerImpl(
                 if (!scrubbing) {
                     if ((System.nanoTime() - startNanos) / 1_000_000 < QUICK_BACK_MS) return@collect
                     scrubbing = true
+                    // SeekableTransitionState.seekTo suspends until any interrupted animateTo
+                    // finishes its initialValueAnimations, which stalls gesture event collection.
+                    if (key(state.currentState) != key(latestPage)) {
+                        state.snapTo(if (key(state.targetState) == key(latestPage)) state.targetState else latestPage)
+                    }
                 }
-                state.seekTo(event.progress, targetState = target)
+                val seekTarget = if (key(state.targetState) == key(target)) state.targetState else target
+                state.seekTo(event.progress, targetState = seekTarget)
             }
         } catch (cancelled: CancellationException) {
-            rewindScope.launch {
-                state.rewindTo(latestPage, transition.totalDurationNanos)
-                scrubbing = false
+            if (scrubbing) {
+                rewindScope.launch {
+                    state.rewindTo(latestPage, transition.totalDurationNanos)
+                    scrubbing = false
+                }
             }
             throw cancelled
         }

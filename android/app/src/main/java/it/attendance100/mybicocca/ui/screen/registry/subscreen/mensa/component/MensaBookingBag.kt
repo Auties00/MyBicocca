@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
 import android.content.Context
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.boundsInWindow
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
@@ -57,6 +59,7 @@ import it.attendance100.mybicocca.ui.component.modal.LocalSheetBackScrub
 import it.attendance100.mybicocca.ui.component.modal.SheetMotion
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaDishDrawable
+import kotlinx.coroutines.delay
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -183,7 +186,9 @@ internal fun MensaBookingBagHero(reservationId: Int, dishes: List<MensaDish>, mo
     val scrubbed = LocalSheetBackScrub.current
     val timeline = rememberHeroTimeline(shown.isNotEmpty(), scrubbed)
     val dishesShown = rememberDishesShown(scrubbed)
-    val openness = remember(timeline) { derivedStateOf { bagOpenness(timeline.value) } }
+    val openness = remember(timeline, dishesShown) {
+        derivedStateOf { bagOpenness(timeline.value) * dishesShown.value }
+    }
     val stage = LocalMensaBagStage.current
     DisposableEffect(stage, reservationId, openness) {
         stage?.bookings?.set(reservationId, openness)
@@ -356,7 +361,8 @@ private class BagLayerPainter(
     override val intrinsicSize: Size = Size(drawable.intrinsicWidth.toFloat(), drawable.intrinsicHeight.toFloat())
 
     override fun DrawScope.onDraw() {
-        drawable.currentPlayTime = (openness().coerceIn(0f, 1f) * drawable.totalDuration).roundToLong()
+        val playTime = (openness().coerceIn(0f, 1f) * drawable.totalDuration).roundToLong()
+        if (drawable.currentPlayTime != playTime) drawable.currentPlayTime = playTime
         drawable.setBounds(0, 0, size.width.roundToInt(), size.height.roundToInt())
         drawIntoCanvas { drawable.draw(it.nativeCanvas) }
     }
@@ -369,19 +375,35 @@ private fun bagOpenness(timeline: Float): Float {
 }
 
 /**
- * 0 with the bag shut and every dish inside, 1 once they are all out and it has shut again;
- * follows the page's own transition, so it is seekable with it. Leaving the page it runs back to
- * where the dishes are in while the page holds still, and on to 0 as the bag flies home.
+ * 0 with the bag shut and every dish inside, 1 once they are all out and it has shut again.
+ * The entrance runs on its own so the page transition settles as soon as the slide ends; leaving
+ * follows the page's transition so a back gesture scrubs it smoothly from wherever the entrance
+ * reached, and a cancelled gesture rewinds and lets it finish.
  */
 @Composable
 private fun rememberHeroTimeline(hasDishes: Boolean, scrubbed: () -> Boolean): State<Float> {
     val visibility = LocalMensaShared.current?.visibility
     if (visibility == null || !hasDishes) return remember { mutableFloatStateOf(1f) }
-    return visibility.transition.animateFloat(
+    val enter = remember {
+        Animatable(if (visibility.transition.currentState == EnterExitState.Visible) 1f else 0f)
+    }
+    LaunchedEffect(visibility.transition.targetState) {
+        if (visibility.transition.targetState == EnterExitState.Visible && enter.value < 1f) {
+            if (visibility.transition.currentState == EnterExitState.PreEnter) {
+                delay(SheetMotion.PAGE_MS.toLong())
+            }
+            val remainingMs = ((1f - enter.value) * HERO_MS).roundToInt()
+            if (remainingMs > 0) {
+                enter.animateTo(1f, tween(durationMillis = remainingMs, easing = LinearEasing))
+            } else {
+                enter.snapTo(1f)
+            }
+        }
+    }
+    val exit = visibility.transition.animateFloat(
         transitionSpec = {
-            if (targetState == EnterExitState.Visible) {
-                // Once the bag has landed.
-                tween(durationMillis = HERO_MS, delayMillis = SheetMotion.PAGE_MS, easing = LinearEasing)
+            if (targetState != EnterExitState.PostExit) {
+                snap()
             } else if (!scrubbed()) {
                 // No finger to follow: the bag stays shut and the dishes fade out where they are.
                 snap(delayMillis = QUICK_DISHES_OUT_MS)
@@ -395,7 +417,18 @@ private fun rememberHeroTimeline(hasDishes: Boolean, scrubbed: () -> Boolean): S
             }
         },
         label = "mensa_bag_hero",
-    ) { if (it == EnterExitState.Visible) 1f else 0f }
+    ) { if (it == EnterExitState.PostExit) 0f else 1f }
+    return remember(enter, exit) {
+        derivedStateOf {
+            val e = enter.value
+            val x = exit.value
+            if (x >= DISHES_IN && e > DISHES_IN) {
+                lerp(DISHES_IN, e, (x - DISHES_IN) / (1f - DISHES_IN))
+            } else {
+                minOf(e, x)
+            }
+        }
+    }
 }
 
 /**
