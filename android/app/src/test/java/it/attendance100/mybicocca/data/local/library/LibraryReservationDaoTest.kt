@@ -19,7 +19,7 @@ import org.robolectric.annotation.Config
  * (Robolectric). The Affluences "my reservations" cache is device-local (not account-scoped) and
  * keyed by the server reservation id. Exercises the upsert round-trip, the
  * `ORDER BY start_epoch_seconds` listing, the keyed delete (cancel), the whole-set `clear`, and the
- * `replaceAll` transaction that mirrors the server by clearing and rewriting the whole cache.
+ * `syncWithServer` transaction that mirrors unended bookings and keeps ended ones as history.
  *
  * library_reservation has no foreign keys, so rows insert directly with no parent.
  */
@@ -109,12 +109,28 @@ class LibraryReservationDaoTest {
     }
 
     @Test
-    fun `replaceAll swaps the whole cache for the fresh server set`() = runTest {
-        dao.upsertAll(listOf(reservation(1), reservation(2)))
+    fun `syncWithServer mirrors unended bookings and keeps ended ones as history`() = runTest {
+        val ended = reservation(1, start = 1_000L)
+        val goneUpcoming = reservation(2, start = 20_000L)
+        val endedButCancelled = reservation(3, start = 2_000L)
+        dao.upsertAll(listOf(ended, goneUpcoming, endedButCancelled))
 
-        dao.replaceAll(listOf(reservation(3), reservation(4)))
+        dao.syncWithServer(
+            reservations = listOf(reservation(4, start = 30_000L)),
+            cancelledIds = listOf(3),
+            nowEpochSeconds = 10_000L,
+        )
 
-        assertThat(dao.observeAll().first().map { it.reservationId }).containsExactly(3, 4)
+        assertThat(dao.observeAll().first().map { it.reservationId }).containsExactly(1, 4)
+    }
+
+    @Test
+    fun `syncWithServer with no cancelled bookings and an empty list keeps only history`() = runTest {
+        dao.upsertAll(listOf(reservation(1, start = 1_000L), reservation(2, start = 20_000L)))
+
+        dao.syncWithServer(emptyList(), cancelledIds = emptyList(), nowEpochSeconds = 10_000L)
+
+        assertThat(dao.observeAll().first().map { it.reservationId }).containsExactly(1)
     }
 
     @Test

@@ -4,12 +4,21 @@ import com.google.common.truth.Truth.assertThat
 import it.attendance100.mybicocca.data.local.library.LibraryReservationEntity
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAgreement
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAvailableResource
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesDayForecasts
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesForecastSlot
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesLiveData
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesMyReservation
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationState
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceTypeFilters
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceTypeInfo
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSite
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteCard
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteService
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteStatus
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesTimeSlot
+import it.attendance100.mybicocca.domain.model.library.LibraryCatalog
 import it.attendance100.mybicocca.domain.model.library.LibraryReservationState
+import it.attendance100.mybicocca.domain.model.library.LibraryServiceType
 import it.attendance100.mybicocca.domain.model.library.LibraryZoneColor
 import org.junit.Test
 import java.time.Instant
@@ -202,6 +211,80 @@ class LibraryMappersTest {
         assertThat(agreement.name).isEqualTo("Termini")
         assertThat(agreement.url).isEqualTo("https://example.com")
         assertThat(agreement.mandatory).isTrue()
+    }
+
+    @Test
+    fun `site card and site payload apply live photo overrides for catalogued ids and fall back for unknown`() {
+        val centraleCard = AffluencesSiteCard(
+            id = LibraryCatalog.CENTRALE_ID,
+            slug = "centrale",
+            primaryName = "Biblioteca Centrale",
+            pictures = listOf("https://api.example/old.jpg"),
+        ).toLibrary()
+        assertThat(centraleCard.pictureUrl).isEqualTo(LibraryCatalog.Centrale.photoUrl)
+
+        val medicinaSite = AffluencesSite(
+            id = LibraryCatalog.MEDICINA_ID,
+            slug = "medicina",
+            primaryName = "Biblioteca di Medicina",
+            pictures = emptyList(),
+        ).toLibrary(liveStatus = null)
+        assertThat(medicinaSite.pictureUrl).isEqualTo(LibraryCatalog.Medicina.photoUrl)
+
+        val unknownCard = AffluencesSiteCard(
+            id = "unknown-id",
+            slug = "other",
+            primaryName = "Altra",
+            pictures = listOf("https://api.example/unknown.jpg"),
+        ).toLibrary()
+        assertThat(unknownCard.pictureUrl).isEqualTo("https://api.example/unknown.jpg")
+    }
+
+    @Test
+    fun `site services map known types and preserve unknown service names`() {
+        assertThat(AffluencesSiteService("accessibility", "Access").toService().type)
+            .isEqualTo(LibraryServiceType.Accessibility)
+        assertThat(AffluencesSiteService("power", "Power").toService().type)
+            .isEqualTo(LibraryServiceType.Power)
+        assertThat(AffluencesSiteService("wifi", "Wi-Fi").toService().type)
+            .isEqualTo(LibraryServiceType.Wifi)
+        assertThat(AffluencesSiteService("ac", "AC").toService().type)
+            .isEqualTo(LibraryServiceType.AirConditioning)
+        assertThat(AffluencesSiteService("study_room", "Study room").toService().type)
+            .isEqualTo(LibraryServiceType.StudyRoom)
+        val unknown = AffluencesSiteService("printer", "Stampante").toService()
+        assertThat(unknown.type).isEqualTo(LibraryServiceType.Other)
+        assertThat(unknown.name).isEqualTo("Stampante")
+    }
+
+    @Test
+    fun `liveData extracts range start, end and calendar date from forecast ranges`() {
+        val live = AffluencesLiveData(
+            status = AffluencesSiteStatus(isOpen = true, closingText = "Chiude alle 22:00"),
+            forecasts = listOf(
+                AffluencesDayForecasts(
+                    day = "2026-06-18",
+                    todayOffset = 0,
+                    forecasts = listOf(
+                        AffluencesForecastSlot(
+                            hourRange = listOf("2026-06-18 08:30:00", "2026-06-18 09:30:00"),
+                            occupancyPercentage = 25,
+                        ),
+                        AffluencesForecastSlot(
+                            hourRange = listOf("2026-06-18 11:00:00", "2026-06-18 12:30:00"),
+                            occupancyPercentage = 72,
+                        ),
+                    ),
+                ),
+            ),
+        ).toLiveStatus()
+
+        assertThat(live.forecastDate).isEqualTo(LocalDate.of(2026, 6, 18))
+        assertThat(live.todayForecast).hasSize(2)
+        assertThat(live.todayForecast[0].time).isEqualTo(LocalTime.of(8, 30))
+        assertThat(live.todayForecast[0].endTime).isEqualTo(LocalTime.of(9, 30))
+        assertThat(live.todayForecast[1].time).isEqualTo(LocalTime.of(11, 0))
+        assertThat(live.todayForecast[1].endTime).isEqualTo(LocalTime.of(12, 30))
     }
 
     private fun reservation(

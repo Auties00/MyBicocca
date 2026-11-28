@@ -24,13 +24,23 @@ interface LibraryReservationDao {
     @Query("DELETE FROM library_reservation WHERE reservation_id = :id")
     suspend fun delete(id: Int)
 
+    @Query(
+        "DELETE FROM library_reservation " +
+            "WHERE end_epoch_seconds > :nowEpochSeconds OR reservation_id IN (:cancelledIds)",
+    )
+    suspend fun deleteUnendedOrCancelled(nowEpochSeconds: Long, cancelledIds: List<Int>)
+
     /**
-     * Mirrors the server list exactly — clears and rewrites the whole cache in one transaction,
-     * since the server is the source of truth and this table is just the cache.
+     * Applies the server list in one transaction. The server is the source of truth for bookings
+     * that have not ended; ended ones stay as history even once it stops listing them.
      */
     @Transaction
-    suspend fun replaceAll(reservations: List<LibraryReservationEntity>) {
-        clear()
+    suspend fun syncWithServer(
+        reservations: List<LibraryReservationEntity>,
+        cancelledIds: List<Int>,
+        nowEpochSeconds: Long,
+    ) {
+        deleteUnendedOrCancelled(nowEpochSeconds, cancelledIds)
         upsertAll(reservations)
     }
 }

@@ -12,10 +12,12 @@ import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceT
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceTypeInfo
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSite
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteCard
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteService
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesWeekTimetable
 import it.attendance100.mybicocca.domain.model.library.Library
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibraryBookingConstraints
+import it.attendance100.mybicocca.domain.model.library.LibraryCatalog
 import it.attendance100.mybicocca.domain.model.library.LibraryCrowd
 import it.attendance100.mybicocca.domain.model.library.LibraryDayHours
 import it.attendance100.mybicocca.domain.model.library.LibraryForecastPoint
@@ -24,6 +26,8 @@ import it.attendance100.mybicocca.domain.model.library.LibraryOpeningRange
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.domain.model.library.LibraryReservationState
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
+import it.attendance100.mybicocca.domain.model.library.LibraryService
+import it.attendance100.mybicocca.domain.model.library.LibraryServiceType
 import it.attendance100.mybicocca.domain.model.library.LibrarySlot
 import it.attendance100.mybicocca.domain.model.library.LibraryWeekHours
 import it.attendance100.mybicocca.domain.model.library.LibraryZone
@@ -58,7 +62,7 @@ fun AffluencesSiteCard.toLibrary(): Library = Library(
     address = null,
     latitude = null,
     longitude = null,
-    pictureUrl = pictures.firstOrNull(),
+    pictureUrl = LibraryCatalog.byId(id)?.photoUrl ?: pictures.firstOrNull(),
     phone = null,
     email = null,
     websiteUrl = null,
@@ -66,7 +70,7 @@ fun AffluencesSiteCard.toLibrary(): Library = Library(
     liveStatus = status?.let { s ->
         LibraryLiveStatus(
             isOpen = s.isOpen,
-            statusText = s.closingText ?: s.openingText,
+            statusText = if (s.isOpen) s.closingText ?: s.openingText else s.openingText ?: s.closingText,
             occupancyPercentage = liveAttendance?.occupancyPercentage,
             crowdLevel = liveAttendance?.flow?.toCrowd(),
             todayForecast = emptyList(),
@@ -83,7 +87,7 @@ fun AffluencesSite.toLibrary(liveStatus: LibraryLiveStatus?): Library = Library(
     address = address,
     latitude = latitude,
     longitude = longitude,
-    pictureUrl = pictures.firstOrNull(),
+    pictureUrl = LibraryCatalog.byId(id)?.photoUrl ?: pictures.firstOrNull(),
     phone = phone,
     email = email,
     websiteUrl = websiteUrl,
@@ -91,32 +95,71 @@ fun AffluencesSite.toLibrary(liveStatus: LibraryLiveStatus?): Library = Library(
     liveStatus = liveStatus,
 )
 
+/** Maps an Affluences site details service entry to a domain facility chip item. */
+fun AffluencesSiteService.toService(): LibraryService = LibraryService(
+    type = when (type.trim().lowercase()) {
+        "accessibility" -> LibraryServiceType.Accessibility
+        "power" -> LibraryServiceType.Power
+        "wifi" -> LibraryServiceType.Wifi
+        "ac" -> LibraryServiceType.AirConditioning
+        "study_room" -> LibraryServiceType.StudyRoom
+        else -> LibraryServiceType.Other
+    },
+    rawType = type.trim(),
+    name = name.trim(),
+)
+
 /**
  * Maps live data to the full status. The forecast curve comes from the day bucket whose offset
  * is today, falling back to the remaining-day list when that bucket is absent; entries without
  * an hour range or occupancy are dropped, which also drops the bucket's leading whole-day
- * summary entry.
+ * summary entry. The forecast date is taken strictly from the date inside the forecast ranges
+ * (site zone, Europe/Rome), falling back to the today-bucket header date — never the device clock.
  */
-fun AffluencesLiveData.toLiveStatus(): LibraryLiveStatus = LibraryLiveStatus(
-    isOpen = status.isOpen,
-    statusText = if (status.isOpen) status.closingText else status.openingText,
-    occupancyPercentage = liveAttendance?.occupancyPercentage,
-    crowdLevel = liveAttendance?.flow?.toCrowd(),
-    todayForecast = (forecasts.firstOrNull { it.todayOffset == 0 }?.forecasts ?: todayForecasts)
-        .mapNotNull { slot ->
-            val start = slot.hourRange.firstOrNull()?.let(::parseLocalTime) ?: return@mapNotNull null
-            val occupancy = slot.occupancyPercentage ?: return@mapNotNull null
-            LibraryForecastPoint(
-                time = start,
-                occupancyPercentage = occupancy,
-                rising = when (slot.occupancyEvolution) {
-                    AffluencesEvolution.Increase -> true
-                    AffluencesEvolution.Decrease -> false
-                    is AffluencesEvolution.Unknown, null -> null
-                },
-            )
-        },
-)
+fun AffluencesLiveData.toLiveStatus(): LibraryLiveStatus {
+    val todayBucket = forecasts.firstOrNull { it.todayOffset == 0 }
+    val rawSlots = todayBucket?.forecasts?.takeIf { it.isNotEmpty() } ?: todayForecasts
+    var rangeDate: LocalDate? = null
+    val mappedForecast = rawSlots.mapNotNull { slot ->
+        val rawStart = slot.hourRange.firstOrNull() ?: return@mapNotNull null
+        val startDateTime = parseLocalDateTime(rawStart)
+        val start = startDateTime?.toLocalTime() ?: parseLocalTime(rawStart) ?: return@mapNotNull null
+        val occupancy = slot.occupancyPercentage ?: return@mapNotNull null
+        if (rangeDate == null && startDateTime != null) {
+            rangeDate = startDateTime.toLocalDate()
+        }
+        val rawEnd = slot.hourRange.getOrNull(1)
+        val endDateTime = rawEnd?.let(::parseLocalDateTime)
+        val parsedEnd = endDateTime?.toLocalTime() ?: rawEnd?.let(::parseLocalTime)
+        val end = when {
+            parsedEnd == null -> start.plusMinutes(30)
+            parsedEnd.isAfter(start) -> parsedEnd
+            endDateTime != null && startDateTime != null &&
+                endDateTime.toLocalDate().isAfter(startDateTime.toLocalDate()) &&
+                parsedEnd == LocalTime.MIDNIGHT -> LocalTime.MIDNIGHT
+            else -> start.plusMinutes(30)
+        }
+        LibraryForecastPoint(
+            time = start,
+            occupancyPercentage = occupancy,
+            rising = when (slot.occupancyEvolution) {
+                AffluencesEvolution.Increase -> true
+                AffluencesEvolution.Decrease -> false
+                is AffluencesEvolution.Unknown, null -> null
+            },
+            endTime = end,
+        )
+    }
+    val forecastDate = rangeDate ?: todayBucket?.day?.let(::parseLocalDate)
+    return LibraryLiveStatus(
+        isOpen = status.isOpen,
+        statusText = if (status.isOpen) status.closingText else status.openingText,
+        occupancyPercentage = liveAttendance?.occupancyPercentage,
+        crowdLevel = liveAttendance?.flow?.toCrowd(),
+        todayForecast = mappedForecast,
+        forecastDate = forecastDate,
+    )
+}
 
 /** Maps the week timetable; opening ranges with unparseable times are dropped. */
 fun AffluencesWeekTimetable.toWeekHours(): LibraryWeekHours = LibraryWeekHours(
@@ -263,4 +306,12 @@ private fun zoneColorOf(description: String): LibraryZoneColor {
 private fun parseLocalTime(value: String): LocalTime? = runCatching {
     if (value.length <= 5) LocalTime.parse(value, TimeFormat)
     else LocalDateTime.parse(value, DateTimeFormat).toLocalTime()
+}.getOrNull()
+
+private fun parseLocalDateTime(value: String): LocalDateTime? = runCatching {
+    if (value.length > 10) LocalDateTime.parse(value, DateTimeFormat) else null
+}.getOrNull()
+
+private fun parseLocalDate(value: String): LocalDate? = runCatching {
+    LocalDate.parse(value, DateFormat)
 }.getOrNull()

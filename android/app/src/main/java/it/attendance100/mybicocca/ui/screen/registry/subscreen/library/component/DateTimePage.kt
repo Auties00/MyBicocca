@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
+import android.content.res.Configuration
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.BorderStroke
@@ -45,9 +46,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
@@ -57,11 +60,14 @@ import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.library.LibraryBookingConstraints
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
+import it.attendance100.mybicocca.domain.model.library.LibraryZone
 import it.attendance100.mybicocca.ui.component.button.RetryButton
-import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPreview
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPreviewDefaults
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
+import it.attendance100.mybicocca.ui.theme.PreviewBgDark
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -76,15 +82,14 @@ private val WeekdayLetters = listOf("L", "M", "M", "G", "V", "S", "D")
 private val CardShape = RoundedCornerShape(28.dp)
 
 /**
- * Wizard step 2: pick the day (month calendar limited to bookable days), the duration and the
- * start time, as stacked section cards over a pinned "Scegli il posto" footer that enables once
- * a time is chosen. Start times are derived from the live seat grid for the chosen day +
- * duration, so they reflect real openings; loading and error-with-retry states render in place
- * of each section.
+ * Wizard step 2: compact zone header over the month calendar, duration selector and live start
+ * times, with a pinned "Scegli il posto" footer that enables once a start time is chosen.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun DateTimePage(
+    zone: LibraryZone?,
+    libraryName: String,
     constraints: Loadable<LibraryBookingConstraints>,
     constraintsStatus: SyncStatus,
     selectedDate: LocalDate?,
@@ -118,6 +123,10 @@ internal fun DateTimePage(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            if (zone != null) {
+                ZoneHeader(zone = zone, libraryName = libraryName)
+            }
+
             when (constraints) {
                 Loadable.NotYetLoaded -> when (constraintsStatus) {
                     is SyncStatus.Failed -> SheetMessage(
@@ -127,14 +136,14 @@ internal fun DateTimePage(
                         action = { RetryButton(onClick = onRetryConstraints) },
                     )
 
-                    else -> SheetLoadingIndicator(label = stringResource(R.string.library_availability_loading))
+                    else -> LibraryLoading(label = stringResource(R.string.library_availability_loading))
                 }
 
                 is Loadable.Loaded -> {
                     val openDays = constraints.value.openDays
                     Card(
                         icon = Icons.Outlined.CalendarMonth,
-                        title = stringResource(R.string.library_day)
+                        title = stringResource(R.string.library_day),
                     ) {
                         if (openDays.isEmpty()) {
                             Message(stringResource(R.string.library_no_bookable_days))
@@ -154,7 +163,7 @@ internal fun DateTimePage(
                     if (constraints.value.durationsMinutes.isNotEmpty()) {
                         Card(
                             icon = Icons.Outlined.Timelapse,
-                            title = stringResource(R.string.library_duration)
+                            title = stringResource(R.string.library_duration),
                         ) {
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 constraints.value.durationsMinutes.forEach { minutes ->
@@ -177,7 +186,7 @@ internal fun DateTimePage(
                     if (selectedDate != null && selectedDuration != null) {
                         Card(
                             icon = Icons.Outlined.Schedule,
-                            title = stringResource(R.string.library_start_time)
+                            title = stringResource(R.string.library_start_time),
                         ) {
                             StartTimeSection(
                                 seats = seats,
@@ -215,12 +224,11 @@ internal fun DateTimePage(
             Text(
                 stringResource(R.string.library_choose_seat),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         }
     }
 }
-
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -247,7 +255,7 @@ private fun StartTimeSection(
                 RetryButton(onClick = onRetry)
             }
 
-            else -> SheetLoadingIndicator(label = stringResource(R.string.library_times_loading))
+            else -> LibraryLoading(label = stringResource(R.string.library_times_loading))
         }
 
         is Loadable.Loaded -> {
@@ -273,7 +281,7 @@ private fun StartTimeSection(
 
 @Composable
 private fun Card(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     content: @Composable () -> Unit,
 ) {
@@ -329,7 +337,7 @@ private fun CalendarSection(
             ) {
                 Icon(
                     Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                    contentDescription = stringResource(R.string.library_previous_month)
+                    contentDescription = stringResource(R.string.library_previous_month),
                 )
             }
             Spacer(Modifier.size(6.dp))
@@ -342,7 +350,7 @@ private fun CalendarSection(
             ) {
                 Icon(
                     Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = stringResource(R.string.library_next_month)
+                    contentDescription = stringResource(R.string.library_next_month),
                 )
             }
         }
@@ -381,10 +389,6 @@ private fun CalendarSection(
     }
 }
 
-/**
- * Brand-tinted month-nav chips: neutral container with a primary-red chevron, matching the
- * calendar's selected-day fill and today ring.
- */
 @Composable
 private fun monthNavColors() = IconButtonDefaults.filledTonalIconButtonColors(
     containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -429,7 +433,8 @@ private fun DayCell(
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .padding(3.dp), contentAlignment = Alignment.Center
+            .padding(3.dp),
+        contentAlignment = Alignment.Center,
     ) {
         if (available) {
             Surface(
@@ -467,4 +472,87 @@ private fun monthWeeks(month: YearMonth): List<List<LocalDate?>> {
     for (day in 1..length) cells.add(month.atDay(day))
     while (cells.size % 7 != 0) cells.add(null)
     return cells.chunked(7)
+}
+
+@Preview(name = "DateTime Loaded · Light", showBackground = true)
+@Composable
+private fun DateTimeLoadedLightPreview() {
+    LibraryPreview(dark = false) {
+        DateTimePage(
+            zone = LibraryPreviewDefaults.Zones.first(),
+            libraryName = LibraryPreviewDefaults.Libraries.first().name,
+            constraints = Loadable.Loaded(LibraryPreviewDefaults.Constraints),
+            constraintsStatus = SyncStatus.Idle,
+            selectedDate = LibraryPreviewDefaults.Today,
+            selectedDuration = 120,
+            seats = Loadable.Loaded(LibraryPreviewDefaults.Seats),
+            seatsStatus = SyncStatus.Idle,
+            availableStartTimes = LibraryPreviewDefaults.Constraints.openHours,
+            selectedStartTime = LocalTime.of(14, 0),
+            enabled = true,
+            onSelectDate = {},
+            onSelectDuration = {},
+            onSelectStartTime = {},
+            onContinue = {},
+            onRetryConstraints = {},
+            onRetrySeats = {},
+        )
+    }
+}
+
+@Preview(
+    name = "DateTime Loaded · Dark",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    backgroundColor = PreviewBgDark,
+)
+@Composable
+private fun DateTimeLoadedDarkPreview() {
+    LibraryPreview(dark = true) {
+        DateTimePage(
+            zone = LibraryPreviewDefaults.Zones.first(),
+            libraryName = LibraryPreviewDefaults.Libraries.first().name,
+            constraints = Loadable.Loaded(LibraryPreviewDefaults.Constraints),
+            constraintsStatus = SyncStatus.Idle,
+            selectedDate = LibraryPreviewDefaults.Today,
+            selectedDuration = 120,
+            seats = Loadable.Loaded(LibraryPreviewDefaults.Seats),
+            seatsStatus = SyncStatus.Idle,
+            availableStartTimes = LibraryPreviewDefaults.Constraints.openHours,
+            selectedStartTime = LocalTime.of(14, 0),
+            enabled = true,
+            onSelectDate = {},
+            onSelectDuration = {},
+            onSelectStartTime = {},
+            onContinue = {},
+            onRetryConstraints = {},
+            onRetrySeats = {},
+        )
+    }
+}
+
+@Preview(name = "DateTime Loading · Light", showBackground = true)
+@Composable
+private fun DateTimeLoadingLightPreview() {
+    LibraryPreview(dark = false) {
+        DateTimePage(
+            zone = LibraryPreviewDefaults.Zones[1],
+            libraryName = LibraryPreviewDefaults.Libraries.first().name,
+            constraints = Loadable.NotYetLoaded,
+            constraintsStatus = SyncStatus.Refreshing,
+            selectedDate = null,
+            selectedDuration = null,
+            seats = Loadable.NotYetLoaded,
+            seatsStatus = SyncStatus.Idle,
+            availableStartTimes = emptyList(),
+            selectedStartTime = null,
+            enabled = true,
+            onSelectDate = {},
+            onSelectDuration = {},
+            onSelectStartTime = {},
+            onContinue = {},
+            onRetryConstraints = {},
+            onRetrySeats = {},
+        )
+    }
 }

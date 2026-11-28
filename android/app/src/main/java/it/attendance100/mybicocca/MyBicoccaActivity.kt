@@ -44,6 +44,7 @@ import it.attendance100.mybicocca.domain.model.library.LibraryDeepLinkAction
 import it.attendance100.mybicocca.domain.model.settings.AppTheme
 import it.attendance100.mybicocca.domain.model.settings.ThemeMode
 import it.attendance100.mybicocca.domain.usecase.attendance.SubmitPresenceScanUseCase
+import it.attendance100.mybicocca.domain.usecase.library.StartLibraryCrowdingSyncUseCase
 import it.attendance100.mybicocca.domain.usecase.library.SubmitLibraryActionUseCase
 import it.attendance100.mybicocca.domain.usecase.notification.SubmitNotificationRouteUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveAppLockEnabledUseCase
@@ -105,6 +106,9 @@ class MyBicoccaActivity : AppCompatActivity() {
     @Inject
     lateinit var updateChecker: UpdateChecker
 
+    @Inject
+    lateinit var startLibraryCrowdingSync: StartLibraryCrowdingSyncUseCase
+
     private val pipController = object : PipController {
         private var state: PipState? = null
         val inPip = mutableStateOf(false)
@@ -143,6 +147,7 @@ class MyBicoccaActivity : AppCompatActivity() {
         }
 
         updateChecker.start()
+        lifecycleScope.launch { runCatching { startLibraryCrowdingSync() } }
 
         splashScreen.setOnExitAnimationListener { provider -> provider.animateExitAndRemove() }
 

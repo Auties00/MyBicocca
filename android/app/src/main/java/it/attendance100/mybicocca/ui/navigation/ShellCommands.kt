@@ -18,8 +18,8 @@ data class ShellCommand(
 )
 
 /**
- * A way to drive the shell from outside the composition. Nothing in a shipped build sends
- * anything here; the demo build uses it to jump straight to the screen a screenshot needs.
+ * Cross-shell navigation bus used both by feature sheets (for example, jumping from the Biblioteca
+ * sheet straight to a building on the campus map) and by the demo build's screenshot capture.
  */
 object ShellCommands {
     private val commands = MutableSharedFlow<ShellCommand>(
