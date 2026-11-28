@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.di
 
+import it.attendance100.mybicocca.data.repository.MensaPickupPointRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -65,9 +66,14 @@ import it.attendance100.mybicocca.domain.repository.FileOpenPreferenceRepository
 import it.attendance100.mybicocca.domain.repository.HapticSettingsRepository
 import it.attendance100.mybicocca.domain.repository.LibraryRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
+import it.attendance100.mybicocca.data.repository.MensaFavouritesRepositoryImpl
 import it.attendance100.mybicocca.domain.repository.MensaAllergenPreferencesRepository
+import it.attendance100.mybicocca.domain.repository.MensaFavouritesRepository
+import it.attendance100.mybicocca.domain.repository.MensaPickupPointRepository
 import it.attendance100.mybicocca.domain.repository.MensaEligibilityProvider
 import it.attendance100.mybicocca.domain.repository.MensaRepository
+import it.attendance100.mybicocca.domain.repository.MensaSignUpRepository
+import it.attendance100.mybicocca.data.repository.MensaSignUpRepositoryImpl
 import it.attendance100.mybicocca.domain.repository.PdfViewerSettingsRepository
 import it.attendance100.mybicocca.domain.repository.PrivacySettingsRepository
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
@@ -195,7 +201,19 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindMensaFavouritesRepository(impl: MensaFavouritesRepositoryImpl): MensaFavouritesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMensaPickupPointRepository(impl: MensaPickupPointRepositoryImpl): MensaPickupPointRepository
+
+    @Binds
+    @Singleton
     abstract fun bindMensaEligibilityProvider(impl: BundledMensaEligibilityProvider): MensaEligibilityProvider
+
+    // One per sign-up: each instance holds that sign-up's session.
+    @Binds
+    abstract fun bindMensaSignUpRepository(impl: MensaSignUpRepositoryImpl): MensaSignUpRepository
 
     @Binds
     @Singleton

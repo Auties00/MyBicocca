@@ -12,8 +12,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -115,7 +119,16 @@ class ModalSheetController {
  * idempotent: Material can report the same dismissal from more than one path.
  * @param gesturesEnabled while false the sheet cannot be dragged — for content where dismissal
  * must stay an explicit act (e.g. mid-wizard). The drag handle stays visible but muted.
+ * @param dragToDismiss while false only the drag is off: back still slides the sheet out and the
+ * scrim still closes it, unlike [gesturesEnabled].
  */
+/**
+ * How far the back gesture has pulled the sheet towards closing, from 0 to 1, for content that
+ * leaves along with the sheet. Read it in a draw or layer block, so following the finger only
+ * redraws.
+ */
+val LocalSheetBackProgress = staticCompositionLocalOf<() -> Float> { { 0f } }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PredictiveModalBottomSheet(
@@ -125,20 +138,41 @@ fun PredictiveModalBottomSheet(
     scrimColor: Color = BottomSheetDefaults.ScrimColor,
     confirmDismiss: () -> Boolean = { true },
     gesturesEnabled: Boolean = true,
+    dragToDismiss: Boolean = true,
+    firmDrag: Boolean = false,
     controller: ModalSheetController? = null,
     contentWindowInsets: @Composable () -> WindowInsets = { BottomSheetDefaults.modalWindowInsets },
-    dragHandle: @Composable (() -> Unit)? = { SheetDragHandle(gesturesEnabled) },
+    dragHandle: @Composable (() -> Unit)? = { SheetDragHandle(gesturesEnabled && dragToDismiss) },
     content: @Composable () -> Unit,
 ) {
     val latestConfirmDismiss by rememberUpdatedState(confirmDismiss)
     val latestOnDismiss by rememberUpdatedState(onDismiss)
     val sheetController = controller ?: remember { ModalSheetController() }
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { target ->
-            target != SheetValue.Hidden || sheetController.closing || latestConfirmDismiss()
-        },
-    )
+    val density = LocalDensity.current
+    // Material's own thresholds are 56dp of pull or a 125dp/s fling; a firm sheet wants a clear intent.
+    val positionalThreshold = remember(density, firmDrag) { { with(density) { (if (firmDrag) 120.dp else 56.dp).toPx() } } }
+    val velocityThreshold = remember(density, firmDrag) { { with(density) { (if (firmDrag) 900.dp else 125.dp).toPx() } } }
+    val confirmValueChange: (SheetValue) -> Boolean = { target ->
+        target != SheetValue.Hidden || sheetController.closing || latestConfirmDismiss()
+    }
+    val sheetState = rememberSaveable(
+        saver = SheetState.Saver(
+            skipPartiallyExpanded = true,
+            positionalThreshold = positionalThreshold,
+            velocityThreshold = velocityThreshold,
+            confirmValueChange = confirmValueChange,
+            skipHiddenState = false,
+        ),
+    ) {
+        SheetState(
+            skipPartiallyExpanded = true,
+            positionalThreshold = positionalThreshold,
+            velocityThreshold = velocityThreshold,
+            initialValue = SheetValue.Hidden,
+            confirmValueChange = confirmValueChange,
+            skipHiddenState = false,
+        )
+    }
     DisposableEffect(sheetController, sheetState) {
         sheetController.state = sheetState
         onDispose { if (sheetController.state === sheetState) sheetController.state = null }
@@ -154,7 +188,7 @@ fun PredictiveModalBottomSheet(
             }
         },
         sheetState = sheetState,
-        sheetGesturesEnabled = gesturesEnabled,
+        sheetGesturesEnabled = gesturesEnabled && dragToDismiss,
         dragHandle = dragHandle,
         shape = shape,
         scrimColor = scrimColor,
@@ -195,12 +229,15 @@ fun PredictiveModalBottomSheet(
             }
         }
         val bodyScroll = remember { SheetBodyScrollConnection() }
+        val backProgress = remember(sheetController) { { sheetController.backProgress.value } }
         Box(
             Modifier
                 .nestedScroll(bodyScroll)
-                .backSlide(sheetController) { sheetController.backProgress.value },
+                .backSlide(sheetController, backProgress),
         ) {
-            SnackbarScope { content() }
+            CompositionLocalProvider(LocalSheetBackProgress provides backProgress) {
+                SnackbarScope { content() }
+            }
         }
     }
 }

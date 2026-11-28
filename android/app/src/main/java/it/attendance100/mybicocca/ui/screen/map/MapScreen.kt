@@ -93,6 +93,7 @@ import kotlin.math.log2
 import kotlin.math.pow
 import kotlin.math.tan
 import android.graphics.Color as AndroidColor
+import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 
 /** Campus center (Piazza dell'Ateneo Nuovo): the initial camera target. */
 private val BICOCCA = LatLng(45.5160, 9.2120)
@@ -277,6 +278,7 @@ fun MapScreen(
     isActive: Boolean = true,
     contentInsets: PaddingValues = PaddingValues(),
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
+    onOpenMensa: ((MensaPlace) -> Unit)? = null,
     viewModel: MapViewModel = hiltViewModel(
         checkNotNull(LocalViewModelStoreOwner.current) {
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
@@ -549,6 +551,12 @@ fun MapScreen(
                         onRoomClick = viewModel::selectRoom,
                         onCloseRoom = viewModel::clearRoomSelection,
                         onRetryRooms = viewModel::retryRooms,
+                        onOpenMensa = onOpenMensa?.let { open ->
+                            { place ->
+                                viewModel.clearSelection()
+                                open(place)
+                            }
+                        },
                     )
                     Spacer(modifier = Modifier.height(with(density) { navBottomPx.toDp() }))
                 }
@@ -571,6 +579,13 @@ fun MapScreen(
             onBack = viewModel::clearSelection,
             onDismiss = viewModel::hideBuildingsList,
             onRetryRooms = viewModel::retryRooms,
+            onOpenMensa = onOpenMensa?.let { open ->
+                { place ->
+                    viewModel.clearSelection()
+                    viewModel.hideBuildingsList()
+                    open(place)
+                }
+            },
         )
     }
 

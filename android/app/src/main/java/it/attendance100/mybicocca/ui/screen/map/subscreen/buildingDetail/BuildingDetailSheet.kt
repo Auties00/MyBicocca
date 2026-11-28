@@ -24,9 +24,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.LocalCafe
+import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -67,12 +71,16 @@ import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.shimmer.ShimmerCircle
 import it.attendance100.mybicocca.ui.screen.map.component.labelRes
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
+import it.attendance100.mybicocca.ui.screen.map.ext.CanteenTarget
+import it.attendance100.mybicocca.ui.screen.map.ext.canteenTargets
+import it.attendance100.mybicocca.ui.screen.map.ext.hasRooms
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.RoomStatus
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.roomStatus
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 
 private val StatusTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
@@ -93,10 +101,12 @@ fun BuildingDetailSheet(
     onCloseRoom: () -> Unit,
     modifier: Modifier = Modifier,
     onRetryRooms: (() -> Unit)? = null,
+    onOpenMensa: ((MensaPlace) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
     val buildingTitle = remember(building.name) { buildingDisplayName(building) }
+    val canteens = remember(building) { building.canteenTargets() }
     val page: BuildingDetailPage = selectedRoom?.let { BuildingDetailPage.Room(it) } ?: BuildingDetailPage.Rooms
 
     SheetPager(
@@ -135,6 +145,9 @@ fun BuildingDetailSheet(
                 onRoomClick = onRoomClick,
                 onDirections = { context.openBuildingInMaps(building) },
                 onRetry = onRetryRooms,
+                canteens = canteens,
+                onOpenMensa = onOpenMensa,
+                hasRooms = building.hasRooms,
             )
 
             is BuildingDetailPage.Room -> RoomDetailPage(
@@ -176,6 +189,9 @@ internal fun BuildingPageBody(
     modifier: Modifier = Modifier,
     onDirections: (() -> Unit)? = null,
     onRetry: (() -> Unit)? = null,
+    canteens: List<CanteenTarget> = emptyList(),
+    onOpenMensa: ((MensaPlace) -> Unit)? = null,
+    hasRooms: Boolean = true,
 ) {
     val now = remember(daySchedule) { LocalDateTime.now(AppClock.clock) }
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
@@ -200,12 +216,18 @@ internal fun BuildingPageBody(
     val motion = MaterialTheme.motionScheme
     val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
 
+    val targets = if (onOpenMensa != null) canteens else emptyList()
+    val hasFooter = onDirections != null || targets.isNotEmpty()
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(animationSpec = sizeSpec)
     ) {
         when {
+            // A canteen-only building: just its menus and the way there.
+            !hasRooms -> Unit
+
             roomList.isNullOrEmpty() && failure != null -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.map_rooms_load_failed),
@@ -228,7 +250,7 @@ internal fun BuildingPageBody(
                     .fillMaxWidth()
                     .heightIn(max = 560.dp)
                     .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(bottom = if (onDirections != null) 12.dp else 24.dp),
+                contentPadding = PaddingValues(bottom = if (hasFooter) 0.dp else 24.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
@@ -266,14 +288,117 @@ internal fun BuildingPageBody(
             }
         }
 
-        if (onDirections != null) {
-            DirectionsButton(
+        // The gap above the buttons sits outside the grid, so scrolled rooms never run into them.
+        when {
+            // One menu to open: it shares a row with the directions.
+            onDirections != null && targets.size == 1 -> {
+                val haptic = rememberHapticManager()
+                val scheme = MaterialTheme.colorScheme
+                val dark = LocalDarkTheme.current
+                val dirBg = if (dark) scheme.primaryContainer else scheme.primary
+                val dirFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    CanteenButton(
+                        target = targets.first(),
+                        onClick = { onOpenMensa?.invoke(targets.first().place) },
+                        shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Button(
+                        onClick = { haptic.tap(); onDirections() },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+                        colors = ButtonDefaults.buttonColors(containerColor = dirBg, contentColor = dirFg),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.LocationOn,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Text(
+                            text = stringResource(R.string.map_directions),
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(start = 8.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+
+            // Canteen and bar side by side, with the directions under them.
+            targets.isNotEmpty() -> Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
+                // The same gap as between the two menus, so the three read as one group.
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    targets.forEachIndexed { index, target ->
+                        CanteenButton(
+                            target = target,
+                            onClick = { onOpenMensa?.invoke(target.place) },
+                            shape = when {
+                                targets.size == 1 -> RoundedCornerShape(24.dp)
+                                index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShape
+                                else -> ButtonGroupDefaults.connectedTrailingButtonShape
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                if (onDirections != null) DirectionsButton(onClick = onDirections, modifier = Modifier.fillMaxWidth())
+            }
+
+            onDirections != null -> DirectionsButton(
                 onClick = onDirections,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
             )
         }
+    }
+}
+
+/** Opens one of a building's menus: the canteen's or the bar's. */
+@Composable
+private fun CanteenButton(
+    target: CanteenTarget,
+    onClick: () -> Unit,
+    shape: androidx.compose.ui.graphics.Shape,
+    modifier: Modifier = Modifier,
+) {
+    val haptic = rememberHapticManager()
+    val scheme = MaterialTheme.colorScheme
+    FilledTonalButton(
+        onClick = { haptic.tap(); onClick() },
+        modifier = modifier.height(48.dp),
+        shape = shape,
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = scheme.surfaceContainerHighest,
+            contentColor = scheme.onSurface,
+        ),
+    ) {
+        Icon(
+            imageVector = if (target.isBar) Icons.Outlined.LocalCafe else Icons.Outlined.Restaurant,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+        Text(
+            text = stringResource(if (target.isBar) R.string.mensa_map_bar_action else R.string.mensa_map_action),
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(start = 8.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

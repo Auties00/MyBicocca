@@ -163,7 +163,7 @@ fun HypotheticalGradePage(
                     else -> null
                 },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp),
             )
 
             if (isWeighted) {
@@ -184,7 +184,7 @@ fun HypotheticalGradePage(
                         { Text(stringResource(R.string.hyp_cfu_invalid)) }
                     } else null,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                 )
             }
         }

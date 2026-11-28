@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.ui.navigation
 
+import androidx.core.net.toUri
+import android.net.Uri
+import android.content.Intent
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
@@ -124,6 +127,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.Cert
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanViewModel
@@ -265,6 +269,24 @@ fun MainShell(
     val elearningViewModel: ElearningViewModel = hiltViewModel()
     val addCourseViewModel: AddCourseViewModel = hiltViewModel()
     val mapViewModel: MapViewModel = hiltViewModel()
+    // Kept loaded so a pickup point can tell whether the campus map has its building.
+    val mapCatalog by mapViewModel.allBuildings.collectAsStateWithLifecycle()
+    val mapsContext = LocalContext.current
+    val showMensaPickup: (String) -> Unit = { building ->
+        val code = BuildingCode("U" + building.drop(1).padStart(2, '0'))
+        if (mapCatalog.valueOrNull()?.any { it.code == code } == true) {
+            navigator.popToRoot()
+            scope.launch { pagerState.scrollToPage(ShellTab.Map.ordinal) }
+            mapViewModel.selectBuilding(code)
+        } else {
+            // Not on the campus map yet: a maps app finds it by name.
+            val query = Uri.encode("Edificio $building Università di Milano-Bicocca")
+            runCatching {
+                mapsContext.startActivity(Intent(Intent.ACTION_VIEW, "geo:0,0?q=$query".toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        }
+    }
+
     val bookedExamsViewModel: BookedExamsViewModel = hiltViewModel()
     val bookableExamsViewModel: BookableExamsViewModel = hiltViewModel()
 
@@ -291,6 +313,7 @@ fun MainShell(
      */
     val appointmentsViewModel: AppointmentsViewModel = hiltViewModel()
     val libraryViewModel: LibraryViewModel = hiltViewModel()
+    val mensaViewModel: MensaViewModel = hiltViewModel()
 
     /**
      * Seat totals per exam event, merged off the main thread from the bookable calls, the
@@ -654,6 +677,8 @@ fun MainShell(
                     if (!updateEventsViewModel.installDownloadedApk()) {
                         snackbarController.showInfo(strShellUpdateGone)
                     }
+
+                is NotificationRoute.Mensa -> navigator.navigate(SheetRoute.Mensa)
             }
             updateEventsViewModel.onNotificationRouteHandled()
         }
@@ -857,6 +882,10 @@ fun MainShell(
                                                         isActive = isActive,
                                                         contentInsets = innerPadding,
                                                         onProvideFilterToggle = onProvideFilterToggle,
+                                                        onOpenMensa = { place ->
+                                                            mensaViewModel.preselectPlace(place)
+                                                            navigator.navigate(SheetRoute.Mensa)
+                                                        },
                                                     )
 
                                                     ShellTab.Registry -> RegistryScreen(
@@ -1005,6 +1034,8 @@ fun MainShell(
                                     questionnairesViewModel = questionnairesViewModel,
                                     appointmentsViewModel = appointmentsViewModel,
                                     libraryViewModel = libraryViewModel,
+                                    mensaViewModel = mensaViewModel,
+                                    onShowMensaPickup = showMensaPickup,
                                 )
                                 calendarSheetEntries(
                                     calendarViewModel = calendarViewModel,

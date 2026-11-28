@@ -13,3 +13,8 @@
   Content-Type: application/x-protobuf
 /map-assets/:hash/glyphs/*
   Content-Type: application/x-protobuf
+
+# Android Digital Asset Links: Google fetches it without redirects and wants JSON.
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *

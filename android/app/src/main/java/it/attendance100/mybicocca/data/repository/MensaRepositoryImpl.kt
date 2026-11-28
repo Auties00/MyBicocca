@@ -268,11 +268,13 @@ class MensaRepositoryImpl @Inject constructor(
         return try {
             block(CompassBearerAuthAuth(token))
         } catch (cause: CompassException) {
-            if (cause.statusCode == 401 || cause.statusCode == 403) {
+            val reason = cause.serverMessage?.trim()?.takeIf { it.isNotEmpty() }
+            // The booking endpoint answers 401 with a message when a dish is no longer on the menu,
+            // which is not about the session: only a bare 401 or 403 means it has expired.
+            if ((cause.statusCode == 401 || cause.statusCode == 403) && reason == null) {
                 logout()
                 throw MensaNotLoggedInException()
             }
-            val reason = cause.serverMessage?.trim()?.takeIf { it.isNotEmpty() }
             throw if (reason != null) MensaServerMessageException(reason, cause) else cause
         }
     }

@@ -7,6 +7,8 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
@@ -19,6 +21,10 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -61,6 +67,9 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param morphHeight whether the sheet's height animates between pages of different heights.
  * Off for a pager whose pages all fill the sheet: their height follows the header's, and
  * animating it chased that header frame by frame and stretched the page change to seconds.
+ * @param holdMillis how long a change from one page to another holds still before moving, so the
+ * leaving page can finish something of its own first (the Mensa bag taking its dishes back). Only a
+ * back gesture being scrubbed holds; a quick one, or the back arrow, moves at once.
  * @param content a page's body; its [AnimatedContentScope] lets it animate parts of itself with
  * the page change.
  */
@@ -75,9 +84,10 @@ fun <P : Any> SheetPager(
     slide: SheetPageSlide = SheetPageSlide.Horizontal,
     header: @Composable (P) -> SheetHeaderSpec?,
     morphHeight: Boolean = true,
+    holdMillis: (from: P, to: P) -> Int = { _, _ -> 0 },
     content: @Composable AnimatedContentScope.(P) -> Unit,
 ) {
-    SheetPagerImpl(page, depth, backTo, onBack, modifier, key, slide, header, morphHeight, content)
+    SheetPagerImpl(page, depth, backTo, onBack, modifier, key, slide, header, morphHeight, holdMillis, content)
 }
 
 /** How a [SheetPager]'s body moves to a deeper page (and back). */
@@ -122,6 +132,7 @@ internal fun <P : Any> SheetPagerImpl(
     slide: SheetPageSlide,
     header: @Composable (P) -> SheetHeaderSpec?,
     morphHeight: Boolean = true,
+    holdMillis: (from: P, to: P) -> Int = { _, _ -> 0 },
     content: @Composable AnimatedContentScope.(P) -> Unit,
 ) {
     val state = remember { SeekableTransitionState(page) }
@@ -130,6 +141,9 @@ internal fun <P : Any> SheetPagerImpl(
     val latestOnBack by rememberUpdatedState(onBack)
     // A cancelled gesture cancels the handler's own job, so the rewind must run elsewhere.
     val rewindScope = rememberCoroutineScope()
+    // A back gesture is being scrubbed: the pages follow the finger, and a page change may hold.
+    var scrubbing by remember { mutableStateOf(false) }
+    val holdFor: (P, P) -> Int = { from, to -> if (scrubbing) holdMillis(from, to) else 0 }
 
     // Programmatic navigation (a tap, a ViewModel result, a popped back-stack entry): animate to
     // the new page. A page that is already the settled state (e.g. right after a predictive back
@@ -146,14 +160,35 @@ internal fun <P : Any> SheetPagerImpl(
             key(state.targetState) == pageKey -> state.animateTo(state.targetState)
             else -> state.animateTo(page)
         }
+        scrubbing = false
     }
 
     PredictiveBackHandler(enabled = backTo != null) { progress ->
         val target = backTo ?: return@PredictiveBackHandler
         try {
-            progress.collect { event -> state.seekTo(event.progress, targetState = target) }
+            val startNanos = System.nanoTime()
+            progress.collect { event ->
+                // A flick is decided on release, like the back arrow: the pages only follow a finger
+                // still down after a moment, so a page's own motion never runs at flick speed.
+                if (!scrubbing) {
+                    if ((System.nanoTime() - startNanos) / 1_000_000 < QUICK_BACK_MS) return@collect
+                    scrubbing = true
+                    // SeekableTransitionState.seekTo suspends until any interrupted animateTo
+                    // finishes its initialValueAnimations, which stalls gesture event collection.
+                    if (key(state.currentState) != key(latestPage)) {
+                        state.snapTo(if (key(state.targetState) == key(latestPage)) state.targetState else latestPage)
+                    }
+                }
+                val seekTarget = if (key(state.targetState) == key(target)) state.targetState else target
+                state.seekTo(event.progress, targetState = seekTarget)
+            }
         } catch (cancelled: CancellationException) {
-            rewindScope.launch { state.animateTo(latestPage) }
+            if (scrubbing) {
+                rewindScope.launch {
+                    state.rewindTo(latestPage, transition.totalDurationNanos)
+                    scrubbing = false
+                }
+            }
             throw cancelled
         }
         // Commit first, then let the page change finish the motion from where the finger left it
@@ -162,10 +197,12 @@ internal fun <P : Any> SheetPagerImpl(
         // cancels this handler's job before it gets to commit.
         latestOnBack()
         // If the owner vetoed the step, return to wherever it is now instead of leaving the pager
-        // parked on a page it is not on.
+        // parked on a page it is not on. Only then: when the step went through, the page change
+        // above is already on its way, and a second one started here would cut it short.
         rewindScope.launch {
             withFrameNanos { }
-            if (key(latestPage) != key(state.targetState)) state.animateTo(latestPage)
+            val vetoed = key(latestPage) == key(state.currentState) && key(state.targetState) != key(latestPage)
+            if (vetoed) state.animateTo(latestPage)
         }
     }
 
@@ -180,15 +217,27 @@ internal fun <P : Any> SheetPagerImpl(
             specs = specs,
             keyOf = key,
             depthOf = depth,
-            progress = { state.fraction },
+            // Over the page change itself: a page can make the transition longer with motion of its
+            // own (held before the change, or played after it), which the header does not wait for.
+            progress = {
+                val totalMs = transition.totalDurationNanos / 1_000_000f
+                val holdMs = holdFor(transition.currentState, transition.targetState).toFloat()
+                val changeMs = minOf(SheetMotion.PAGE_MS.toFloat(), totalMs - holdMs)
+                if (changeMs <= 0f) state.fraction else ((state.fraction * totalMs - holdMs) / changeMs).coerceIn(0f, 1f)
+            },
             onBack = onBack,
         )
         transition.AnimatedContent(
             transitionSpec = {
-                sheetPageTransform(slide, forward = depth(targetState) >= depth(initialState), morphHeight)
+                sheetPageTransform(
+                    slide = slide,
+                    forward = depth(targetState) >= depth(initialState),
+                    morphHeight = morphHeight,
+                    hold = holdFor(initialState, targetState),
+                )
             },
             contentKey = key,
-        ) { shown -> content(fresh(shown)) }
+        ) { shown -> CompositionLocalProvider(LocalSheetBackScrub provides { scrubbing }) { content(fresh(shown)) } }
     }
 }
 
@@ -200,20 +249,55 @@ private fun AnimatedContentTransitionScope<*>.sheetPageTransform(
     slide: SheetPageSlide,
     forward: Boolean,
     morphHeight: Boolean,
+    hold: Int,
 ): ContentTransform {
     val sign = if (forward) 1 else -1
+    val move = tween<IntOffset>(SheetMotion.PAGE_MS, delayMillis = hold)
     val enter = when (slide) {
-        SheetPageSlide.Horizontal -> slideInHorizontally(tween(SheetMotion.PAGE_MS)) { sign * it / 8 }
-        SheetPageSlide.Vertical -> slideInVertically(tween(SheetMotion.PAGE_MS)) { sign * it / 4 }
+        SheetPageSlide.Horizontal -> slideInHorizontally(move) { sign * it / 8 }
+        SheetPageSlide.Vertical -> slideInVertically(move) { sign * it / 4 }
     }
     val exit = when (slide) {
-        SheetPageSlide.Horizontal -> slideOutHorizontally(tween(SheetMotion.PAGE_MS)) { -sign * it / 8 }
-        SheetPageSlide.Vertical -> slideOutVertically(tween(SheetMotion.PAGE_MS)) { -sign * it / 4 }
+        SheetPageSlide.Horizontal -> slideOutHorizontally(move) { -sign * it / 8 }
+        SheetPageSlide.Vertical -> slideOutVertically(move) { -sign * it / 4 }
     }
-    return (fadeIn(tween(SheetMotion.IN_FADE_MS, delayMillis = SheetMotion.IN_FADE_DELAY_MS)) + enter)
-        .togetherWith(fadeOut(tween(SheetMotion.OUT_FADE_MS)) + exit)
-        .using(SizeTransform(clip = true) { _, _ -> if (morphHeight) tween(SheetMotion.PAGE_MS) else snap() })
+    return (fadeIn(tween(SheetMotion.IN_FADE_MS, delayMillis = SheetMotion.IN_FADE_DELAY_MS + hold)) + enter)
+        .togetherWith(fadeOut(tween(SheetMotion.OUT_FADE_MS, delayMillis = hold)) + exit)
+        .using(SizeTransform(clip = true) { _, _ -> if (morphHeight) tween(SheetMotion.PAGE_MS, delayMillis = hold) else snap() })
 }
+
+/**
+ * Plays a cancelled back gesture backwards, from where the finger let go to the page it started
+ * on, then settles there. Animating to [page] instead would start a new page change from the
+ * gesture's target, replaying the page's entrance.
+ */
+private suspend fun <P : Any> SeekableTransitionState<P>.rewindTo(page: P, totalDurationNanos: Long) {
+    val target = targetState
+    val from = fraction
+    if (target != page && from > 0f) {
+        val durationNanos = (totalDurationNanos * from).toLong().coerceIn(1L, MAX_REWIND_NANOS)
+        val start = withFrameNanos { it }
+        while (true) {
+            val elapsed = withFrameNanos { it } - start
+            val t = (elapsed.toFloat() / durationNanos).coerceAtMost(1f)
+            seekTo(from * (1f - FastOutSlowInEasing.transform(t)), targetState = target)
+            if (t >= 1f) break
+        }
+    }
+    snapTo(page)
+}
+
+/** A back gesture released this soon is a flick: it is not scrubbed. */
+private const val QUICK_BACK_MS = 150L
+
+/**
+ * Whether the page change under way follows a back gesture's finger, rather than running on its
+ * own (a tap, the back arrow, a flick). A page can play its leaving differently for each.
+ */
+val LocalSheetBackScrub = compositionLocalOf<() -> Boolean> { { false } }
+
+/** The longest a cancelled gesture takes to rewind, however far it went. */
+private const val MAX_REWIND_NANOS = 450_000_000L
 
 /**
  * [value], or — while it is null — the last non-null value it had. For a page that is sliding out

@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.map
 
+import it.attendance100.mybicocca.ui.screen.map.ext.hasRooms
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -201,6 +202,8 @@ class MapViewModel @Inject constructor(
     }
 
     private fun refreshRoomsFor(code: BuildingCode) {
+        // EasyStaff lists no rooms for a canteen-only building; asking would only fail offline.
+        if (allBuildings.value.valueOrNull()?.firstOrNull { it.code == code }?.hasRooms == false) return
         viewModelScope.launch {
             _syncStatus.value = SyncStatus.Refreshing
             runCatching { refreshRooms(code) }

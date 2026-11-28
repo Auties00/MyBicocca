@@ -10,24 +10,33 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.layoutId
@@ -47,6 +56,8 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
  * state (e.g. a "3 prenotazioni" counter) and update in place on the same page; [subtitle] is
  * null only while the data it summarises is still loading.
  *
+ * @param subtitleChip wraps a clickable [subtitle] in a compact rounded tonal container with a
+ * dropdown chevron so context-switch subtitles visibly read as interactive controls.
  * @param showBack whether this page offers the header back arrow. Pages at depth 0 never do;
  * deeper pages hide it when back is not a meaningful action (e.g. an in-flight submission or a
  * terminal result page).
@@ -59,6 +70,7 @@ data class SheetHeaderSpec(
     val title: String,
     val subtitle: CharSequence?,
     val onSubtitleClick: (() -> Unit)? = null,
+    val subtitleChip: Boolean = false,
     val showBack: Boolean = true,
     val onBack: (() -> Unit)? = null,
     val trailing: (@Composable () -> Unit)? = null,
@@ -279,16 +291,49 @@ private fun HeaderTexts(spec: SheetHeaderSpec, modifier: Modifier) {
         ) { sub ->
             if (sub != null) {
                 val onSubtitleClick = spec.onSubtitleClick
-                Text(
-                    text = sub,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = scheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = onSubtitleClick
-                        ?.let { Modifier.clickable(onClick = { haptic.tap(); it() }) }
-                        ?: Modifier,
-                )
+                if (onSubtitleClick != null && spec.subtitleChip) {
+                    val chipShape = RoundedCornerShape(8.dp)
+                    Surface(
+                        shape = chipShape,
+                        color = scheme.surfaceContainerHigh,
+                        modifier = Modifier
+                            .padding(top = 3.dp)
+                            .clip(chipShape)
+                            .clickable(role = Role.Button) { haptic.tap(); onSubtitleClick() },
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
+                        ) {
+                            Text(
+                                text = sub,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = scheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                            Icon(
+                                imageVector = Icons.Outlined.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = scheme.primary,
+                                modifier = Modifier.size(14.dp),
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = sub,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = scheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = onSubtitleClick
+                            ?.let { Modifier.clickable(onClick = { haptic.tap(); it() }) }
+                            ?: Modifier,
+                    )
+                }
             } else {
                 Spacer(Modifier.height(0.dp))
             }

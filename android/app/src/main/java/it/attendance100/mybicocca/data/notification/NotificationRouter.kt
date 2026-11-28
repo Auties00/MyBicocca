@@ -54,6 +54,7 @@ class NotificationRouter @Inject constructor(
         when (route) {
             NotificationRoute.UpdatePage -> putExtra(EXTRA_ROUTE, ROUTE_UPDATE_PAGE)
             NotificationRoute.InstallApk -> putExtra(EXTRA_ROUTE, ROUTE_INSTALL_APK)
+            NotificationRoute.Mensa -> putExtra(EXTRA_ROUTE, ROUTE_MENSA)
         }
     }
 
@@ -62,6 +63,7 @@ class NotificationRouter @Inject constructor(
 
         const val ROUTE_UPDATE_PAGE = "update_page"
         const val ROUTE_INSTALL_APK = "install_apk"
+        const val ROUTE_MENSA = "mensa"
 
         // IMMUTABLE is required from API 31 and correct everywhere: nothing that receives one of
         // these intents may rewrite its contents. UPDATE_CURRENT so re-posting a slot refreshes
@@ -73,6 +75,7 @@ class NotificationRouter @Inject constructor(
         fun routeOf(intent: Intent?): NotificationRoute? = when (intent?.getStringExtra(EXTRA_ROUTE)) {
             ROUTE_UPDATE_PAGE -> NotificationRoute.UpdatePage
             ROUTE_INSTALL_APK -> NotificationRoute.InstallApk
+            ROUTE_MENSA -> NotificationRoute.Mensa
             else -> null
         }
     }

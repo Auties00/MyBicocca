@@ -31,4 +31,16 @@ data class MensaAllergen(
     val name: String,
     val shortName: String,
     val iconUrl: String?,
-)
+    val kind: MensaAllergenKind = MensaAllergenKind.ALLERGEN,
+) {
+    /**
+     * "Contains frozen ingredients" is declared in the allergen list but is a notice about the food,
+     * not something to avoid, so it is never flagged and never offered as a preference.
+     */
+    val isFrozenNotice: Boolean
+        get() = kind == MensaAllergenKind.CONTENT &&
+            (name.contains("surgel", ignoreCase = true) || name.contains("congel", ignoreCase = true))
+}
+
+/** Compass files allergens (`allergene`) and other declared contents such as pork (`contenuto`) in one list. */
+enum class MensaAllergenKind { ALLERGEN, CONTENT }

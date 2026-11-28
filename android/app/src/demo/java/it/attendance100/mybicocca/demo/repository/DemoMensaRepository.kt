@@ -31,7 +31,7 @@ class DemoMensaRepository @Inject constructor() : MensaRepository {
 
     private val today: LocalDate = DemoClock.now.toLocalDate()
     private val session = MutableStateFlow<MensaSession?>(DemoMensa.session)
-    private val reservations = MutableStateFlow(listOf(bookedOrder()))
+    private val reservations = MutableStateFlow(listOf(bookedOrder()) + pastOrders())
 
     override fun observeSession(): Flow<MensaSession?> = session.asStateFlow()
 
@@ -97,37 +97,43 @@ class DemoMensaRepository @Inject constructor() : MensaRepository {
         )
     }
 
-    override suspend fun getTakeawayServices(): List<MensaTakeawayService> = listOf(
-        MensaTakeawayService(
-            id = 279,
-            name = "Prenotazione ristorazione base",
-            menuId = 400,
-            menuName = "Menù Bicocca",
-            ageRangeId = 5,
-            viewPrices = false,
-            walletPayment = false,
-            userRequestsEnabled = true,
-            infoText = null,
-            descriptionText = null,
-            maxDaysAhead = 5,
-            isFavorite = true,
-            pickupLocations = listOf(
-                MensaPickupLocation(141, "Mensa U12", "Ristorazione base"),
-                MensaPickupLocation(146, "Mensa U6 -1", "Ristorazione base"),
-            ),
-            scheduleByDate = DemoMensa.serviceDays().associateWith {
-                listOf(
-                    MensaTakeawayDayMealType(
-                        id = 3,
-                        name = "Pranzo",
-                        timeSlots = listOf(
-                            MensaTimeSlot(1116, "Pranzo\n11:45 - 14:30", true, 6, 60, 10.0),
-                        ),
-                    ),
-                )
-            },
-        ),
-    )
+    override suspend fun getTakeawayServices(): List<MensaTakeawayService> {
+        val canteenPlaces = listOf(
+            MensaPickupLocation(141, "Mensa U12", "Ristorazione base"),
+            MensaPickupLocation(146, "Mensa U6 -1 (solo pranzo)", "Ristorazione base"),
+        )
+        val canteenMeals = listOf(
+            MensaTakeawayDayMealType(3, "Pranzo", listOf(MensaTimeSlot(1116, "Pranzo\n11:45 - 14:30", true, 6, 60, 10.0))),
+            MensaTakeawayDayMealType(5, "Cena", listOf(MensaTimeSlot(1274, "\n19:00 - 21:00", true, 2, 60, 3.0))),
+        )
+        val barSlots = listOf("12:00 - 12:30", "12:30 - 13:00", "13:00 - 13:30", "13:30 - 14:00")
+            .mapIndexed { i, label -> MensaTimeSlot(1500 + i, "\n$label", true, i, 20, i * 5.0) }
+        val barMeals = listOf(MensaTakeawayDayMealType(3, "Pranzo", barSlots))
+        fun service(id: Int, name: String, menuId: Int, menuName: String, places: List<MensaPickupLocation>, meals: List<MensaTakeawayDayMealType>, prices: Boolean) =
+            MensaTakeawayService(
+                id = id,
+                name = name,
+                menuId = menuId,
+                menuName = menuName,
+                ageRangeId = 5,
+                viewPrices = prices,
+                walletPayment = false,
+                userRequestsEnabled = true,
+                infoText = null,
+                descriptionText = null,
+                maxDaysAhead = 5,
+                isFavorite = false,
+                pickupLocations = places,
+                scheduleByDate = DemoMensa.serviceDays().associateWith { meals },
+            )
+        return listOf(
+            service(279, "Prenotazione ristorazione base", 400, "Menù Bicocca", canteenPlaces, canteenMeals, prices = false),
+            service(431, "Bicocca - Pasto senza glutine", 598, "Menu Bicocca Senza Glutine", canteenPlaces, canteenMeals, prices = false),
+            service(429, "Prenotazione Lunch box U3", 701, "Ristorazione complementare U3", emptyList(), barMeals, prices = true),
+            service(435, "Prenotazione Lunch box U12", 709, "Ristorazione complementare U12", emptyList(), barMeals, prices = true),
+            service(436, "Prenotazione Lunch box U6PT", 712, "Ristorazione complementare U6PT", emptyList(), barMeals, prices = true),
+        )
+    }
 
     override suspend fun toggleFavoriteService(serviceId: Int, isCurrentlyFavorite: Boolean) = Unit
 
@@ -146,7 +152,13 @@ class DemoMensaRepository @Inject constructor() : MensaRepository {
         placeId: Int?,
         dishesQty: Map<Int, Int>,
         userNote: String?,
-    ): Pair<Int?, String?> = 1202020 to "2026-GI111202020"
+    ): Pair<Int?, String?> {
+        val id = 1202020 + reservations.value.size
+        val code = "2026-GI11$id"
+        val dishes = dishesQty.keys.mapNotNull { dishId -> DemoMensa.allDishes.firstOrNull { it.id == dishId } }
+        reservations.value = listOf(order(id, code, date, dishes)) + reservations.value
+        return id to code
+    }
 
     override suspend fun getTakeawayReservations(): List<MensaReservation> = reservations.value
 
@@ -154,29 +166,55 @@ class DemoMensaRepository @Inject constructor() : MensaRepository {
         reservations.value = reservations.value.filterNot { it.id == reservationId }
     }
 
-    private fun bookedOrder(): MensaReservation {
-        val date = DemoMensa.serviceDays().getOrElse(1) { today }
-        return MensaReservation(
-            id = 1201989,
-            code = "2026-VE111201989",
-            date = date,
-            rawDate = date.toString(),
-            createdAt = null,
-            deliveryAddress = "",
-            menuName = "Menù Bicocca",
-            mealTypeName = "Pranzo",
-            canteenName = "Prenotazione ristorazione base",
-            shiftName = "Pranzo (11:45 - 14:30)",
-            confirmed = true,
-            deletable = true,
-            active = true,
-            provided = false,
-            statusDescription = "confermata",
-            statusColorHex = "#66bb6a",
-            dishes = DemoMensa.allDishes.filter { it.id in listOf(1001, 1101, 1201, 1301) },
-            barcodeValue = "P-1201989",
-            cfpFinalValue = null,
-            cfpUnit = null,
+    private fun bookedOrder(): MensaReservation = order(
+        id = 1201989,
+        code = "2026-VE111201989",
+        date = DemoMensa.serviceDays().getOrElse(1) { today },
+        dishes = DemoMensa.allDishes.filter { it.id in listOf(38612, 42239, 101027, 69399) },
+    )
+
+    /** What the history shows: two take-aways collected and one never picked up. */
+    private fun pastOrders(): List<MensaReservation> {
+        val dishes = DemoMensa.allDishes
+        return listOf(
+            order(1201544, "2026-GI111201544", today.minusDays(5), dishes.take(3), Status.COLLECTED),
+            order(1201320, "2026-LU111201320", today.minusDays(8), dishes.drop(3).take(2), Status.MISSED),
+            order(1201011, "2026-MA111201011", today.minusDays(16), dishes.drop(5).take(4), Status.COLLECTED),
         )
     }
+
+    private enum class Status(val description: String, val colorHex: String) {
+        BOOKED("confermata", "#66bb6a"),
+        COLLECTED("ritirata", "#42a5f5"),
+        MISSED("non ritirata", "#ef5350"),
+    }
+
+    private fun order(
+        id: Int,
+        code: String,
+        date: LocalDate,
+        dishes: List<MensaDish>,
+        status: Status = Status.BOOKED,
+    ) = MensaReservation(
+        id = id,
+        code = code,
+        date = date,
+        rawDate = date.toString(),
+        createdAt = null,
+        deliveryAddress = "",
+        menuName = "Menù Bicocca",
+        mealTypeName = "Pranzo",
+        canteenName = "Prenotazione ristorazione base",
+        shiftName = "Pranzo (11:45 - 14:30)",
+        confirmed = true,
+        deletable = status == Status.BOOKED,
+        active = status == Status.BOOKED,
+        provided = status == Status.COLLECTED,
+        statusDescription = status.description,
+        statusColorHex = status.colorHex,
+        dishes = dishes,
+        barcodeValue = "P-$id",
+        cfpFinalValue = null,
+        cfpUnit = null,
+    )
 }

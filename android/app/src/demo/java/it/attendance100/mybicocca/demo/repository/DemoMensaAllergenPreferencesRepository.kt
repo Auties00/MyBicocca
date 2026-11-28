@@ -13,7 +13,7 @@ import javax.inject.Singleton
 @Singleton
 class DemoMensaAllergenPreferencesRepository @Inject constructor() : MensaAllergenPreferencesRepository {
 
-    private val state = MutableStateFlow(MensaAllergenPreferences(allergenIds = setOf(1, 7)))
+    private val state = MutableStateFlow(MensaAllergenPreferences(allergenIds = setOf(37, 7)))
 
     override fun observe(): Flow<MensaAllergenPreferences> = state.asStateFlow()
 

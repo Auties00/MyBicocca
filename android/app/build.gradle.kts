@@ -316,6 +316,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
     implementation("androidx.activity:activity-compose:1.12.2")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    // Offers to save the Mensa password after an in-app sign-up (Play Services backs it below Android 14)
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation(platform("androidx.compose:compose-bom:2026.03.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -328,6 +331,8 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     // Animated vector drawables in Compose (AnimatedImageVector, e.g. the crash screen's bug wiggle)
     implementation("androidx.compose.animation:animation-graphics")
+    // An animated vector drawable whose frame can be set, so a back gesture can scrub it (the Mensa bag)
+    implementation("androidx.vectordrawable:vectordrawable-seekable:1.0.0")
 
     // Core library desugaring for java.time API on older Android versions
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
