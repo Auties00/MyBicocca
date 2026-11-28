@@ -1,14 +1,15 @@
 package it.attendance100.mybicocca.ui.component.modal
 
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.MutatePriority
+import androidx.compose.foundation.gestures.DragScope
+import androidx.compose.foundation.gestures.DraggableState
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.Velocity
 
 /**
@@ -19,16 +20,20 @@ import androidx.compose.ui.unit.Velocity
  */
 fun Modifier.holdSheetFromContent(): Modifier = this
     .nestedScroll(SwallowLeftoverScroll)
-    .pointerInput(Unit) {
-        awaitEachGesture {
-            awaitFirstDown(requireUnconsumed = false)
-            do {
-                val event = awaitPointerEvent()
-                // The content has had these moves already; taking them leaves none for the sheet.
-                event.changes.forEach { if (it.positionChange() != Offset.Zero) it.consume() }
-            } while (event.changes.any { it.pressed })
-        }
+    .draggable(state = AbsorbDrag, orientation = Orientation.Vertical)
+
+/** Absorbs vertical drags that no child claimed, waiting for touch slop so child scrollables can start. */
+private object AbsorbDrag : DraggableState {
+    private val scope = object : DragScope {
+        override fun dragBy(pixels: Float) = Unit
     }
+
+    override suspend fun drag(dragPriority: MutatePriority, block: suspend DragScope.() -> Unit) {
+        block(scope)
+    }
+
+    override fun dispatchRawDelta(delta: Float) = Unit
+}
 
 /** Keeps what the content's own scrolling leaves over, so the sheet behind it never gets it. */
 private object SwallowLeftoverScroll : NestedScrollConnection {
