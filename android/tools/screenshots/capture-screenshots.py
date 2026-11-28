@@ -29,6 +29,7 @@ import time
 from pathlib import Path
 
 ANDROID = Path(__file__).resolve().parents[2]
+REPO = ANDROID.parent
 CATALOG = ANDROID / "app/src/demo/assets/screenshots.json"
 APK_DIR = ANDROID / "app/build/outputs/apk/demo"
 RES = ANDROID / "app/src/main/res"
