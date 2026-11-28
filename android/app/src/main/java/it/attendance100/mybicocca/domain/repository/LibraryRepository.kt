@@ -3,9 +3,12 @@ package it.attendance100.mybicocca.domain.repository
 import it.attendance100.mybicocca.domain.model.library.Library
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibraryBookingConstraints
+import it.attendance100.mybicocca.domain.model.library.LibraryBookingDraft
 import it.attendance100.mybicocca.domain.model.library.LibraryLiveStatus
+import it.attendance100.mybicocca.domain.model.library.LibraryPendingValidation
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
+import it.attendance100.mybicocca.domain.model.library.LibraryService
 import it.attendance100.mybicocca.domain.model.library.LibraryWeekHours
 import it.attendance100.mybicocca.domain.model.library.LibraryZone
 import kotlinx.coroutines.flow.Flow
@@ -32,8 +35,20 @@ interface LibraryRepository {
     /** The bookable Bicocca libraries — children of the Affluences root site that accept booking. */
     suspend fun getLibraries(): List<Library>
 
-    /** A library's full live status, including the hourly occupancy forecast. */
+    /** Full site metadata (address, phone, e-mail, website, coordinates) for a single library. */
+    suspend fun getLibrary(libraryId: String): Library
+
+    /** Facilities and services published on a library's Affluences site details page. */
+    suspend fun getLibraryServices(libraryId: String): List<LibraryService>
+
+    /** A library's full live status, including the occupancy forecast ranges. */
     suspend fun getLiveStatus(libraryId: String): LibraryLiveStatus
+
+    /** Persisted Affluences site id of the library the student last opened or booked, if any. */
+    suspend fun lastUsedLibraryId(): String?
+
+    /** Records the Affluences site id of the library the student opened or booked. */
+    suspend fun recordLastUsedLibrary(libraryId: String)
 
     /** A library's opening hours for the week [weekOffset] weeks after the current one. */
     suspend fun getWeekHours(libraryId: String, weekOffset: Int = 0): LibraryWeekHours
@@ -93,8 +108,23 @@ interface LibraryRepository {
      */
     suspend fun confirmEmailValidation(email: String, requestUuid: String): Boolean
 
-    /** Clears the stored session and the cached reservation list. */
+    /** Clears the stored session, pending validation, booking draft, and cached reservation list. */
     suspend fun logout()
+
+    /** Returns the persisted pending e-mail validation request, if any. */
+    suspend fun pendingValidation(): LibraryPendingValidation?
+
+    /** Clears the persisted pending e-mail validation request. */
+    suspend fun clearPendingValidation()
+
+    /** Returns the persisted booking wizard draft, if any. */
+    suspend fun bookingDraft(): LibraryBookingDraft?
+
+    /** Persists the current booking wizard draft across process death. */
+    suspend fun saveBookingDraft(draft: LibraryBookingDraft)
+
+    /** Clears any persisted booking wizard draft. */
+    suspend fun clearBookingDraft()
 
     /** Streams the cached reservation list — the last server sync, kept in Room. */
     fun observeReservations(): Flow<List<LibraryReservation>>

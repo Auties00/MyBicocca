@@ -26,7 +26,10 @@ import it.attendance100.mybicocca.demo.repository.DemoEnrollmentRepository
 import it.attendance100.mybicocca.demo.repository.DemoExamRepository
 import it.attendance100.mybicocca.data.repository.FileOpenPreferenceRepositoryImpl
 import it.attendance100.mybicocca.data.repository.HapticSettingsRepositoryImpl
+import it.attendance100.mybicocca.demo.repository.DemoLastKnownLocationSource
+import it.attendance100.mybicocca.demo.repository.DemoLibraryCrowdingHistoryRepository
 import it.attendance100.mybicocca.demo.repository.DemoLibraryRepository
+import it.attendance100.mybicocca.demo.repository.NoOpLibraryCrowdingSyncScheduler
 import it.attendance100.mybicocca.data.repository.MapRepositoryImpl
 import it.attendance100.mybicocca.data.repository.PdfViewerSettingsRepositoryImpl
 import it.attendance100.mybicocca.data.repository.PrivacySettingsRepositoryImpl
@@ -60,6 +63,9 @@ import it.attendance100.mybicocca.domain.repository.EnrollmentRepository
 import it.attendance100.mybicocca.domain.repository.ExamRepository
 import it.attendance100.mybicocca.domain.repository.FileOpenPreferenceRepository
 import it.attendance100.mybicocca.domain.repository.HapticSettingsRepository
+import it.attendance100.mybicocca.domain.repository.LastKnownLocationSource
+import it.attendance100.mybicocca.domain.repository.LibraryCrowdingHistoryRepository
+import it.attendance100.mybicocca.domain.repository.LibraryCrowdingSyncScheduler
 import it.attendance100.mybicocca.domain.repository.LibraryRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
 import it.attendance100.mybicocca.domain.repository.PdfViewerSettingsRepository
@@ -182,6 +188,24 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLibraryRepository(impl: DemoLibraryRepository): LibraryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLibraryCrowdingHistoryRepository(
+        impl: DemoLibraryCrowdingHistoryRepository,
+    ): LibraryCrowdingHistoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLibraryCrowdingSyncScheduler(
+        impl: NoOpLibraryCrowdingSyncScheduler,
+    ): LibraryCrowdingSyncScheduler
+
+    @Binds
+    @Singleton
+    abstract fun bindLastKnownLocationSource(
+        impl: DemoLastKnownLocationSource,
+    ): LastKnownLocationSource
 
     @Binds
     @Singleton

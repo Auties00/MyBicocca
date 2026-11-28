@@ -1,7 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import android.content.res.Configuration
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,31 +11,30 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPreview
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPreviewDefaults
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
+import it.attendance100.mybicocca.ui.theme.PreviewBgDark
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -47,9 +46,7 @@ private val FullDateFormat: DateTimeFormatter
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
- * Final wizard step: a hero check over the booking recap. The booking is confirmed on creation
- * (the logged-in session authorizes it), so this just acknowledges success; the pinned "Fatto"
- * button closes the wizard.
+ * Final wizard step: armchair illustration over the booking recap and a pinned "Fatto" button.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -79,8 +76,13 @@ internal fun LibraryDonePage(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(8.dp))
-            HeroIcon(Icons.Rounded.Check)
-            Spacer(Modifier.height(24.dp))
+            Image(
+                painter = painterResource(R.drawable.library_art_armchair),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(width = 160.dp, height = 120.dp),
+            )
+            Spacer(Modifier.height(20.dp))
             Text(
                 text = stringResource(R.string.library_booked),
                 style = MaterialTheme.typography.headlineSmallEmphasized,
@@ -123,21 +125,6 @@ internal fun LibraryDonePage(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun HeroIcon(icon: ImageVector) {
-    val scheme = MaterialTheme.colorScheme
-    Box(
-        modifier = Modifier
-            .size(120.dp)
-            .clip(MaterialShapes.Cookie9Sided.toShape())
-            .background(scheme.primaryContainer),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, contentDescription = null, tint = scheme.onPrimaryContainer, modifier = Modifier.size(56.dp))
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
 private fun DoneButton(onDone: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val dark = LocalDarkTheme.current
@@ -158,7 +145,44 @@ private fun DoneButton(onDone: () -> Unit) {
         Text(
             stringResource(R.string.common_done),
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Preview(name = "LibraryDone · Light", showBackground = true)
+@Composable
+private fun LibraryDoneLightPreview() {
+    LibraryPreview(dark = false) {
+        LibraryDonePage(
+            libraryName = LibraryPreviewDefaults.Libraries.first().name,
+            zoneName = LibraryPreviewDefaults.Zones.first().name,
+            seatName = LibraryPreviewDefaults.Seats.first().shortName,
+            date = LibraryPreviewDefaults.Today,
+            startTime = LocalTime.of(14, 0),
+            durationMinutes = 120,
+            onDone = {},
+        )
+    }
+}
+
+@Preview(
+    name = "LibraryDone · Dark",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    backgroundColor = PreviewBgDark,
+)
+@Composable
+private fun LibraryDoneDarkPreview() {
+    LibraryPreview(dark = true) {
+        LibraryDonePage(
+            libraryName = LibraryPreviewDefaults.Libraries.first().name,
+            zoneName = LibraryPreviewDefaults.Zones.first().name,
+            seatName = LibraryPreviewDefaults.Seats.first().shortName,
+            date = LibraryPreviewDefaults.Today,
+            startTime = LocalTime.of(14, 0),
+            durationMinutes = 120,
+            onDone = {},
         )
     }
 }

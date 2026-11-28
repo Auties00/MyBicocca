@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.domain.repository.LastKnownLocationSource
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,9 +21,9 @@ import javax.inject.Singleton
 @Singleton
 class DeviceLocationProvider @Inject constructor(
     @ApplicationContext private val context: Context,
-) {
+) : LastKnownLocationSource {
     @SuppressLint("MissingPermission")
-    fun lastKnownLatLong(): Pair<Double, Double>? {
+    override fun lastKnownLatLong(): Pair<Double, Double>? {
         if (!hasPermission()) return null
         val manager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return null
         return PROVIDERS

@@ -31,6 +31,10 @@
     <intent>
       <action android:name="android.speech.RecognitionService" />
     </intent>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="geo" />
+    </intent>
     <package android:name="com.microsoft.office.word" />
     <package android:name="com.microsoft.office.excel" />
     <package android:name="com.microsoft.office.powerpoint" />

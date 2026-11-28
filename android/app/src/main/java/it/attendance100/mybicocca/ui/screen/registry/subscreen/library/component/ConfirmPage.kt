@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
+import android.content.res.Configuration
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.AlternateEmail
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Chair
 import androidx.compose.material.icons.outlined.LocalLibrary
+import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,7 +28,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -35,13 +35,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import it.attendance100.mybicocca.R
@@ -49,9 +52,14 @@ import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
+import it.attendance100.mybicocca.ui.component.input.ConsentCheckboxCard
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPreview
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPreviewDefaults
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
+import it.attendance100.mybicocca.ui.theme.PreviewBgDark
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -63,9 +71,9 @@ private val FullDateFormat: DateTimeFormatter
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
- * Wizard step 4: recap of library, zone, seat and slot, the booking email, an optional (or
- * seat-required) note and the mandatory-consent switch, over a pinned "Prenota" submit button.
- * The email is pinned to the institutional address so the booking syncs to the user's account.
+ * Wizard step 4: recap of library, zone, seat, slot and booking e-mail, optional/required note,
+ * and mandatory-consent switch. When signed out, displays an info card explaining one-time e-mail
+ * verification and enables the "Verifica email e prenota" button without requiring consent yet.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -77,6 +85,7 @@ internal fun ConfirmPage(
     startTime: LocalTime,
     durationMinutes: Int,
     email: String,
+    loggedIn: Boolean,
     note: String,
     onNoteChange: (String) -> Unit,
     agreement: LibraryAgreement?,
@@ -92,7 +101,11 @@ internal fun ConfirmPage(
 
     val noteOk = !seat.noteRequired || note.isNotBlank()
     val consentOk = agreement?.mandatory != true || consentAccepted
-    val canSubmit = email.isNotBlank() && noteOk && consentOk && !submitting
+    val canSubmit = if (loggedIn) {
+        email.isNotBlank() && noteOk && consentOk && !submitting
+    } else {
+        email.isNotBlank() && !submitting
+    }
     val haptic = rememberHapticManager()
 
     Column(
@@ -111,7 +124,7 @@ internal fun ConfirmPage(
                 IconRow(
                     Icons.Outlined.LocalLibrary,
                     stringResource(R.string.library_library),
-                    "$libraryName · $zoneName"
+                    "$libraryName · $zoneName",
                 )
                 IconRow(
                     Icons.Outlined.Chair,
@@ -124,8 +137,7 @@ internal fun ConfirmPage(
                     Icons.Outlined.CalendarMonth,
                     stringResource(R.string.library_when),
                     buildString {
-                        append(
-                            date.format(fullDateFormat).replaceFirstChar { it.titlecase(locale) })
+                        append(date.format(fullDateFormat).replaceFirstChar { it.titlecase(locale) })
                         append(" · ${startTime.format(TimeFormat)}–${end.format(TimeFormat)}")
                         append(" · ${durationLabel(durationMinutes)}")
                     },
@@ -133,7 +145,7 @@ internal fun ConfirmPage(
                 IconRow(
                     Icons.Outlined.AlternateEmail,
                     stringResource(R.string.library_book_as),
-                    email
+                    email.ifBlank { "—" },
                 )
             }
 
@@ -159,6 +171,15 @@ internal fun ConfirmPage(
             Spacer(Modifier.size(4.dp))
         }
 
+        if (!loggedIn) {
+            VerifyEmailInfoCard(
+                email = email,
+                modifier = Modifier
+                    .padding(start = 24.dp, end = 24.dp, top = 8.dp)
+                    .testTag(LibraryTestTags.CONFIRM_INFO_CARD),
+            )
+        }
+
         Button(
             onClick = { haptic.tap(); onSubmit() },
             enabled = canSubmit && LocalIsOnline.current,
@@ -166,7 +187,8 @@ internal fun ConfirmPage(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = ButtonDefaults.MediumContainerHeight)
-                .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp),
+                .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp)
+                .testTag(LibraryTestTags.CONFIRM_SUBMIT),
             contentPadding = ButtonDefaults.MediumContentPadding,
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (dark) scheme.primaryContainer else scheme.primary,
@@ -181,11 +203,56 @@ internal fun ConfirmPage(
                 )
             } else {
                 Text(
-                    stringResource(R.string.library_book),
+                    text = if (loggedIn) {
+                        stringResource(R.string.library_book)
+                    } else {
+                        stringResource(R.string.library_verify_and_book)
+                    },
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun VerifyEmailInfoCard(
+    email: String,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val message = if (email.isNotBlank()) {
+        stringResource(R.string.library_confirm_verify_info, email)
+    } else {
+        stringResource(R.string.library_confirm_verify_info_no_email)
+    }
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = scheme.surfaceContainerHigh,
+        contentColor = scheme.onSurfaceVariant,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.MarkEmailRead,
+                contentDescription = null,
+                tint = scheme.primary,
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .size(20.dp),
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
@@ -199,7 +266,7 @@ private fun IconRow(icon: ImageVector, label: String, value: String) {
                 Icon(icon, contentDescription = null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
             }
         }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(label, style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
             Text(value, style = MaterialTheme.typography.bodyLarge, color = scheme.onSurface)
         }
@@ -216,7 +283,6 @@ private fun ConsentRow(
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
     val linkStyles = TextLinkStyles(SpanStyle(color = scheme.primary, fontWeight = FontWeight.SemiBold))
-    val haptic = rememberHapticManager()
 
     val statement = buildAnnotatedString {
         append(stringResource(R.string.library_accept) + " ")
@@ -231,34 +297,116 @@ private fun ConsentRow(
         }
     }
 
-    Surface(
-        onClick = {
-            if (enabled) {
-                haptic.tap(); onChange(!accepted)
-            }
-        },
+    ConsentCheckboxCard(
+        checked = accepted,
+        onCheckedChange = onChange,
+        text = statement,
         enabled = enabled,
-        shape = MaterialTheme.shapes.large,
-        color = scheme.surfaceContainerHigh,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(start = 16.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
-        ) {
-            Text(
-                text = statement,
-                style = MaterialTheme.typography.bodyLarge,
-                color = scheme.onSurface,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(Modifier.width(12.dp))
-            Switch(
-                checked = accepted,
-                onCheckedChange = { haptic.tap(); onChange(it) },
-                enabled = enabled
-            )
-        }
+    )
+}
+
+@Preview(name = "Confirm Signed Out · Light", showBackground = true)
+@Composable
+private fun ConfirmSignedOutLightPreview() {
+    LibraryPreview(dark = false) {
+        ConfirmPage(
+            libraryName = LibraryPreviewDefaults.Libraries.first().name,
+            zoneName = LibraryPreviewDefaults.Zones.first().name,
+            seat = LibraryPreviewDefaults.Seats.first(),
+            date = LibraryPreviewDefaults.Today,
+            startTime = LocalTime.of(14, 0),
+            durationMinutes = 120,
+            email = LibraryPreviewDefaults.Email,
+            loggedIn = false,
+            note = "",
+            onNoteChange = {},
+            agreement = LibraryPreviewDefaults.Agreement,
+            consentAccepted = false,
+            onConsentChange = {},
+            submitting = false,
+            onSubmit = {},
+        )
+    }
+}
+
+@Preview(
+    name = "Confirm Signed Out · Dark",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    backgroundColor = PreviewBgDark,
+)
+@Composable
+private fun ConfirmSignedOutDarkPreview() {
+    LibraryPreview(dark = true) {
+        ConfirmPage(
+            libraryName = LibraryPreviewDefaults.Libraries.first().name,
+            zoneName = LibraryPreviewDefaults.Zones.first().name,
+            seat = LibraryPreviewDefaults.Seats.first(),
+            date = LibraryPreviewDefaults.Today,
+            startTime = LocalTime.of(14, 0),
+            durationMinutes = 120,
+            email = LibraryPreviewDefaults.Email,
+            loggedIn = false,
+            note = "",
+            onNoteChange = {},
+            agreement = LibraryPreviewDefaults.Agreement,
+            consentAccepted = false,
+            onConsentChange = {},
+            submitting = false,
+            onSubmit = {},
+        )
+    }
+}
+
+@Preview(name = "Confirm Signed In · Light", showBackground = true)
+@Composable
+private fun ConfirmSignedInLightPreview() {
+    LibraryPreview(dark = false) {
+        ConfirmPage(
+            libraryName = LibraryPreviewDefaults.Libraries.first().name,
+            zoneName = LibraryPreviewDefaults.Zones.first().name,
+            seat = LibraryPreviewDefaults.Seats.first(),
+            date = LibraryPreviewDefaults.Today,
+            startTime = LocalTime.of(14, 0),
+            durationMinutes = 120,
+            email = LibraryPreviewDefaults.Email,
+            loggedIn = true,
+            note = "",
+            onNoteChange = {},
+            agreement = LibraryPreviewDefaults.Agreement,
+            consentAccepted = true,
+            onConsentChange = {},
+            submitting = false,
+            onSubmit = {},
+        )
+    }
+}
+
+@Preview(
+    name = "Confirm Signed In · Dark",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    backgroundColor = PreviewBgDark,
+)
+@Composable
+private fun ConfirmSignedInDarkPreview() {
+    LibraryPreview(dark = true) {
+        ConfirmPage(
+            libraryName = LibraryPreviewDefaults.Libraries.first().name,
+            zoneName = LibraryPreviewDefaults.Zones.first().name,
+            seat = LibraryPreviewDefaults.Seats.first(),
+            date = LibraryPreviewDefaults.Today,
+            startTime = LocalTime.of(14, 0),
+            durationMinutes = 120,
+            email = LibraryPreviewDefaults.Email,
+            loggedIn = true,
+            note = "",
+            onNoteChange = {},
+            agreement = LibraryPreviewDefaults.Agreement,
+            consentAccepted = true,
+            onConsentChange = {},
+            submitting = false,
+            onSubmit = {},
+        )
     }
 }

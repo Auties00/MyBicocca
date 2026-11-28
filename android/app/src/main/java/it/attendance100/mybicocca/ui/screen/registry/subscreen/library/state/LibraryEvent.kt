@@ -10,6 +10,7 @@ sealed interface LibraryEvent {
     data object ReservationCancelled : LibraryEvent
     data class CancelFailed(val cause: Throwable) : LibraryEvent
     data class BookingFailed(val cause: Throwable) : LibraryEvent
+    data object SeatNoLongerAvailable : LibraryEvent
 
     /**
      * The validation link went out to [email]. Surfaces no result page: the login page advances

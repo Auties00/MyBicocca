@@ -1,7 +1,9 @@
 package it.attendance100.mybicocca.data.repository
 
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.data.local.credentials.LibraryAccountStore
 import it.attendance100.mybicocca.data.local.library.LibraryReservationDao
+import it.attendance100.mybicocca.data.local.settings.LibraryPreferencesStore
 import it.attendance100.mybicocca.data.mapper.library.LIBRARY_ROOT_ID
 import it.attendance100.mybicocca.data.mapper.library.toAgreement
 import it.attendance100.mybicocca.data.mapper.library.toConstraints
@@ -10,6 +12,7 @@ import it.attendance100.mybicocca.data.mapper.library.toEntity
 import it.attendance100.mybicocca.data.mapper.library.toLibrary
 import it.attendance100.mybicocca.data.mapper.library.toLiveStatus
 import it.attendance100.mybicocca.data.mapper.library.toSeat
+import it.attendance100.mybicocca.data.mapper.library.toService
 import it.attendance100.mybicocca.data.mapper.library.toWeekHours
 import it.attendance100.mybicocca.data.mapper.library.toZone
 import it.attendance100.mybicocca.data.remote.affluences.api.AffluencesApi
@@ -25,9 +28,13 @@ import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.library.Library
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibraryBookingConstraints
+import it.attendance100.mybicocca.domain.model.library.LibraryBookingDraft
 import it.attendance100.mybicocca.domain.model.library.LibraryLiveStatus
+import it.attendance100.mybicocca.domain.model.library.LibraryPendingValidation
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
+import it.attendance100.mybicocca.domain.model.library.LibraryService
+import it.attendance100.mybicocca.domain.model.library.LibraryServiceType
 import it.attendance100.mybicocca.domain.model.library.LibraryWeekHours
 import it.attendance100.mybicocca.domain.model.library.LibraryZone
 import it.attendance100.mybicocca.domain.model.library.isBookableAt
@@ -39,6 +46,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -61,6 +69,7 @@ class LibraryRepositoryImpl @Inject constructor(
     private val api: AffluencesApi,
     private val reservationDao: LibraryReservationDao,
     private val accountStore: LibraryAccountStore,
+    private val preferencesStore: LibraryPreferencesStore,
     @ApplicationScope appScope: CoroutineScope,
 ) : LibraryRepository {
 
@@ -73,8 +82,21 @@ class LibraryRepositoryImpl @Inject constructor(
     override suspend fun getLibraries(): List<Library> =
         api.sites.getChildren(LIBRARY_ROOT_ID).map { it.toLibrary() }.filter { it.bookable }
 
+    override suspend fun getLibrary(libraryId: String): Library =
+        api.sites.getSite(libraryId).toLibrary(liveStatus = null)
+
+    override suspend fun getLibraryServices(libraryId: String): List<LibraryService> =
+        api.sites.getDetails(libraryId).services
+            .map { it.toService() }
+            .filterNot { it.type == LibraryServiceType.Other && it.name.isBlank() }
+
     override suspend fun getLiveStatus(libraryId: String): LibraryLiveStatus =
         api.sites.getLiveData(libraryId).toLiveStatus()
+
+    override suspend fun lastUsedLibraryId(): String? = preferencesStore.lastUsedLibraryId()
+
+    override suspend fun recordLastUsedLibrary(libraryId: String) =
+        preferencesStore.setLastUsedLibraryId(libraryId)
 
     override suspend fun getWeekHours(libraryId: String, weekOffset: Int): LibraryWeekHours =
         api.sites.getWeekTimetable(libraryId, weekOffset).toWeekHours()
@@ -120,6 +142,7 @@ class LibraryRepositoryImpl @Inject constructor(
         email: String,
         note: String?,
     ): String? {
+        val auth = accountAuth() ?: throw LibraryNotLoggedInException()
         val endTime = LocalDateTime.of(date, startTime).plusMinutes(durationMinutes.toLong()).toLocalTime()
         val result = api.reservations.createReservation(
             resourceId = seat.resourceId,
@@ -131,8 +154,9 @@ class LibraryRepositoryImpl @Inject constructor(
                 personCount = 1,
                 note = note,
             ),
-            auth = accountAuth(),
+            auth = auth,
         )
+        runCatching { preferencesStore.setLastUsedLibraryId(library.id) }
         runCatching { refreshReservations() }
         return result.reservationId?.toString()
     }
@@ -145,7 +169,15 @@ class LibraryRepositoryImpl @Inject constructor(
     override suspend fun requestEmailValidation(email: String): String {
         val apiKey = ensureApiKey()
         val request = api.account.requestEmailValidation(AffluencesEmailTokenRequest(email), AffluencesDeviceAuth(apiKey))
-        return request.requestUuid ?: error("Missing request_uuid from validation request")
+        val uuid = request.requestUuid ?: error("Missing request_uuid from validation request")
+        accountStore.setPendingValidation(
+            LibraryPendingValidation(
+                email = email,
+                requestUuid = uuid,
+                createdAt = Instant.now(AppClock.clock),
+            ),
+        )
+        return uuid
     }
 
     /**
@@ -162,6 +194,7 @@ class LibraryRepositoryImpl @Inject constructor(
         }
         if (token.isNullOrBlank()) return false
         accountStore.setSession(email, token)
+        accountStore.clearPendingValidation()
         linkedEmail.value = email
         refreshReservations()
         return true
@@ -169,9 +202,21 @@ class LibraryRepositoryImpl @Inject constructor(
 
     override suspend fun logout() {
         accountStore.clearSession()
+        accountStore.clearPendingValidation()
+        accountStore.clearBookingDraft()
         linkedEmail.value = null
         reservationDao.clear()
     }
+
+    override suspend fun pendingValidation(): LibraryPendingValidation? = accountStore.pendingValidation()
+
+    override suspend fun clearPendingValidation() = accountStore.clearPendingValidation()
+
+    override suspend fun bookingDraft(): LibraryBookingDraft? = accountStore.bookingDraft()
+
+    override suspend fun saveBookingDraft(draft: LibraryBookingDraft) = accountStore.setBookingDraft(draft)
+
+    override suspend fun clearBookingDraft() = accountStore.clearBookingDraft()
 
     override fun observeReservations(): Flow<List<LibraryReservation>> =
         reservationDao.observeAll().map { entities -> entities.map { it.toDomain() } }
@@ -193,10 +238,12 @@ class LibraryRepositoryImpl @Inject constructor(
             }
             throw cause
         }
-        reservationDao.replaceAll(
-            list.results
-                .filterNot { it.state == AffluencesReservationState.Cancelled }
-                .map { it.toEntity() }
+        val (cancelled, kept) = list.results
+            .partition { it.state == AffluencesReservationState.Cancelled }
+        reservationDao.syncWithServer(
+            reservations = kept.map { it.toEntity() },
+            cancelledIds = cancelled.map { it.reservationId },
+            nowEpochSeconds = Instant.now(AppClock.clock).epochSecond,
         )
     }
 

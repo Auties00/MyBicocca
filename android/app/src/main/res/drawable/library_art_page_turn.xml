@@ -1,0 +1,398 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="160dp"
+            android:height="120dp"
+            android:viewportWidth="160"
+            android:viewportHeight="120">
+            <path android:fillColor="#22000000" android:pathData="M 140.6,98.7 Q 145.6,100.5 141.3,102.3 Q 136.9,104.1 124.6,105.4 Q 112.2,106.7 96.1,107.1 Q 80,107.6 63.6,107.2 Q 47.2,106.8 35.1,105.5 Q 23.1,104.1 19.3,102.3 Q 15.6,100.5 20,98.7 Q 24.4,96.9 35.8,95.6 Q 47.2,94.2 63.6,93.7 Q 80,93.2 96.1,93.8 Q 112.2,94.3 123.9,95.6 Q 135.6,96.9 140.6,98.7 Z" />
+            <path android:fillColor="#84182B" android:pathData="M 77.6,92 Q 81,92 83.2,92 Q 84.5,99.5 84.2,106.5 Q 81.8,104 80.5,103.5 Q 79.2,104.2 76.8,106.8 Q 77.2,99.5 77.6,92 Z" />
+            <path android:fillColor="#B3263E" android:pathData="M 78.2,92 Q 80.2,92 81.5,92 Q 82.2,98.5 82,103.8 Q 80.6,102.6 79.8,102.8 Q 79,103.5 78,104.8 Q 78.1,98.5 78.2,92 Z" />
+            <path android:fillColor="#7D1527" android:pathData="M 21.5,49.3 Q 48.8,50.8 76,53.2 Q 80,53.5 84,53.2 Q 111.2,50.8 138.5,49.3 Q 142.5,49 143,53 Q 145.7,70.7 147.5,88.5 Q 148,92.5 144,92.9 Q 114.1,96.5 84,99.1 Q 80,99.5 76,99.1 Q 45.9,96.5 16,92.9 Q 12,92.5 12.5,88.5 Q 14.3,70.7 17,53 Q 17.5,49 21.5,49.3 Z" />
+            <path android:fillColor="#B3263E" android:pathData="M 22.5,46.8 Q 49.3,48.3 76,50.7 Q 80,51 84,50.7 Q 110.7,48.3 137.5,46.8 Q 141.5,46.5 142,50.5 Q 144.7,67.9 146.5,85.5 Q 147,89.5 143,89.9 Q 113.6,93.5 84,96.1 Q 80,96.5 76,96.1 Q 46.4,93.5 17,89.9 Q 13,89.5 13.5,85.5 Q 15.3,67.9 18,50.5 Q 18.5,46.5 22.5,46.8 Z" />
+            <path android:fillColor="#D4445B" android:pathData="M 21,47.7 Q 22,47.5 23,47.6 Q 24.5,47.5 24.3,49 Q 22.2,67.9 19.7,86.7 Q 19.5,88.2 18,88.3 Q 17,88.5 16,88.4 Q 14.5,88.5 14.7,87 Q 16.8,68.1 19.3,49.3 Q 19.5,47.8 21,47.7 Z" />
+            <path android:fillColor="#6E1323" android:pathData="M 75.5,89.5 Q 80,89.1 84.5,89.5 Q 87,89.5 86.8,92 Q 87.1,93.5 86.7,95 Q 86.5,97.5 84,97.5 Q 80,97.9 76,97.5 Q 73.5,97.5 73.3,95 Q 72.9,93.5 73.2,92 Q 73,89.5 75.5,89.5 Z" />
+            <path android:fillColor="#CFC5B2" android:pathData="M 18.5,83.5 Q 49,77 80,91.5 L 80,95.2 Q 49,83.5 16.5,89 Z" />
+            <path android:fillColor="#CFC5B2" android:pathData="M 80,91.5 Q 111,77 141.5,83.5 L 143.5,89 Q 111,83.5 80,95.2 Z" />
+            <path android:fillColor="#EAE2D2" android:pathData="M 19.5,81.5 Q 50,75 80,89.5 L 80,93 Q 50,80.5 17.8,86.5 Z" />
+            <path android:fillColor="#EAE2D2" android:pathData="M 80,89.5 Q 110,75 140.5,81.5 L 142.2,86.5 Q 110,80.5 80,93 Z" />
+            <path android:fillColor="#B8AC96" android:pathData="M 20,85.2 Q 50,78.5 79,91.2 L 79,92.3 Q 50,80 19.5,86.5 Z M 81,91.2 Q 110,78.5 140,85.2 L 140.5,86.5 Q 110,80 81,92.3 Z" />
+            <path android:fillColor="#D8CEBC" android:pathData="M 80,47.2 Q 53.5,32.8 24.8,41.2 Q 21.8,62 19,82.8 Q 52,74.6 80,89.6 Q 80,68.5 80,47.2 Z" />
+            <path android:fillColor="#D8CEBC" android:pathData="M 80,47.2 Q 106.5,32.8 135.2,41.2 Q 138.2,62 141,82.8 Q 108,74.6 80,89.6 Q 80,68.5 80,47.2 Z" />
+            <path android:fillColor="#F0E9DC" android:pathData="M 80,48 Q 54,34 26,42 Q 23,62 20,82 Q 52,74 80,89 Q 80,68.5 80,48 Z" />
+            <path android:fillColor="#D2C7B4" android:pathData="M 71.5,53.6 Q 54.3,46.8 36.1,49 Q 35.9,50.5 35.7,51.9 Q 54.1,49.7 71.4,56.5 Q 71.4,55.1 71.5,53.6 Z M 71.3,61.7 Q 54.9,55.2 37.5,56.8 Q 37.4,58.3 37.2,59.7 Q 54.8,58.1 71.3,64.7 Q 71.3,63.2 71.3,61.7 Z M 71.2,69.9 Q 57.9,64.6 43.8,64.5 Q 43.6,66 43.5,67.4 Q 57.7,67.5 71.1,72.8 Q 71.2,71.4 71.2,69.9 Z" />
+            <path android:fillColor="#F8F4EC" android:pathData="M 80,48 Q 106,34 134,42 Q 137,62 140,82 Q 108,74 80,89 Q 80,68.5 80,48 Z" />
+            <path android:fillColor="#D2C7B4" android:pathData="M 88.5,53.6 Q 105.7,46.8 123.9,49 Q 124.1,50.5 124.3,51.9 Q 105.9,49.7 88.6,56.5 Q 88.6,55.1 88.5,53.6 Z M 88.7,61.7 Q 105.1,55.2 122.5,56.8 Q 122.6,58.3 122.8,59.7 Q 105.2,58.1 88.7,64.7 Q 88.7,63.2 88.7,61.7 Z M 88.8,69.9 Q 102.1,64.6 116.2,64.5 Q 116.4,66 116.5,67.4 Q 102.3,67.5 88.9,72.8 Q 88.8,71.4 88.8,69.9 Z" />
+            <path
+                android:name="turn_shadow"
+                android:fillColor="#24000000"
+                android:fillAlpha="0"
+                android:pathData="M 80,49 Q 105,36 132,43 Q 135,62 138,81 Q 107,74 80,89 Q 80,68.5 80,49 Z" />
+            <path
+                android:name="turn_page"
+                android:fillColor="#F8F4EC"
+                android:pathData="M 80,48 Q 106,34 134,42 Q 137,62 140,82 Q 108,74 80,89 Q 80,68.5 80,48 Z" />
+            <path
+                android:name="turn_curl_shade"
+                android:fillColor="#2C8C7352"
+                android:fillAlpha="0"
+                android:pathData="M 80,48 Q 89.9,42.7 100,40.5 Q 101,60.7 101.9,80.9 Q 90.6,83.3 80,89 Q 80,68.5 80,48 Z" />
+            <path
+                android:name="turn_lines_front"
+                android:fillColor="#D2C7B4"
+                android:fillAlpha="1"
+                android:pathData="M 88.5,53.6 Q 105.7,46.8 123.9,49 Q 124.1,50.5 124.3,51.9 Q 105.9,49.7 88.6,56.5 Q 88.6,55.1 88.5,53.6 Z M 88.7,61.7 Q 105.1,55.2 122.5,56.8 Q 122.6,58.3 122.8,59.7 Q 105.2,58.1 88.7,64.7 Q 88.7,63.2 88.7,61.7 Z M 88.8,69.9 Q 102.1,64.6 116.2,64.5 Q 116.4,66 116.5,67.4 Q 102.3,67.5 88.9,72.8 Q 88.8,71.4 88.8,69.9 Z" />
+            <path
+                android:name="turn_lines_back"
+                android:fillColor="#D2C7B4"
+                android:fillAlpha="0"
+                android:pathData="M 75.1,49.2 Q 65.9,33.8 60.6,28.4 Q 60.4,30.1 60.2,31.9 Q 65.7,37.3 75.1,52.4 Q 75.1,50.8 75.1,49.2 Z M 75,58 Q 66,44.5 60.3,38.8 Q 60.2,40.5 60.1,42.3 Q 65.9,48.1 74.9,61.2 Q 75,59.6 75,58 Z M 74.9,66.8 Q 67.7,56.8 62.4,51 Q 62.4,52.8 62.5,54.5 Q 67.7,60.3 75,70 Q 75,68.4 74.9,66.8 Z" />
+            <path android:fillColor="#12000000" android:pathData="M 73.5,46.2 Q 77,47 80,48 L 80,89 Q 76.5,87.2 72.5,85.8 Z" />
+            <path android:fillColor="#14000000" android:pathData="M 80,48 Q 83,47 86.5,46.2 L 87.5,85.8 Q 83.5,87.2 80,89 Z" />
+            <path android:fillColor="#1C000000" android:pathData="M 79.1,47.8 Q 80,48.3 80.9,47.8 L 81.2,89.2 Q 80,89.8 78.8,89.2 Z" />
+        </vector>
+    </aapt:attr>
+
+    <target android:name="turn_page">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="220"
+                        android:valueFrom="M 80,48 Q 106,34 134,42 Q 137,62 140,82 Q 108,74 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 106,25 124,25.5 Q 131,48.5 131,70.5 Q 106,67.5 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/accelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="260"
+                        android:valueFrom="M 80,48 Q 106,25 124,25.5 Q 131,48.5 131,70.5 Q 106,67.5 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 96,17.5 99.5,14.5 Q 106.5,38 103.5,61.5 Q 96,69 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="160"
+                        android:valueFrom="M 80,48 Q 96,17.5 99.5,14.5 Q 106.5,38 103.5,61.5 Q 96,69 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 65,17.5 60.5,15 Q 53.5,38.5 56.5,62 Q 64.5,69 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="240"
+                        android:valueFrom="M 80,48 Q 65,17.5 60.5,15 Q 53.5,38.5 56.5,62 Q 64.5,69 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 54,24.5 36,26.5 Q 29,49 29,71 Q 54,67.5 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="220"
+                        android:valueFrom="M 80,48 Q 54,24.5 36,26.5 Q 29,49 29,71 Q 54,67.5 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 54,34 26,42 Q 23,62 20,82 Q 52,74 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/decelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="2500"
+                        android:valueFrom="M 80,48 Q 54,34 26,42 Q 23,62 20,82 Q 52,74 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 54,34 26,42 Q 23,62 20,82 Q 52,74 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="fillColor"
+                        android:duration="220"
+                        android:valueFrom="#F8F4EC"
+                        android:valueTo="#FCF9F2"
+                        android:valueType="colorType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="fillColor"
+                        android:duration="340"
+                        android:valueFrom="#FCF9F2"
+                        android:valueTo="#E6DCCB"
+                        android:valueType="colorType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="fillColor"
+                        android:duration="540"
+                        android:valueFrom="#E6DCCB"
+                        android:valueTo="#F0E9DC"
+                        android:valueType="colorType"
+                        android:interpolator="@android:interpolator/decelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="fillColor"
+                        android:duration="2500"
+                        android:valueFrom="#F0E9DC"
+                        android:valueTo="#F0E9DC"
+                        android:valueType="colorType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="turn_curl_shade">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="220"
+                        android:valueFrom="M 80,48 Q 89.9,42.7 100,40.5 Q 101,60.7 101.9,80.9 Q 90.6,83.3 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 91.4,37.9 101.3,32.3 Q 103.5,53.8 102.7,74.8 Q 91.4,79.5 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/accelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="260"
+                        android:valueFrom="M 80,48 Q 91.4,37.9 101.3,32.3 Q 103.5,53.8 102.7,74.8 Q 91.4,79.5 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 88.3,32.1 93.3,23.7 Q 96.4,47.6 94.3,71.6 Q 88.3,78.6 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="160"
+                        android:valueFrom="M 80,48 Q 88.3,32.1 93.3,23.7 Q 96.4,47.6 94.3,71.6 Q 88.3,78.6 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 72.2,32.1 67.2,23.9 Q 64,47.8 65.9,71.7 Q 71.9,78.6 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="240"
+                        android:valueFrom="M 80,48 Q 72.2,32.1 67.2,23.9 Q 64,47.8 65.9,71.7 Q 71.9,78.6 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 68.6,37.7 58.7,32.3 Q 56.5,53.7 57.3,74.9 Q 68.6,79.5 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="220"
+                        android:valueFrom="M 80,48 Q 68.6,37.7 58.7,32.3 Q 56.5,53.7 57.3,74.9 Q 68.6,79.5 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 70.1,42.7 60,40.5 Q 59,60.7 58.1,80.9 Q 69.4,83.3 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/decelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="2500"
+                        android:valueFrom="M 80,48 Q 70.1,42.7 60,40.5 Q 59,60.7 58.1,80.9 Q 69.4,83.3 80,89 Q 80,68.5 80,48 Z"
+                        android:valueTo="M 80,48 Q 70.1,42.7 60,40.5 Q 59,60.7 58.1,80.9 Q 69.4,83.3 80,89 Q 80,68.5 80,48 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="520"
+                        android:valueFrom="0"
+                        android:valueTo="0.95"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/accelerate_decelerate" />
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="580"
+                        android:valueFrom="0.95"
+                        android:valueTo="0"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/decelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="2500"
+                        android:valueFrom="0"
+                        android:valueTo="0"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="turn_shadow">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="220"
+                        android:valueFrom="M 80,49 Q 105,36 132,43 Q 135,62 138,81 Q 107,74 80,89 Q 80,68.5 80,49 Z"
+                        android:valueTo="M 80,49 Q 104,38 129,44 Q 132,63 134,81 Q 106,75 80,89 Q 80,68.5 80,49 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/accelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="260"
+                        android:valueFrom="M 80,49 Q 104,38 129,44 Q 132,63 134,81 Q 106,75 80,89 Q 80,68.5 80,49 Z"
+                        android:valueTo="M 80,49 Q 98,41 114,44 Q 116,63 118,80 Q 99,77 80,89 Q 80,68.5 80,49 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="160"
+                        android:valueFrom="M 80,49 Q 98,41 114,44 Q 116,63 118,80 Q 99,77 80,89 Q 80,68.5 80,49 Z"
+                        android:valueTo="M 80,49 Q 62,41 46,44 Q 44,63 42,80 Q 61,77 80,89 Q 80,68.5 80,49 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="240"
+                        android:valueFrom="M 80,49 Q 62,41 46,44 Q 44,63 42,80 Q 61,77 80,89 Q 80,68.5 80,49 Z"
+                        android:valueTo="M 80,49 Q 56,38 32,44 Q 29,63 27,81 Q 55,75 80,89 Q 80,68.5 80,49 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="220"
+                        android:valueFrom="M 80,49 Q 56,38 32,44 Q 29,63 27,81 Q 55,75 80,89 Q 80,68.5 80,49 Z"
+                        android:valueTo="M 80,49 Q 55,36 28,43 Q 25,62 22,81 Q 53,74 80,89 Q 80,68.5 80,49 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/decelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="2500"
+                        android:valueFrom="M 80,49 Q 55,36 28,43 Q 25,62 22,81 Q 53,74 80,89 Q 80,68.5 80,49 Z"
+                        android:valueTo="M 80,49 Q 55,36 28,43 Q 25,62 22,81 Q 53,74 80,89 Q 80,68.5 80,49 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="480"
+                        android:valueFrom="0"
+                        android:valueTo="0.9"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/accelerate_decelerate" />
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="620"
+                        android:valueFrom="0.9"
+                        android:valueTo="0"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/decelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="2500"
+                        android:valueFrom="0"
+                        android:valueTo="0"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="turn_lines_front">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="220"
+                        android:valueFrom="M 88.5,53.6 Q 105.7,46.8 123.9,49 Q 124.1,50.5 124.3,51.9 Q 105.9,49.7 88.6,56.5 Q 88.6,55.1 88.5,53.6 Z M 88.7,61.7 Q 105.1,55.2 122.5,56.8 Q 122.6,58.3 122.8,59.7 Q 105.2,58.1 88.7,64.7 Q 88.7,63.2 88.7,61.7 Z M 88.8,69.9 Q 102.1,64.6 116.2,64.5 Q 116.4,66 116.5,67.4 Q 102.3,67.5 88.9,72.8 Q 88.8,71.4 88.8,69.9 Z"
+                        android:valueTo="M 88.4,51 Q 104.7,39 118.5,36.7 Q 118.8,38.3 119,39.9 Q 104.9,42.1 88.4,54 Q 88.4,52.5 88.4,51 Z M 88.5,59.3 Q 104.1,48.3 118,45.8 Q 118.1,47.4 118.3,49 Q 104.2,51.3 88.5,62.3 Q 88.5,60.8 88.5,59.3 Z M 88.5,67.6 Q 101.1,58.9 112.9,55.8 Q 112.9,57.4 113,58.9 Q 101.1,62 88.5,70.6 Q 88.5,69.1 88.5,67.6 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/accelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="260"
+                        android:valueFrom="M 88.4,51 Q 104.7,39 118.5,36.7 Q 118.8,38.3 119,39.9 Q 104.9,42.1 88.4,54 Q 88.4,52.5 88.4,51 Z M 88.5,59.3 Q 104.1,48.3 118,45.8 Q 118.1,47.4 118.3,49 Q 104.2,51.3 88.5,62.3 Q 88.5,60.8 88.5,59.3 Z M 88.5,67.6 Q 101.1,58.9 112.9,55.8 Q 112.9,57.4 113,58.9 Q 101.1,62 88.5,70.6 Q 88.5,69.1 88.5,67.6 Z"
+                        android:valueTo="M 85.1,49.2 Q 94.7,33.7 99.6,28.1 Q 99.9,29.8 100.1,31.5 Q 94.9,37.3 85.2,52.4 Q 85.1,50.8 85.1,49.2 Z M 85.2,58 Q 94.5,44.5 100,38.5 Q 100.1,40.2 100.2,42 Q 94.6,48 85.3,61.2 Q 85.2,59.6 85.2,58 Z M 85.2,66.8 Q 92.7,56.8 97.9,50.8 Q 97.9,52.6 97.8,54.3 Q 92.6,60.2 85.2,70 Q 85.2,68.4 85.2,66.8 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="3120"
+                        android:valueFrom="M 85.1,49.2 Q 94.7,33.7 99.6,28.1 Q 99.9,29.8 100.1,31.5 Q 94.9,37.3 85.2,52.4 Q 85.1,50.8 85.1,49.2 Z M 85.2,58 Q 94.5,44.5 100,38.5 Q 100.1,40.2 100.2,42 Q 94.6,48 85.3,61.2 Q 85.2,59.6 85.2,58 Z M 85.2,66.8 Q 92.7,56.8 97.9,50.8 Q 97.9,52.6 97.8,54.3 Q 92.6,60.2 85.2,70 Q 85.2,68.4 85.2,66.8 Z"
+                        android:valueTo="M 85.1,49.2 Q 94.7,33.7 99.6,28.1 Q 99.9,29.8 100.1,31.5 Q 94.9,37.3 85.2,52.4 Q 85.1,50.8 85.1,49.2 Z M 85.2,58 Q 94.5,44.5 100,38.5 Q 100.1,40.2 100.2,42 Q 94.6,48 85.3,61.2 Q 85.2,59.6 85.2,58 Z M 85.2,66.8 Q 92.7,56.8 97.9,50.8 Q 97.9,52.6 97.8,54.3 Q 92.6,60.2 85.2,70 Q 85.2,68.4 85.2,66.8 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="300"
+                        android:valueFrom="1"
+                        android:valueTo="1"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="180"
+                        android:valueFrom="1"
+                        android:valueTo="0"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/accelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="3120"
+                        android:valueFrom="0"
+                        android:valueTo="0"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="turn_lines_back">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="640"
+                        android:valueFrom="M 75.1,49.2 Q 65.9,33.8 60.6,28.4 Q 60.4,30.1 60.2,31.9 Q 65.7,37.3 75.1,52.4 Q 75.1,50.8 75.1,49.2 Z M 75,58 Q 66,44.5 60.3,38.8 Q 60.2,40.5 60.1,42.3 Q 65.9,48.1 74.9,61.2 Q 75,59.6 75,58 Z M 74.9,66.8 Q 67.7,56.8 62.4,51 Q 62.4,52.8 62.5,54.5 Q 67.7,60.3 75,70 Q 75,68.4 74.9,66.8 Z"
+                        android:valueTo="M 75.1,49.2 Q 65.9,33.8 60.6,28.4 Q 60.4,30.1 60.2,31.9 Q 65.7,37.3 75.1,52.4 Q 75.1,50.8 75.1,49.2 Z M 75,58 Q 66,44.5 60.3,38.8 Q 60.2,40.5 60.1,42.3 Q 65.9,48.1 74.9,61.2 Q 75,59.6 75,58 Z M 74.9,66.8 Q 67.7,56.8 62.4,51 Q 62.4,52.8 62.5,54.5 Q 67.7,60.3 75,70 Q 75,68.4 74.9,66.8 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="240"
+                        android:valueFrom="M 75.1,49.2 Q 65.9,33.8 60.6,28.4 Q 60.4,30.1 60.2,31.9 Q 65.7,37.3 75.1,52.4 Q 75.1,50.8 75.1,49.2 Z M 75,58 Q 66,44.5 60.3,38.8 Q 60.2,40.5 60.1,42.3 Q 65.9,48.1 74.9,61.2 Q 75,59.6 75,58 Z M 74.9,66.8 Q 67.7,56.8 62.4,51 Q 62.4,52.8 62.5,54.5 Q 67.7,60.3 75,70 Q 75,68.4 74.9,66.8 Z"
+                        android:valueTo="M 71.6,50.9 Q 55.3,38.8 41.5,37.1 Q 41.2,38.6 41,40.2 Q 55.1,41.9 71.6,53.9 Q 71.6,52.4 71.6,50.9 Z M 71.5,59.2 Q 55.9,48.1 42,46.1 Q 41.9,47.7 41.7,49.2 Q 55.8,51.2 71.5,62.2 Q 71.5,60.7 71.5,59.2 Z M 71.5,67.5 Q 58.9,58.8 47.1,55.9 Q 47.1,57.5 47,59 Q 58.9,61.9 71.5,70.5 Q 71.5,69 71.5,67.5 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="220"
+                        android:valueFrom="M 71.6,50.9 Q 55.3,38.8 41.5,37.1 Q 41.2,38.6 41,40.2 Q 55.1,41.9 71.6,53.9 Q 71.6,52.4 71.6,50.9 Z M 71.5,59.2 Q 55.9,48.1 42,46.1 Q 41.9,47.7 41.7,49.2 Q 55.8,51.2 71.5,62.2 Q 71.5,60.7 71.5,59.2 Z M 71.5,67.5 Q 58.9,58.8 47.1,55.9 Q 47.1,57.5 47,59 Q 58.9,61.9 71.5,70.5 Q 71.5,69 71.5,67.5 Z"
+                        android:valueTo="M 71.5,53.6 Q 54.3,46.8 36.1,49 Q 35.9,50.5 35.7,51.9 Q 54.1,49.7 71.4,56.5 Q 71.4,55.1 71.5,53.6 Z M 71.3,61.7 Q 54.9,55.2 37.5,56.8 Q 37.4,58.3 37.2,59.7 Q 54.8,58.1 71.3,64.7 Q 71.3,63.2 71.3,61.7 Z M 71.2,69.9 Q 57.9,64.6 43.8,64.5 Q 43.6,66 43.5,67.4 Q 57.7,67.5 71.1,72.8 Q 71.2,71.4 71.2,69.9 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/decelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="pathData"
+                        android:duration="2500"
+                        android:valueFrom="M 71.5,53.6 Q 54.3,46.8 36.1,49 Q 35.9,50.5 35.7,51.9 Q 54.1,49.7 71.4,56.5 Q 71.4,55.1 71.5,53.6 Z M 71.3,61.7 Q 54.9,55.2 37.5,56.8 Q 37.4,58.3 37.2,59.7 Q 54.8,58.1 71.3,64.7 Q 71.3,63.2 71.3,61.7 Z M 71.2,69.9 Q 57.9,64.6 43.8,64.5 Q 43.6,66 43.5,67.4 Q 57.7,67.5 71.1,72.8 Q 71.2,71.4 71.2,69.9 Z"
+                        android:valueTo="M 71.5,53.6 Q 54.3,46.8 36.1,49 Q 35.9,50.5 35.7,51.9 Q 54.1,49.7 71.4,56.5 Q 71.4,55.1 71.5,53.6 Z M 71.3,61.7 Q 54.9,55.2 37.5,56.8 Q 37.4,58.3 37.2,59.7 Q 54.8,58.1 71.3,64.7 Q 71.3,63.2 71.3,61.7 Z M 71.2,69.9 Q 57.9,64.6 43.8,64.5 Q 43.6,66 43.5,67.4 Q 57.7,67.5 71.1,72.8 Q 71.2,71.4 71.2,69.9 Z"
+                        android:valueType="pathType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+                <set android:ordering="sequentially">
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="640"
+                        android:valueFrom="0"
+                        android:valueTo="0"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/linear" />
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="200"
+                        android:valueFrom="0"
+                        android:valueTo="1"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/decelerate_quad" />
+                    <objectAnimator
+                        android:propertyName="fillAlpha"
+                        android:duration="2760"
+                        android:valueFrom="1"
+                        android:valueTo="1"
+                        android:valueType="floatType"
+                        android:interpolator="@android:interpolator/linear" />
+                </set>
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>
