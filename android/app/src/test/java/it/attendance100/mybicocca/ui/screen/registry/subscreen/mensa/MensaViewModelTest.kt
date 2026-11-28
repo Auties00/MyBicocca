@@ -296,9 +296,10 @@ class MensaViewModelTest {
         vm.confirmMenuSetup()
         assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.Menu).inOrder()
 
+        // Asked again every time.
         vm.back()
         vm.openMenu()
-        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.Menu).inOrder()
+        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.PlacePicker).inOrder()
     }
 
     @Test
@@ -341,8 +342,6 @@ class MensaViewModelTest {
         vm.pickPlace(MensaPlace.BAR_U3)
         vm.confirmMenuSetup()
         vm.back()
-        vm.openMenu()
-        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.Menu)
 
         vm.resetNavigation()
         vm.openMenu()

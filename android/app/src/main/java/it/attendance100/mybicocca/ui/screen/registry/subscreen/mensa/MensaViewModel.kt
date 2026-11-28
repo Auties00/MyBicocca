@@ -177,8 +177,6 @@ class MensaViewModel @Inject constructor(
     private val _dishDetails = MutableStateFlow<Map<Int, MensaDishDetailState>>(emptyMap())
     val dishDetails: StateFlow<Map<Int, MensaDishDetailState>> = _dishDetails.asStateFlow()
 
-    private val _menuContextConfirmed = MutableStateFlow(false)
-
     private val _signInHintDismissed = MutableStateFlow(false)
     val signInHintDismissed: StateFlow<Boolean> = _signInHintDismissed.asStateFlow()
 
@@ -341,7 +339,6 @@ class MensaViewModel @Inject constructor(
     fun resetNavigation() {
         pendingAfterLogin = null
         hubTrayIntroPlayed = false
-        _menuContextConfirmed.value = false
         _selectedPlace.value = null
         _signInHintDismissed.value = false
         _backStack.value = listOf(MensaSubPage.Home)
@@ -458,10 +455,10 @@ class MensaViewModel @Inject constructor(
 
     /**
      * Opens the menu, asking where first (a canteen or a bar), then which menu when the place has
-     * more than one, then the day and meal, unless they were already chosen.
+     * more than one, then the day and meal; every time, even with a choice already made.
      */
     fun openMenu() {
-        push(if (_menuContextConfirmed.value) MensaSubPage.Menu else MensaSubPage.PlacePicker)
+        push(MensaSubPage.PlacePicker)
     }
 
     /** The day and meal step, reached from the menu's header to change either. */
@@ -523,7 +520,6 @@ class MensaViewModel @Inject constructor(
 
     /** Leaves the selection steps for the menu, which takes their place above wherever it began. */
     fun confirmMenuSetup() {
-        _menuContextConfirmed.value = true
         val steps = setOf(MensaSubPage.PlacePicker, MensaSubPage.MenuPicker, MensaSubPage.MenuSetup)
         val base = _backStack.value.takeWhile { it !in steps }
         _backStack.value = if (base.lastOrNull() == MensaSubPage.Menu) base else base + MensaSubPage.Menu
@@ -538,7 +534,6 @@ class MensaViewModel @Inject constructor(
         _selectedPlace.value = place
         selectMenu(defaultMenuFor(place))
         ensureMealAllowed()
-        _menuContextConfirmed.value = false
         _backStack.value = listOf(MensaSubPage.Home, if (place.hasMenuChoice) MensaSubPage.MenuPicker else MensaSubPage.MenuSetup)
     }
 
