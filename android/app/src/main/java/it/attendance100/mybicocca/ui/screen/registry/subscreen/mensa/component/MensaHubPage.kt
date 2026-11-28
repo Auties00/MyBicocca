@@ -92,7 +92,13 @@ internal fun MensaHubPage(
                     body = stringResource(R.string.mensa_hub_menu_body),
                     onClick = onOpenMenu,
                     modifier = Modifier.weight(1f),
-                ) { MensaPlateTrio(middleSize = 72.dp, modifier = Modifier.align(Alignment.TopEnd).offset(x = (-4).dp, y = 16.dp)) }
+                ) {
+                    MensaMenuCardFan(
+                        playIntro = playTrayIntro,
+                        onIntroPlayed = onTrayIntroPlayed,
+                        modifier = Modifier.align(Alignment.TopCenter),
+                    )
+                }
                 BookingBox(booking = booking, today = today, pickupPoint = pickupPoints[booking.id], onClick = { onOpenBooking(booking) }, modifier = Modifier.weight(1f))
             }
         } else {

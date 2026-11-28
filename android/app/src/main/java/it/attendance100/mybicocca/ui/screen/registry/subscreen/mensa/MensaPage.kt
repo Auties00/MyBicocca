@@ -2,6 +2,8 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa
 
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MENSA_BAG_RETURN_MS
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaBagStage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaMenuCardStage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaMenuCardStage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaBagStage
 import androidx.compose.runtime.State
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaDishAvailability
@@ -9,11 +11,19 @@ import it.attendance100.mybicocca.domain.model.mensa.availabilityAt
 import it.attendance100.mybicocca.domain.model.mensa.isUpcoming
 import it.attendance100.mybicocca.domain.model.mensa.mensaPickupBuilding
 import it.attendance100.mybicocca.domain.model.mensa.MensaDishAvailability
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.outlined.RestaurantMenu
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -33,14 +43,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import androidx.credentials.CreatePasswordRequest
 import androidx.credentials.CredentialManager
 import it.attendance100.mybicocca.ui.screen.lock.findFragmentActivity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
@@ -50,8 +68,13 @@ import java.time.format.DateTimeFormatter
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
+import it.attendance100.mybicocca.domain.model.mensa.MensaMenuIdentity
 import it.attendance100.mybicocca.domain.model.mensa.MensaMenuKind
+import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 import it.attendance100.mybicocca.domain.model.mensa.identity
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MENSA_MENU_CARD_ASPECT
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaMenuCardArt
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaMenuCardShadow
 import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
 import it.attendance100.mybicocca.domain.repository.MensaServerMessageException
 import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
@@ -264,13 +287,15 @@ fun MensaPage(
     LaunchedEffect(inOrders) {
         if (inOrders) ordersPager.scrollToPage(if (hasUpcoming) MensaOrdersTab.ACTIVE.ordinal else MensaOrdersTab.HISTORY.ordinal)
     }
-    val menuContext = remember(menus, selectedPlace, selectedMenuId, selectedDate, selectedMealTypeId, schedule, todayLabel, tomorrowLabel, locale) {
+    val selectedMenuIdentity = remember(menus, selectedMenuId) {
+        menus.valueOrNull()?.firstOrNull { it.id == selectedMenuId }?.identity()
+    }
+    val menuContext = remember(menus, selectedPlace, selectedMenuIdentity, selectedDate, selectedMealTypeId, schedule, todayLabel, tomorrowLabel, locale) {
         val today = LocalDate.now(AppClock.clock)
-        val menuIdentity = menus.valueOrNull()?.firstOrNull { it.id == selectedMenuId }?.identity()
         // A canteen's usual menu goes without saying; the place and a variant of it are worth showing.
         val canteen = listOfNotNull(
             selectedPlace?.displayName,
-            menuIdentity?.displayName?.takeIf { selectedPlace == null || menuIdentity.kind == MensaMenuKind.GLUTEN_FREE },
+            selectedMenuIdentity?.displayName?.takeIf { selectedPlace == null || selectedMenuIdentity.kind == MensaMenuKind.GLUTEN_FREE },
         ).distinct().joinToString(" · ").ifBlank { null }
         val day = selectedDate?.let {
             when (it) {
@@ -337,6 +362,7 @@ fun MensaPage(
     // Kept while the confirmation slides away after signing out, when the session is gone.
     val shownSignOutEmail = rememberLastNonNull(session?.email)
     val bagStage = remember { MensaBagStage() }
+    val menuCardStage = remember { MensaMenuCardStage() }
 
     SharedTransitionLayout {
     val sharedScope = this
@@ -362,6 +388,7 @@ fun MensaPage(
             if (hasDishes && displayDepth(to) < displayDepth(from)) MENSA_BAG_RETURN_MS else 0
         },
         header = { target ->
+            val isMenuPage = (target as? MensaDisplay.Page)?.let { it.page == MensaSubPage.Menu && !it.inMenu } == true
             SheetHeaderSpec(
                 title = when (target) {
                     MensaDisplay.Outcome -> outcomeTitle.ifBlank { stringResource(R.string.mensa_title) }
@@ -418,10 +445,13 @@ fun MensaPage(
                         is MensaSubPage.ReservationDetail -> reservationList
                             .firstOrNull { it.id == page.reservationId }
                             ?.statusDescription
+                            ?.takeIf { it.isNotBlank() }
+                            ?.replaceFirstChar { it.titlecase(locale) }
                             ?: stringResource(R.string.mensa_orders_title)
                     }
                 },
-                onSubtitleClick = if ((target as? MensaDisplay.Page)?.let { it.page == MensaSubPage.Menu && !it.inMenu } == true) viewModel::openMenuSetup else null,
+                onSubtitleClick = if (isMenuPage) viewModel::openMenuSetup else null,
+                subtitleChip = isMenuPage,
                 showBack = when (target) {
                     MensaDisplay.Outcome -> false
                     MensaDisplay.ConfirmCancel -> true
@@ -441,16 +471,16 @@ fun MensaPage(
                     }
                     MensaSubPage.Menu -> {
                         {
-                            Row {
-                                IconButton(onClick = { haptic.tap(); viewModel.openMenuSetup() }, modifier = Modifier.testTag(MensaTestTags.CHANGE_SELECTION_BUTTON)) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.RestaurantMenu,
-                            ?.takeIf { it.isNotBlank() }
-                            ?.replaceFirstChar { it.titlecase(locale) }
-                                        contentDescription = stringResource(R.string.mensa_change_selection_action),
-                                    )
-                                }
-                            }
+                            val cardIdentity = selectedMenuIdentity ?: MensaMenuIdentity(
+                                kind = if (selectedPlace?.isCanteen == false) MensaMenuKind.BAR else MensaMenuKind.CANTEEN,
+                                displayName = selectedPlace?.displayName.orEmpty(),
+                                building = selectedPlace?.building,
+                            )
+                            MensaMenuSwitchAction(
+                                identity = cardIdentity,
+                                place = selectedPlace,
+                                onClick = { haptic.tap(); viewModel.openMenuSetup() },
+                            )
                         }
                     }
                     else -> null
@@ -458,13 +488,14 @@ fun MensaPage(
             )
         },
     ) { shown ->
-        val orderMenuKind = menus.valueOrNull()?.firstOrNull { it.id == selectedMenuId }?.identity()?.kind
+        val orderMenuKind = selectedMenuIdentity?.kind
         val dishAvailability: (MensaDish) -> MensaDishAvailability = remember(orderMenuKind, selectedPlace) {
             { dish -> dish.availabilityAt(orderMenuKind, selectedPlace) }
         }
         CompositionLocalProvider(
             LocalMensaShared provides MensaSharedScopes(sharedScope, this),
             LocalMensaBagStage provides bagStage,
+            LocalMensaMenuCardStage provides menuCardStage,
             LocalMensaDishAvailability provides dishAvailability,
         ) {
         // Only the handle and the header move the sheet: a scroll or drag in a page never closes it.
@@ -836,6 +867,61 @@ private suspend fun offerToSavePassword(context: Context, email: String, passwor
     }
 }
 
+
+/**
+ * Active V4 menu booklet thumbnail with a swap badge, making the header action clearly read as
+ * switching the canteen, day, or meal.
+ */
+@Composable
+private fun MensaMenuSwitchAction(
+    identity: MensaMenuIdentity,
+    place: MensaPlace?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val changeLabel = stringResource(R.string.mensa_change_selection_action)
+    Box(
+        modifier = modifier
+            .size(48.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(role = Role.Button, onClickLabel = changeLabel, onClick = onClick)
+            .semantics { contentDescription = changeLabel }
+            .testTag(MensaTestTags.CHANGE_SELECTION_BUTTON),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(modifier = Modifier.size(width = 30.dp, height = 43.dp)) {
+            Image(
+                painter = painterResource(mensaMenuCardArt(identity, place)),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .width(25.dp)
+                    .aspectRatio(MENSA_MENU_CARD_ASPECT)
+                    .graphicsLayer { rotationZ = -4f }
+                    .mensaMenuCardShadow(offsetY = 1.5.dp),
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(19.dp)
+                    .clip(CircleShape)
+                    .background(scheme.surfaceContainerLow)
+                    .padding(2.dp)
+                    .clip(CircleShape)
+                    .background(scheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.SwapHoriz,
+                    contentDescription = null,
+                    tint = scheme.onPrimaryContainer,
+                    modifier = Modifier.size(11.dp),
+                )
+            }
+        }
+    }
+}
 
 /** How the user tried to leave a sign-up with something typed in it, so confirming does the same. */
 private enum class SignUpLeave { Back, CloseSheet }

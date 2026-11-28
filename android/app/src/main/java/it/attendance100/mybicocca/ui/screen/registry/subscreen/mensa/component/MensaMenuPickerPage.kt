@@ -85,6 +85,7 @@ internal fun MensaPlacePickerPage(
                             else -> stringResource(R.string.mensa_place_lunch_dinner)
                         },
                         onClick = { haptic.tap(); onPick(place) },
+                        fromFan = true,
                         modifier = Modifier
                             .weight(1f)
                             .testTag(MensaTestTags.placeCard(place.name)),
@@ -184,8 +185,10 @@ private fun MensaPickerCard(
     subtitle: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    fromFan: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val art = mensaMenuCardArt(identity, place)
     // The whole card answers the tap, the artwork over its edge included.
     val press = remember { MutableInteractionSource() }
     Box(modifier = modifier.clickable(interactionSource = press, indication = null, onClick = onClick)) {
@@ -222,10 +225,11 @@ private fun MensaPickerCard(
             }
         }
         Image(
-            painter = painterResource(mensaMenuCardArt(identity, place)),
+            painter = painterResource(art),
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.TopCenter)
+                .then(if (fromFan) Modifier.mensaMenuCardHero(art) else Modifier)
                 .width(ArtWidth)
                 .aspectRatio(ArtAspect),
         )
