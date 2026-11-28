@@ -224,7 +224,7 @@ private fun BookingBox(
     ) {
         MensaBookingBag(
             reservationId = booking.id,
-            width = 128.dp,
+            width = 144.dp,
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(x = 4.dp),

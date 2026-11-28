@@ -2130,7 +2130,6 @@
     <string name="registry_mensa">Canteen</string>
     <string name="registry_mensa_desc">Daily menus, allergens &amp; bookings</string>
     <string name="mensa_title">Canteen</string>
-    <string name="mensa_subtitle_logged_in">Fresh &amp; Natural account active</string>
     <string name="mensa_order_gone_title">Booking no longer available</string>
     <string name="mensa_order_gone_body">It has expired or been cancelled in the meantime.</string>
     <string name="mensa_order_gone_back">Go back</string>

@@ -399,7 +399,7 @@ fun MensaPage(
                     MensaDisplay.ConfirmSignOut -> shownSignOutEmail
                     is MensaDisplay.Page -> when (val page = target.host ?: target.page) {
                         // No balance: Bicocca's canteen does not take payments through the wallet.
-                        MensaSubPage.Home -> if (session != null) stringResource(R.string.mensa_subtitle_logged_in) else null
+                        MensaSubPage.Home -> stringResource(R.string.registry_mensa_desc)
                         MensaSubPage.PlacePicker -> stringResource(R.string.mensa_place_picker_subtitle)
                         MensaSubPage.MenuPicker -> stringResource(R.string.mensa_picker_subtitle)
                         MensaSubPage.Menu -> menuContext ?: stringResource(R.string.mensa_menu_subtitle)
@@ -445,6 +445,8 @@ fun MensaPage(
                                 IconButton(onClick = { haptic.tap(); viewModel.openMenuSetup() }, modifier = Modifier.testTag(MensaTestTags.CHANGE_SELECTION_BUTTON)) {
                                     Icon(
                                         imageVector = Icons.Outlined.RestaurantMenu,
+                            ?.takeIf { it.isNotBlank() }
+                            ?.replaceFirstChar { it.titlecase(locale) }
                                         contentDescription = stringResource(R.string.mensa_change_selection_action),
                                     )
                                 }

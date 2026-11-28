@@ -2135,7 +2135,6 @@
     <string name="registry_mensa">Mensa</string>
     <string name="registry_mensa_desc">Menù del giorno, allergeni e prenotazioni</string>
     <string name="mensa_title">Mensa</string>
-    <string name="mensa_subtitle_logged_in">Account Fresh &amp; Natural attivo</string>
     <string name="mensa_order_gone_title">Prenotazione non più disponibile</string>
     <string name="mensa_order_gone_body">È scaduta o è stata annullata nel frattempo.</string>
     <string name="mensa_order_gone_back">Torna indietro</string>
