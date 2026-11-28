@@ -391,7 +391,7 @@ class LibraryPageTest {
         compose.waitForIdle()
 
         compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_PAGE).assertIsDisplayed()
-        compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_MAP).assertIsDisplayed()
+        compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_MAP).performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_CANCEL, useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_VERIFY, useUnmergedTree = true).assertDoesNotExist()
     }
@@ -409,7 +409,7 @@ class LibraryPageTest {
         compose.waitForIdle()
 
         compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_PAGE).assertIsDisplayed()
-        compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_MAP).assertIsDisplayed()
+        compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_MAP).performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_CANCEL, useUnmergedTree = true).assertIsDisplayed()
         compose.onNodeWithTag(LibraryTestTags.RESERVATION_DETAIL_VERIFY, useUnmergedTree = true).assertIsDisplayed()
     }
